@@ -1,0 +1,295 @@
+/* ============ Agents Page ============ */
+.agents-page {
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.agents-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 120px 20px 60px;
+  text-align: center;
+  color: white;
+}
+
+.agents-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.agents-hero p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.agents-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+/* Filters */
+.agents-filters {
+  margin-bottom: 30px;
+}
+
+.agents-filters .search-box {
+  position: relative;
+  max-width: 500px;
+  margin-bottom: 20px;
+}
+
+.agents-filters .search-box .search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.agents-filters .search-box input {
+  width: 100%;
+  padding: 14px 14px 14px 45px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.agents-filters .search-box input:focus {
+  border-color: #667eea;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.city-filter {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.city-btn {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  background: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.city-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.city-btn.active {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+
+/* Results */
+.results-count {
+  color: #666;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+/* Agents Grid */
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+}
+
+/* Agent Card */
+.agent-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.agent-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.agent-header {
+  position: relative;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 30px 20px 60px;
+  text-align: center;
+}
+
+.agent-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.verified-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #10b981;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.agent-info {
+  padding: 20px;
+  margin-top: -40px;
+  background: white;
+  position: relative;
+  border-radius: 20px 20px 0 0;
+}
+
+.agent-info h3 {
+  font-size: 1.3rem;
+  color: #1f2937;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.agent-info .company {
+  color: #667eea;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.agent-info .location {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.agent-info .specialization {
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+.agent-rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.star-icon {
+  color: #f59e0b;
+  fill: #f59e0b;
+}
+
+.agent-rating .rating {
+  font-weight: 700;
+  color: #333;
+}
+
+.agent-rating .reviews {
+  color: #666;
+  font-size: 13px;
+}
+
+.agent-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 15px 0;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 20px;
+}
+
+.agent-stats .stat {
+  text-align: center;
+}
+
+.agent-stats .value {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.agent-stats .label {
+  font-size: 12px;
+  color: #888;
+}
+
+.agent-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.agent-actions .action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.action-btn.call {
+  background: #10b981;
+  color: white;
+}
+
+.action-btn.email {
+  background: #f0f4ff;
+  color: #667eea;
+}
+
+.action-btn.properties {
+  background: #f3f4f6;
+  color: #333;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .agents-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .agents-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .city-filter {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 10px;
+  }
+
+  .city-btn {
+    white-space: nowrap;
+  }
+}
+

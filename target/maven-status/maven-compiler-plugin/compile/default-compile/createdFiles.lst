@@ -1,7 +1,0 @@
-com\realestate\backend\entity\Property.class
-com\realestate\backend\repository\PropertyRepository.class
-com\realestate\backend\BackendApplication.class
-com\realestate\backend\repository\UserRepository.class
-com\realestate\backend\config\CorsConfig.class
-com\realestate\backend\controller\UserController.class
-com\realestate\backend\entity\User.class

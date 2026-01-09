@@ -1,0 +1,372 @@
+/* ============ Post Property Page ============ */
+.post-property-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.post-property-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 100px 20px 50px;
+}
+
+.post-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.post-header h1 {
+  font-size: 2.2rem;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.post-header p {
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+/* Progress Steps */
+.progress-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40px;
+  gap: 0;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.step.active .step-number {
+  background: #0ea5e9;
+  color: white;
+}
+
+.step.completed .step-number {
+  background: #10b981;
+  color: white;
+}
+
+.step span {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.step.active span {
+  color: #0ea5e9;
+}
+
+.step-line {
+  width: 80px;
+  height: 3px;
+  background: #e2e8f0;
+  margin: 0 10px;
+  margin-bottom: 25px;
+}
+
+/* Form */
+.property-form {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.form-step h2 {
+  font-size: 1.5rem;
+  color: #1e293b;
+  margin-bottom: 25px;
+}
+
+.step-desc {
+  color: #64748b;
+  margin-bottom: 25px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  background: #f8fafc;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #0ea5e9;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  background: white;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+/* Amenities Selection */
+.amenities-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.amenity-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border: 2px solid #e5e7eb;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.amenity-chip:hover {
+  border-color: #0ea5e9;
+}
+
+.amenity-chip.selected {
+  background: #0ea5e9;
+  border-color: #0ea5e9;
+  color: white;
+}
+
+/* Image Upload */
+.image-upload-area {
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 50px 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  margin-bottom: 25px;
+  background: #f8fafc;
+}
+
+.image-upload-area:hover {
+  border-color: #0ea5e9;
+  background: #f0f9ff;
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.upload-label svg {
+  color: #0ea5e9;
+}
+
+.upload-label span {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.upload-label small {
+  color: #999;
+}
+
+.uploaded-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.uploaded-image {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 120px;
+}
+
+.uploaded-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.remove-image:hover {
+  background: #ef4444;
+}
+
+/* Form Navigation */
+.form-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid #eee;
+}
+
+.nav-btn {
+  padding: 14px 35px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-btn.prev {
+  background: white;
+  border: 2px solid #ddd;
+  color: #666;
+}
+
+.nav-btn.prev:hover {
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+}
+
+.nav-btn.next,
+.nav-btn.submit {
+  background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+  border: none;
+  color: white;
+  margin-left: auto;
+}
+
+.nav-btn.next:hover,
+.nav-btn.submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+}
+
+.nav-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Upload Hint */
+.upload-hint {
+  text-align: center;
+  color: #ef4444;
+  font-size: 14px;
+  margin-top: 20px;
+  padding: 15px;
+  background: #fef2f2;
+  border-radius: 8px;
+  border: 1px dashed #fca5a5;
+}
+
+/* Disabled Submit Button */
+.nav-btn.submit:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.nav-btn.submit:disabled:hover {
+  background: #ccc;
+  transform: none;
+}
+
+/* Access Denied */
+.access-denied {
+  text-align: center;
+  padding: 100px 20px;
+}
+
+.access-denied h2 {
+  color: #ef4444;
+  margin-bottom: 15px;
+}
+
+.access-denied p {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.access-denied button {
+  padding: 12px 30px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .progress-steps {
+    flex-wrap: wrap;
+  }
+
+  .step-line {
+    display: none;
+  }
+
+  .property-form {
+    padding: 25px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
