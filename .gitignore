@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+target/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven wrapper (optional - can be committed)
+# .mvn/
+
+# Frontend build files
+frontend/dist/
+
+# Vite output files
+vite_out.txt
+vite_err.txt
+
