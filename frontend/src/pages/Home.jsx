@@ -5,11 +5,10 @@ import Footer from "../components/Footer";
 import "../styles/Home.css";
 import heroBg from "../assets/re-back.jpg";
 import ahmImg from "../assets/ahm.jpg";
-import gurgaonImg from "../assets/gurgaon.jpg";
-import mumbaiImg from "../assets/Mumbai.jpeg";
-import puneImg from "../assets/Pune.jpg";
-import delhiImg from "../assets/delhi.jpg";
-import { FiSearch, FiHome, FiUsers, FiShield, FiTrendingUp, FiMapPin, FiStar, FiArrowRight } from "react-icons/fi";
+import { FiSearch, FiMapPin, FiArrowRight } from "react-icons/fi";
+import { propertyApi } from "../api";
+import { userApi } from "../api"; // add at top
+
 
 /* ---------------- HERO SECTION ---------------- */
 function Hero() {
@@ -21,26 +20,31 @@ function Hero() {
     navigate(`/properties?city=${searchCity}&type=${activeTab.toLowerCase()}`);
   };
 
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    const key = tab.toLowerCase();
+    if (["buy", "rent", "projects", "commercial"].includes(key)) {
+      navigate(`/properties?type=${key}`);
+    }
+  };
+
   return (
-    <section
-      className="hero"
-      style={{
-        backgroundImage: `url(${heroBg})`
-      }}
-    >
+    <section className="hero" style={{ backgroundImage: `url(${heroBg})` }}>
       <div className="hero-overlay"></div>
 
       <div className="hero-inner">
-        <h1 className="hero-title">Find Your Dream Home in India</h1>
-        <p className="hero-subtitle">Discover 50,000+ properties across India's top cities</p>
+        <h1 className="hero-title">Find Your Dream Home in Ahmedabad</h1>
+        <p className="hero-subtitle">
+          Discover verified properties across prime locations
+        </p>
 
         <div className="hero-search">
           <div className="tabs">
-            {["Buy", "Rent", "Projects", "Commercial", "Agents"].map(tab => (
+            {["Buy", "Rent", "Projects", "Commercial"].map((tab) => (
               <button
                 key={tab}
-                className={`tab ${activeTab === tab ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab)}
+                className={`tab ${activeTab === tab ? "active" : ""}`}
+                onClick={() => handleTabClick(tab)}
               >
                 {tab}
               </button>
@@ -48,49 +52,20 @@ function Hero() {
           </div>
 
           <div className="search-row">
-            <select className="type-select">
-              <option>All Residential</option>
-              <option>1 BHK</option>
-              <option>2 BHK</option>
-              <option>3 BHK</option>
-              <option>4+ BHK</option>
-              <option>Villa</option>
-              <option>Plot</option>
-            </select>
-
             <div className="search-input-wrapper">
               <FiSearch className="search-input-icon" />
               <input
                 className="search-input"
-                placeholder="Enter city, locality, or project"
+                placeholder="Enter area, locality, or project"
                 value={searchCity}
                 onChange={(e) => setSearchCity(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>
 
             <button className="search-btn" onClick={handleSearch}>
               <FiSearch /> Search
             </button>
-          </div>
-        </div>
-
-        <div className="hero-stats">
-          <div className="stat-item">
-            <span className="stat-number">50K+</span>
-            <span className="stat-label">Properties</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">10K+</span>
-            <span className="stat-label">Happy Customers</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">500+</span>
-            <span className="stat-label">Verified Agents</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">100+</span>
-            <span className="stat-label">Cities</span>
           </div>
         </div>
       </div>
@@ -105,30 +80,22 @@ function FeatureBox({ icon, title, description, cta, onClick }) {
       <div className="feature-icon">{icon}</div>
       <h4>{title}</h4>
       <p>{description}</p>
-      <button className="explore-btn">{cta} <FiArrowRight /></button>
+      <button className="explore-btn">
+        {cta} <FiArrowRight />
+      </button>
     </div>
   );
 }
 
-/* ---------------- CITY CIRCLE ---------------- */
-function CityCircle({ city, count, image, onClick }) {
-  return (
-    <div className="city-item" onClick={onClick}>
-      <div className="city-pic" style={{ backgroundImage: image ? `url(${image})` : 'none' }}></div>
-      <div className="city-name">{city}</div>
-      <div className="city-count">{count}+ Properties</div>
-    </div>
-  );
-}
-
-/* ---------------- PROPERTY CARD ---------------- */
-function FeaturedProperty({ image, title, location, price, bhk, area, type }) {
+/* ---------------- FEATURED PROPERTY CARD ---------------- */
+function FeaturedProperty({ id, image, title, location, price, bhk, area, type, purpose }) {
   const navigate = useNavigate();
   return (
-    <div className="featured-property" onClick={() => navigate('/properties')}>
+    <div className="featured-property" onClick={() => navigate(`/property/${id}`)}>
       <div className="fp-image">
         <img src={image} alt={title} />
         <span className="fp-badge">{type}</span>
+        {purpose && <span className="fp-purpose">{purpose}</span>}
       </div>
       <div className="fp-info">
         <h4>{title}</h4>
@@ -143,72 +110,50 @@ function FeaturedProperty({ image, title, location, price, bhk, area, type }) {
   );
 }
 
-/* ---------------- WHY CHOOSE US ---------------- */
-function WhyChooseUs() {
-  const features = [
-    {
-      icon: <FiShield size={32} />,
-      title: "100% Verified Listings",
-      description: "All properties are verified by our expert team"
-    },
-    {
-      icon: <FiUsers size={32} />,
-      title: "Trusted Agents",
-      description: "Connect with verified and experienced agents"
-    },
-    {
-      icon: <FiHome size={32} />,
-      title: "Wide Selection",
-      description: "Choose from 50,000+ properties across India"
-    },
-    {
-      icon: <FiTrendingUp size={32} />,
-      title: "Best Deals",
-      description: "Get the best deals and investment opportunities"
-    }
-  ];
-
-  return (
-    <section className="why-choose-us">
-      <h2>Why Choose RealEstateIndia?</h2>
-      <p className="section-subtitle">India's most trusted real estate platform</p>
-      <div className="why-grid">
-        {features.map((feature, index) => (
-          <div key={index} className="why-item">
-            <div className="why-icon">{feature.icon}</div>
-            <h4>{feature.title}</h4>
-            <p>{feature.description}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 /* ---------------- MAIN HOME ---------------- */
 export default function Home() {
   const navigate = useNavigate();
   const [featuredProperties, setFeaturedProperties] = useState([]);
+  const [agents, setAgents] = useState([]); // ✅ ADD
 
-  // Fetch featured properties from backend
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const response = await fetch("http://localhost:8082/api/properties");
-        const data = await response.json();
+        const resp = await propertyApi.get("");
+        const data = resp.data || [];
 
-        // Transform and take first 4 properties
-        const transformed = data.slice(0, 4).map(prop => ({
-          image: prop.photos || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
-          title: prop.title,
-          location: "India",
-          price: prop.price >= 10000000
-            ? `₹${(prop.price / 10000000).toFixed(2)} Cr`
-            : `₹${(prop.price / 100000).toFixed(2)} L`,
-          bhk: prop.bhk,
-          area: prop.area,
-          type: prop.type
-        }));
+        const transformed = data.slice(0, 4).map((prop) => {
+          let imageUrl =
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800";
+
+          if (prop.photos && prop.photos.trim() !== "") {
+            const photosArray = prop.photos
+              .split(",")
+              .map((p) => p.trim())
+              .filter(Boolean);
+
+            if (photosArray.length > 0) {
+              imageUrl = `http://localhost:8085/uploads/${encodeURIComponent(
+                photosArray[0]
+              )}?v=${Date.now()}`;
+            }
+          }
+
+          return {
+            id: prop.id,
+            image: imageUrl,
+            title: prop.title,
+            location: prop.location || "Ahmedabad",
+            price:
+              prop.price >= 10000000
+                ? `₹${(prop.price / 10000000).toFixed(2)} Cr`
+                : `₹${(prop.price / 100000).toFixed(2)} L`,
+            bhk: prop.bhk,
+            area: prop.area,
+            type: prop.type,
+            purpose: prop.purpose || "For Sale",
+          };
+        });
 
         setFeaturedProperties(transformed);
       } catch (error) {
@@ -217,175 +162,140 @@ export default function Home() {
       }
     };
 
+
+
     fetchProperties();
   }, []);
 
   const features = [
-    {
-      icon: "🏠",
-      title: "Post Your Property Free",
-      description: "List your property and reach thousands of potential buyers",
-      cta: "Post Now"
-    },
-    {
-      icon: "👨‍💼",
-      title: "Find Top Agents",
-      description: "Connect with verified real estate agents in your city",
-      cta: "Find Agents"
-    },
-    {
-      icon: "🏙️",
-      title: "Explore Projects",
-      description: "Discover new residential and commercial projects",
-      cta: "Explore"
-    },
-    {
-      icon: "📋",
-      title: "Get Home Loan",
-      description: "Compare rates from top banks and get best deals",
-      cta: "Check Rates"
-    },
+    { icon: "🏠", title: "Post Your Property Free", description: "List your property and reach buyers", cta: "Post Now" },
+    { icon: "👨‍💼", title: "Find Top Agents", description: "Connect with verified agents", cta: "Find Agents" },
+    { icon: "🏙️", title: "Buy Property", description: "Browse properties for sale", cta: "Buy Now" },
+    { icon: "🏡", title: "Rent Property", description: "Find rental homes", cta: "Rent Now" },
   ];
 
-  const cities = [
-    { city: "Mumbai", count: 35419, image: mumbaiImg },
-    { city: "Delhi NCR", count: 34395, image: delhiImg },
-    { city: "Bangalore", count: 33387, image: ahmImg },
-    { city: "Gurgaon", count: 31814, image: gurgaonImg },
-    { city: "Pune", count: 29152, image: puneImg },
-    { city: "Hyderabad", count: 25437, image: ahmImg },
-  ];
-
+  const areas = ["Bopal", "Maninagar", "SG Highway", "Satellite", "Vastrapur"];
 
   return (
     <div className="home-page">
       <Navbar />
-
       <Hero />
 
-      {/* Features Section */}
       <section className="features">
         <div className="features-inner">
           {features.map((f, i) => (
             <FeatureBox
               key={i}
-              icon={f.icon}
-              title={f.title}
-              description={f.description}
-              cta={f.cta}
+              {...f}
               onClick={() => {
                 if (f.title.includes("Agents")) navigate("/agents");
                 else if (f.title.includes("Post")) navigate("/post-property");
-                else navigate("/properties");
+                else if (f.title.includes("Buy")) navigate("/properties?type=buy");
+                else if (f.title.includes("Rent")) navigate("/properties?type=rent");
               }}
             />
           ))}
         </div>
       </section>
 
-      {/* Featured Properties */}
       <section className="featured-section">
-        <div className="featured-header">
-          <div>
-            <h2>Featured Properties</h2>
-            <p>Handpicked properties for you</p>
-          </div>
-          <button className="view-all-btn" onClick={() => navigate("/properties")}>
-            View All <FiArrowRight />
-          </button>
-        </div>
+        <h2 className="section-title">Featured Properties</h2>
         <div className="featured-grid">
-          {featuredProperties.length > 0 ? (
-            featuredProperties.map((property, i) => (
-              <FeaturedProperty key={i} {...property} />
-            ))
-          ) : (
-            <p style={{textAlign: 'center', width: '100%', color: '#666'}}>
-              No properties listed yet. Be the first to post a property!
-            </p>
-          )}
-        </div>
-      </section>
-
-      {/* Cities Section */}
-      <section className="cities">
-        <h3>Find Your Property in Your Preferred City</h3>
-        <p className="section-subtitle">Explore properties in India's top real estate markets</p>
-
-        <div className="cities-grid">
-          {cities.map((c, i) => (
-            <CityCircle
-              key={i}
-              {...c}
-              onClick={() => navigate(`/properties?city=${c.city}`)}
-            />
+          {featuredProperties.map((p) => (
+            <FeaturedProperty key={p.id} {...p} />
           ))}
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <WhyChooseUs />
+      <section className="why-choose-us">
+        <h2>Why Choose Us</h2>
+        <p className="section-subtitle">
+          We make property buying and renting simple, secure, and transparent.
+        </p>
 
-      {/* Testimonials */}
-      <section className="testimonials">
-        <h2>What Our Customers Say</h2>
-        <p className="section-subtitle">Trusted by thousands of home buyers</p>
-        <div className="testimonials-grid">
-          <div className="testimonial-card">
-            <div className="testimonial-rating">
-              <FiStar /><FiStar /><FiStar /><FiStar /><FiStar />
-            </div>
-            <p>"Found my dream home within 2 weeks! The platform is very user-friendly and the agents were very helpful."</p>
-            <div className="testimonial-author">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" alt="User" />
-              <div>
-                <h5>Rahul Sharma</h5>
-                <span>Mumbai</span>
-              </div>
-            </div>
+        <div className="why-grid">
+
+          {/* Verified Listings */}
+          <div className="why-item">
+            <div className="why-icon">🏠</div>
+            <h4>Verified Listings</h4>
+            <p>
+              Every property is manually verified by our team to ensure genuine
+              listings with correct pricing and legal details.
+            </p>
+            <p>
+              Popular projects: <strong>Godrej Garden City</strong>, <strong>Shilp Revanta</strong>, <strong>Adani Shantigram</strong>
+            </p>
           </div>
-          <div className="testimonial-card">
-            <div className="testimonial-rating">
-              <FiStar /><FiStar /><FiStar /><FiStar /><FiStar />
-            </div>
-            <p>"Best platform for property search. Verified listings and transparent pricing made my decision easy."</p>
-            <div className="testimonial-author">
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100" alt="User" />
-              <div>
-                <h5>Priya Patel</h5>
-                <span>Bangalore</span>
-              </div>
-            </div>
+
+          {/* Trusted Agents (FROM DB) */}
+          <div className="why-item">
+            <div className="why-icon">👨‍💼</div>
+            <h4>Trusted Agents</h4>
+            <p>
+              Connect with experienced and certified real estate agents in Ahmedabad.
+            </p>
+            <p>
+              Top agents:{" "}
+              {agents.length > 0
+                ? agents.slice(0, 3).map((a, i) => (
+                    <span key={a.id}>
+                      <strong>{a.name}</strong>
+                      {i < Math.min(agents.length, 3) - 1 ? ", " : ""}
+                    </span>
+                  ))
+                : " No agents available"}
+            </p>
           </div>
-          <div className="testimonial-card">
-            <div className="testimonial-rating">
-              <FiStar /><FiStar /><FiStar /><FiStar /><FiStar />
-            </div>
-            <p>"Sold my property at a great price. The team was professional and the process was smooth."</p>
-            <div className="testimonial-author">
-              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100" alt="User" />
-              <div>
-                <h5>Amit Kumar</h5>
-                <span>Delhi</span>
-              </div>
-            </div>
+
+          {/* Prime Locations */}
+          <div className="why-item">
+            <div className="why-icon">📍</div>
+            <h4>Prime Locations</h4>
+            <p>
+              Explore properties in the most in-demand locations with high ROI and
+              excellent connectivity.
+            </p>
+            <p>
+              Hot areas: <strong>SG Highway</strong>, <strong>Bopal</strong>, <strong>Satellite</strong>, <strong>Vastrapur</strong>
+            </p>
           </div>
+
+          {/* Best Prices */}
+          <div className="why-item">
+            <div className="why-icon">💰</div>
+            <h4>Best Prices</h4>
+            <p>
+              Get properties at market-competitive prices with no hidden charges.
+            </p>
+            <p>
+              Starting from <strong>₹25 Lakhs</strong> for 1 BHK and
+              <strong> ₹45 Lakhs</strong> for 2 BHK in prime areas.
+            </p>
+          </div>
+
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="cta-section">
-        <div className="cta-content">
-          <h2>Ready to Find Your Perfect Home?</h2>
-          <p>Join thousands of satisfied customers who found their dream property with us</p>
-          <div className="cta-buttons">
-            <button className="cta-btn primary" onClick={() => navigate("/properties")}>
-              Browse Properties
-            </button>
-            <button className="cta-btn secondary" onClick={() => navigate("/signup")}>
-              Create Free Account
-            </button>
-          </div>
+      <section className="cities">
+        <h2 className="section-title">Explore Ahmedabad Areas</h2>
+        <div className="city-grid">
+          {areas.map((a) => (
+            <div key={a} className="city-card" onClick={() => navigate(`/properties?city=${a}`)}>
+              <img src={ahmImg} />
+              <span>{a}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="how-it-works">
+        <h2 className="section-title">How It Works</h2>
+        <div className="steps">
+          <div className="step">🔍 Search Property</div>
+          <div className="step">📞 Contact Agent</div>
+          <div className="step">🏡 Visit Property</div>
+          <div className="step">✍️ Close Deal</div>
         </div>
       </section>
 

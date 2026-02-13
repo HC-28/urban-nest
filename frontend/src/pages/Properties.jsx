@@ -1,60 +1,138 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyCard from "../components/PropertyCard";
 import "../styles/Properties.css";
-import { FiSearch, FiFilter, FiMapPin, FiGrid, FiList } from "react-icons/fi";
+import { FiSearch, FiFilter, FiGrid, FiList } from "react-icons/fi";
 import { propertyApi } from "../api";
+
+const IMAGE_BASE_URL = "http://localhost:8080/";
+
 
 function Properties() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
+
   const [filters, setFilters] = useState({
-    type: searchParams.get("type") || "all",
-    city: searchParams.get("city") || "",
+    city: "",
     minPrice: "",
     maxPrice: "",
     bhk: "",
     propertyType: ""
   });
+
   const [showFilters, setShowFilters] = useState(false);
 
+  // ✅ SINGLE NORMALIZATION FUNCTION (SOURCE OF TRUTH)
+  const normalizePriceToLakh = (price) => {
+    if (!price) return 0;
+
+    // RUPEES → LAKH
+    if (price >= 1_000_000) {
+      return Math.round(price / 100_000);
+    }
+
+    // CRORE → LAKH
+    if (price >= 1 && price <= 1000) {
+      return price * 100;
+    }
+
+    // ALREADY LAKH
+    return price;
+  };
+const IMAGE_BASE_URL = "http://localhost:8085/uploads/";
+
+const getFirstPhoto = (photos) => {
+  if (!photos) return null;
+
+  let first = null;
+
+  if (Array.isArray(photos)) {
+    first = photos[0];
+  } else if (typeof photos === "string") {
+    first = photos.split(",")[0];
+  }
+
+  if (!first) return null;
+
+  // ❌ Ignore old blob URLs
+  if (first.startsWith("blob:")) {
+    return null;
+  }
+
+  // ✅ Already full URL
+  if (first.startsWith("http")) {
+    return first;
+  }
+
+  // ✅ Correct backend upload URL
+  return IMAGE_BASE_URL + encodeURIComponent(first);
+};
+
+
+
   useEffect(() => {
-    // Fetch properties from backend API
     const fetchProperties = async () => {
       try {
-        console.log("Fetching properties from API...");
-        const response = await fetch("http://localhost:8082/api/properties");
-        const backendProperties = await response.json();
-        console.log("API Response:", backendProperties);
+        setLoading(true);
 
-        // Transform backend properties to match frontend format
-        const transformedProperties = backendProperties.map(prop => ({
-          id: prop.id,
-          title: prop.title,
-          type: prop.type,
-          price: prop.price,
-          pricePerSqft: prop.area > 0 ? Math.round(prop.price / prop.area) : 0,
-          area: prop.area,
-          bhk: prop.bhk,
-          bathrooms: prop.bhk, // Assume same as BHK
-          city: prop.city || "India",
-          location: prop.location || "Listed Property",
-          image: prop.photos ? prop.photos.split(",")[0] : "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
-          amenities: ["Parking", "Security"],
-          isVerified: true,
-          postedBy: prop.agentName || "Agent",
-          postedDate: "Recently",
-          isFeatured: false,
-          agentId: prop.agentId,
-          agentEmail: prop.agentEmail
-        }));
+        const typeQuery = searchParams.get("type") || "";
+        let purposeParam;
 
-        console.log("Transformed properties:", transformedProperties);
+        if (typeQuery) {
+          const t = typeQuery.toLowerCase();
+          if (t === "buy" || t === "sale") purposeParam = "sale";
+          else if (t === "rent") purposeParam = "rent";
+          else if (t === "commercial") purposeParam = "commercial";
+          else if (t === "projects") purposeParam = "project";
+        }
+
+        const resp = await propertyApi.get("", {
+          params: purposeParam ? { purpose: purposeParam } : {}
+        });
+
+        const backendProperties = resp.data;
+
+        const transformedProperties = backendProperties.map(prop => {
+          const normalizedPrice = normalizePriceToLakh(prop.price);
+
+          return {
+            id: prop.id,
+            title: prop.title,
+            type: prop.type,
+            purpose: prop.purpose || "For Sale",
+
+            // ✅ FIXED PRICE
+            price: normalizedPrice,
+
+            // ✅ FIXED PRICE PER SQFT
+            pricePerSqft: prop.area > 0
+              ? Math.round((normalizedPrice * 100000) / prop.area)
+              : 0,
+
+            area: prop.area,
+            bhk: prop.bhk,
+            bathrooms: prop.bhk,
+            city: prop.city || prop.pinCode || "India",
+            location: prop.location || "Listed Property",
+            image: getFirstPhoto(prop.photos)
+              ? getFirstPhoto(prop.photos)
+              : "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
+
+            amenities: ["Parking", "Security"],
+            isVerified: true,
+            postedBy: prop.agentName || "Agent",
+            postedDate: "Recently",
+            isFeatured: false,
+            agentId: prop.agentId,
+            agentEmail: prop.agentEmail
+          };
+        });
+
         setProperties(transformedProperties);
         setLoading(false);
       } catch (error) {
@@ -65,15 +143,17 @@ function Properties() {
     };
 
     fetchProperties();
-  }, []);
+  }, [searchParams]);
 
-  const formatPrice = (price) => {
-    if (price >= 10000000) {
-      return `₹${(price / 10000000).toFixed(2)} Cr`;
-    } else if (price >= 100000) {
-      return `₹${(price / 100000).toFixed(2)} L`;
+  const formatPrice = (priceInLakh) => {
+    if (!priceInLakh) return "₹0";
+
+    if (priceInLakh >= 100) {
+      const crore = priceInLakh / 100;
+      return `₹${Number.isInteger(crore) ? crore : crore.toFixed(2)} Cr`;
     }
-    return `₹${price.toLocaleString()}`;
+
+    return `₹${priceInLakh} L`;
   };
 
   const filteredProperties = properties.filter(property => {
@@ -97,7 +177,7 @@ function Properties() {
       </div>
 
       <div className="properties-container">
-        {/* Search and Filter Bar */}
+
         <div className="search-filter-bar">
           <div className="search-box">
             <FiSearch className="search-icon" />
@@ -105,125 +185,24 @@ function Properties() {
               type="text"
               placeholder="Search by city, location, or property name..."
               value={filters.city}
-              onChange={(e) => setFilters({...filters, city: e.target.value})}
+              onChange={(e) => setFilters({ ...filters, city: e.target.value })}
             />
           </div>
 
-          <button
-            className="filter-toggle-btn"
-            onClick={() => setShowFilters(!showFilters)}
-          >
+          <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
             <FiFilter /> Filters
           </button>
 
           <div className="view-toggle">
-            <button
-              className={viewMode === "grid" ? "active" : ""}
-              onClick={() => setViewMode("grid")}
-            >
+            <button className={viewMode === "grid" ? "active" : ""} onClick={() => setViewMode("grid")}>
               <FiGrid />
             </button>
-            <button
-              className={viewMode === "list" ? "active" : ""}
-              onClick={() => setViewMode("list")}
-            >
+            <button className={viewMode === "list" ? "active" : ""} onClick={() => setViewMode("list")}>
               <FiList />
             </button>
           </div>
         </div>
 
-        {/* Filter Panel */}
-        {showFilters && (
-          <div className="filter-panel">
-            <div className="filter-group">
-              <label>Property Type</label>
-              <select
-                value={filters.propertyType}
-                onChange={(e) => setFilters({...filters, propertyType: e.target.value})}
-              >
-                <option value="">All Types</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Villa">Villa</option>
-                <option value="House">House</option>
-                <option value="Penthouse">Penthouse</option>
-                <option value="Studio">Studio</option>
-                <option value="Commercial">Commercial</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>BHK</label>
-              <select
-                value={filters.bhk}
-                onChange={(e) => setFilters({...filters, bhk: e.target.value})}
-              >
-                <option value="">Any</option>
-                <option value="1">1 BHK</option>
-                <option value="2">2 BHK</option>
-                <option value="3">3 BHK</option>
-                <option value="4">4 BHK</option>
-                <option value="5">5+ BHK</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>Min Price</label>
-              <select
-                value={filters.minPrice}
-                onChange={(e) => setFilters({...filters, minPrice: e.target.value})}
-              >
-                <option value="">No Min</option>
-                <option value="2000000">₹20 Lakh</option>
-                <option value="5000000">₹50 Lakh</option>
-                <option value="10000000">₹1 Cr</option>
-                <option value="20000000">₹2 Cr</option>
-                <option value="50000000">₹5 Cr</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>Max Price</label>
-              <select
-                value={filters.maxPrice}
-                onChange={(e) => setFilters({...filters, maxPrice: e.target.value})}
-              >
-                <option value="">No Max</option>
-                <option value="5000000">₹50 Lakh</option>
-                <option value="10000000">₹1 Cr</option>
-                <option value="20000000">₹2 Cr</option>
-                <option value="50000000">₹5 Cr</option>
-                <option value="100000000">₹10 Cr</option>
-              </select>
-            </div>
-
-            <button
-              className="clear-filters"
-              onClick={() => setFilters({
-                type: "all",
-                city: "",
-                minPrice: "",
-                maxPrice: "",
-                bhk: "",
-                propertyType: ""
-              })}
-            >
-              Clear All
-            </button>
-          </div>
-        )}
-
-        {/* Results Count */}
-        <div className="results-info">
-          <span>{filteredProperties.length} Properties Found</span>
-          <select className="sort-select">
-            <option>Sort by: Relevance</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-            <option>Newest First</option>
-          </select>
-        </div>
-
-        {/* Property Grid */}
         {loading ? (
           <div className="loading-state">
             <div className="loader"></div>
@@ -237,7 +216,6 @@ function Properties() {
                 property={property}
                 viewMode={viewMode}
                 formatPrice={formatPrice}
-                onClick={() => navigate(`/property/${property.id}`)}
               />
             ))}
           </div>
@@ -257,4 +235,3 @@ function Properties() {
 }
 
 export default Properties;
-

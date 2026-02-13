@@ -13,12 +13,12 @@
   right: 0;
   width: 35%;
   height: 100vh;
-  background: #ffffff;
+  background: #1e293b;
   z-index: 101;
   padding: 24px;
   display: flex;
   flex-direction: column;
-
+  border-left: 1px solid rgba(51, 65, 85, 0.5);
   animation: slideIn 0.35s ease forwards;
 }
 
@@ -34,7 +34,7 @@
 /* Header */
 .drawer-header {
   text-align: center;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
   padding-bottom: 20px;
 }
 
@@ -72,7 +72,7 @@
 .display-name-container h3 {
   margin: 0;
   font-size: 1.4rem;
-  color: #333;
+  color: #f1f5f9;
 }
 
 .edit-name-btn {
@@ -105,10 +105,13 @@
   width: 200px;
   outline: none;
   transition: border-color 0.2s ease;
+  background: #334155;
+  color: #f1f5f9;
 }
 
 .edit-name-input:focus {
   border-color: #06b6d4;
+  background: #475569;
 }
 
 .edit-name-actions {
@@ -139,8 +142,8 @@
 
 .cancel-name-btn {
   padding: 8px 16px;
-  background: #f0f0f0;
-  color: #666;
+  background: #334155;
+  color: #cbd5e1;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -149,7 +152,7 @@
 }
 
 .cancel-name-btn:hover:not(:disabled) {
-  background: #e0e0e0;
+  background: #475569;
 }
 
 .cancel-name-btn:disabled {
@@ -179,7 +182,7 @@
   display: flex;
   justify-content: space-around;
   padding: 20px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
   margin-bottom: 15px;
 }
 
@@ -198,7 +201,7 @@
 
 .stat-label {
   font-size: 11px;
-  color: #888;
+  color: #94a3b8;
   margin-top: 4px;
   text-transform: uppercase;
 }
@@ -214,16 +217,18 @@
   flex: 1;
   padding: 10px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  background: #334155;
   cursor: pointer;
   transition: 0.2s ease;
   font-weight: 500;
+  color: #cbd5e1;
 }
 
 .drawer-menu button:hover {
   background: #0ea5e9;
   color: white;
+  border-color: #0ea5e9;
 }
 
 /* Content */
@@ -234,17 +239,18 @@
 
 .drawer-content h4 {
   margin-bottom: 12px;
-  color: #333;
+  color: #f1f5f9;
 }
 
 /* Property cards */
 .property-card {
-  background: #f5f7fb;
+  background: #334155;
   padding: 14px;
   border-radius: 10px;
   margin-bottom: 10px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease;
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .property-card:hover {
@@ -254,7 +260,7 @@
 /* Footer with Logout */
 .drawer-footer {
   padding-top: 15px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid rgba(51, 65, 85, 0.5);
   margin-top: auto;
 }
 

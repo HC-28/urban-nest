@@ -1,7 +1,7 @@
 /* ============ Property Detail Page ============ */
 .property-detail-page {
   min-height: 100vh;
-  background: #f8fafc;
+  background: #0f172a;
 }
 
 .property-detail-container {
@@ -19,16 +19,79 @@
 }
 
 .breadcrumb span {
-  color: #64748b;
+  color: #94a3b8;
+  cursor: pointer;
+}
+/* Chat Box */
+.chat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-messages {
+  height: 200px;
+  overflow-y: auto;
+  background: #334155;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.chat-message {
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  max-width: 80%;
+  font-size: 14px;
+}
+
+.chat-message.buyer {
+  background: #0ea5e9;
+  color: white;
+  align-self: flex-end;
+}
+
+.chat-message.agent {
+  background: #475569;
+  color: white;
+  align-self: flex-start;
+}
+
+.chat-input {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+.chat-input button {
+  padding: 10px 14px;
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
 }
 
+.close-chat {
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+
 .breadcrumb span:hover:not(.current) {
-  color: #0ea5e9;
+  color: #38bdf8;
 }
 
 .breadcrumb .current {
-  color: #1e293b;
+  color: #f1f5f9;
   cursor: default;
 }
 
@@ -58,15 +121,16 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: white;
+  background: rgba(30, 41, 59, 0.9);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
   font-size: 20px;
+  color: #f1f5f9;
 }
 
 .gallery-nav:hover {
@@ -131,10 +195,11 @@
 }
 
 .main-content {
-  background: white;
+  background: #1e293b;
   border-radius: 16px;
   padding: 30px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 /* Property Header */
@@ -176,7 +241,7 @@
 
 .property-header h1 {
   font-size: 1.8rem;
-  color: #1e293b;
+  color: #f1f5f9;
   margin-bottom: 10px;
 }
 
@@ -184,7 +249,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #64748b;
+  color: #cbd5e1;
   font-size: 15px;
 }
 
@@ -199,7 +264,7 @@
 }
 
 .price-per-sqft {
-  color: #64748b;
+  color: #94a3b8;
   font-size: 14px;
 }
 
@@ -208,7 +273,7 @@
   display: flex;
   gap: 25px;
   padding: 20px;
-  background: #f1f5f9;
+  background: #334155;
   border-radius: 12px;
   margin-bottom: 25px;
 }
@@ -218,7 +283,7 @@
   align-items: center;
   gap: 8px;
   font-size: 15px;
-  color: #1e293b;
+  color: #f1f5f9;
 }
 
 /* Action Buttons */
@@ -237,8 +302,9 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 2px solid #e2e8f0;
-  background: white;
+  border: 2px solid rgba(51, 65, 85, 0.6);
+  background: #334155;
+  color: #f1f5f9;
 }
 
 .action-btn:hover {
@@ -270,14 +336,14 @@
 
 .section h3 {
   font-size: 1.3rem;
-  color: #1e293b;
+  color: #f1f5f9;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid rgba(51, 65, 85, 0.5);
 }
 
 .description {
-  color: #475569;
+  color: #cbd5e1;
   line-height: 1.7;
 }
 
@@ -292,17 +358,17 @@
   display: flex;
   justify-content: space-between;
   padding: 12px 15px;
-  background: #f8fafc;
+  background: #334155;
   border-radius: 8px;
 }
 
 .detail-item .label {
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .detail-item .value {
   font-weight: 600;
-  color: #1e293b;
+  color: #f1f5f9;
 }
 
 /* Amenities Grid */
@@ -317,9 +383,9 @@
   align-items: center;
   gap: 8px;
   padding: 10px 15px;
-  background: #f0f9ff;
+  background: rgba(14, 165, 233, 0.1);
   border-radius: 8px;
-  color: #1e293b;
+  color: #f1f5f9;
   font-size: 14px;
 }
 
@@ -336,11 +402,11 @@
 
 /* Agent Card */
 .agent-card {
-  background: white;
+  background: #1e293b;
   border-radius: 16px;
   padding: 25px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .agent-header {
@@ -369,12 +435,12 @@
 
 .agent-header h4 {
   font-size: 1.1rem;
-  color: #1e293b;
+  color: #f1f5f9;
   margin-bottom: 4px;
 }
 
 .agent-header p {
-  color: #64748b;
+  color: #cbd5e1;
   font-size: 14px;
 }
 
@@ -388,8 +454,8 @@
   display: flex;
   justify-content: space-around;
   padding: 15px 0;
-  border-top: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
+  border-top: 1px solid rgba(51, 65, 85, 0.5);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
   margin-bottom: 20px;
 }
 
@@ -401,12 +467,12 @@
   display: block;
   font-size: 1.3rem;
   font-weight: 700;
-  color: #0ea5e9;
+  color: #38bdf8;
 }
 
 .agent-stats .label {
   font-size: 12px;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .agent-actions {
@@ -443,35 +509,43 @@
 
 /* Enquiry Form */
 .enquiry-form {
-  background: white;
+  background: #1e293b;
   border-radius: 16px;
   padding: 25px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .enquiry-form h4 {
   font-size: 1.1rem;
   margin-bottom: 20px;
-  color: #1e293b;
+  color: #f1f5f9;
 }
 
 .enquiry-form input,
 .enquiry-form textarea {
   width: 100%;
   padding: 12px 15px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid rgba(51, 65, 85, 0.6);
   border-radius: 8px;
   margin-bottom: 12px;
   font-size: 14px;
   transition: border-color 0.3s ease;
+  background: #334155;
+  color: #f1f5f9;
 }
 
 .enquiry-form input:focus,
 .enquiry-form textarea:focus {
   border-color: #0ea5e9;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+  background: #475569;
+}
+
+.enquiry-form input::placeholder,
+.enquiry-form textarea::placeholder {
+  color: #94a3b8;
 }
 
 .submit-btn {
@@ -493,18 +567,18 @@
 
 /* Property Stats */
 .property-stats {
-  background: white;
+  background: #1e293b;
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .property-stats .stat-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #64748b;
+  color: #cbd5e1;
   font-size: 14px;
   padding: 8px 0;
 }

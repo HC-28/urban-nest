@@ -1,7 +1,7 @@
 /* ============ Properties Page ============ */
 .properties-page {
   min-height: 100vh;
-  background: #f8fafc;
+  background: #0f172a;
 }
 
 .properties-hero {
@@ -48,23 +48,29 @@
   left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .search-box input {
   width: 100%;
   padding: 14px 14px 14px 45px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid rgba(51, 65, 85, 0.6);
   border-radius: 10px;
   font-size: 15px;
   transition: all 0.3s ease;
-  background: white;
+  background: #1e293b;
+  color: #f1f5f9;
 }
 
 .search-box input:focus {
   border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
   outline: none;
+  background: #334155;
+}
+
+.search-box input::placeholder {
+  color: #94a3b8;
 }
 
 .filter-toggle-btn {
@@ -72,36 +78,39 @@
   align-items: center;
   gap: 8px;
   padding: 14px 20px;
-  background: white;
-  border: 2px solid #e2e8f0;
+  background: #1e293b;
+  border: 2px solid rgba(51, 65, 85, 0.6);
   border-radius: 10px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s ease;
+  color: #f1f5f9;
 }
 
 .filter-toggle-btn:hover {
   border-color: #0ea5e9;
   color: #0ea5e9;
+  background: #334155;
 }
 
 .view-toggle {
   display: flex;
-  border: 2px solid #e2e8f0;
+  border: 2px solid rgba(51, 65, 85, 0.6);
   border-radius: 10px;
   overflow: hidden;
 }
 
 .view-toggle button {
   padding: 12px 16px;
-  background: white;
+  background: #1e293b;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
+  color: #cbd5e1;
 }
 
 .view-toggle button:first-child {
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid rgba(51, 65, 85, 0.6);
 }
 
 .view-toggle button.active {
@@ -111,16 +120,16 @@
 
 /* Filter Panel */
 .filter-panel {
-  background: white;
+  background: #1e293b;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
   align-items: flex-end;
   margin-bottom: 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .filter-group {
@@ -133,35 +142,39 @@
 .filter-group label {
   font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: #cbd5e1;
 }
 
 .filter-group select {
   padding: 10px 12px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid rgba(51, 65, 85, 0.6);
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
   transition: border-color 0.2s ease;
+  background: #334155;
+  color: #f1f5f9;
 }
 
 .filter-group select:focus {
   border-color: #0ea5e9;
   outline: none;
+  background: #475569;
 }
 
 .clear-filters {
   padding: 10px 20px;
-  background: #f1f5f9;
+  background: #334155;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s ease;
+  color: #f1f5f9;
 }
 
 .clear-filters:hover {
-  background: #e0e0e0;
+  background: #475569;
 }
 
 /* Results Info */
@@ -171,19 +184,21 @@
   align-items: center;
   margin-bottom: 20px;
   padding: 15px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .results-info span {
   font-weight: 600;
-  color: #333;
+  color: #f1f5f9;
 }
 
 .sort-select {
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(51, 65, 85, 0.6);
   border-radius: 6px;
   cursor: pointer;
+  background: #1e293b;
+  color: #f1f5f9;
 }
 
 /* Properties Grid */
@@ -212,7 +227,7 @@
 .loader {
   width: 50px;
   height: 50px;
-  border: 4px solid #e2e8f0;
+  border: 4px solid rgba(51, 65, 85, 0.6);
   border-top: 4px solid #0ea5e9;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -225,24 +240,25 @@
 
 .loading-state p {
   margin-top: 15px;
-  color: #666;
+  color: #cbd5e1;
 }
 
 /* No Results */
 .no-results {
   text-align: center;
   padding: 80px 20px;
-  background: white;
+  background: #1e293b;
   border-radius: 12px;
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .no-results h3 {
-  color: #333;
+  color: #f1f5f9;
   margin-bottom: 10px;
 }
 
 .no-results p {
-  color: #666;
+  color: #cbd5e1;
 }
 
 /* Responsive */

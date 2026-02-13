@@ -1,121 +1,101 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/Agents.css";
-import { FiSearch, FiMapPin, FiStar, FiPhone, FiMail, FiHome } from "react-icons/fi";
+import {
+  FiSearch,
+  FiMail,
+  FiHome
+} from "react-icons/fi";
+import { userApi, propertyApi } from "../api";
 
 function Agents() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCity, setSelectedCity] = useState("all");
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const agents = [
-    {
-      id: 1,
-      name: "Rajesh Kumar",
-      company: "Premium Realty",
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300",
-      city: "Mumbai",
-      specialization: "Luxury Properties",
-      experience: "15+ years",
-      propertiesListed: 45,
-      propertiesSold: 120,
-      rating: 4.8,
-      reviews: 156,
-      phone: "+91 98765 43210",
-      email: "rajesh@premiumrealty.com",
-      isVerified: true
-    },
-    {
-      id: 2,
-      name: "Priya Sharma",
-      company: "City Homes",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300",
-      city: "Delhi",
-      specialization: "Residential Apartments",
-      experience: "10+ years",
-      propertiesListed: 38,
-      propertiesSold: 85,
-      rating: 4.7,
-      reviews: 98,
-      phone: "+91 98765 43211",
-      email: "priya@cityhomes.com",
-      isVerified: true
-    },
-    {
-      id: 3,
-      name: "Amit Patel",
-      company: "Dream Estates",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300",
-      city: "Bangalore",
-      specialization: "Villas & Independent Houses",
-      experience: "12+ years",
-      propertiesListed: 32,
-      propertiesSold: 95,
-      rating: 4.9,
-      reviews: 142,
-      phone: "+91 98765 43212",
-      email: "amit@dreamestates.com",
-      isVerified: true
-    },
-    {
-      id: 4,
-      name: "Sneha Reddy",
-      company: "Urban Living",
-      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300",
-      city: "Hyderabad",
-      specialization: "Commercial Properties",
-      experience: "8+ years",
-      propertiesListed: 28,
-      propertiesSold: 65,
-      rating: 4.6,
-      reviews: 78,
-      phone: "+91 98765 43213",
-      email: "sneha@urbanliving.com",
-      isVerified: true
-    },
-    {
-      id: 5,
-      name: "Vikram Singh",
-      company: "Royal Properties",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300",
-      city: "Gurgaon",
-      specialization: "Premium Apartments",
-      experience: "18+ years",
-      propertiesListed: 52,
-      propertiesSold: 180,
-      rating: 4.9,
-      reviews: 210,
-      phone: "+91 98765 43214",
-      email: "vikram@royalproperties.com",
-      isVerified: true
-    },
-    {
-      id: 6,
-      name: "Meera Desai",
-      company: "HomeFirst Realty",
-      image: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=300",
-      city: "Pune",
-      specialization: "Budget Homes",
-      experience: "6+ years",
-      propertiesListed: 25,
-      propertiesSold: 55,
-      rating: 4.5,
-      reviews: 62,
-      phone: "+91 98765 43215",
-      email: "meera@homefirst.com",
-      isVerified: false
-    }
-  ];
+  /* ================= FETCH AGENTS ================= */
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const cities = ["all", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Gurgaon", "Pune"];
+        // ✅ Fetch agents (this API is CORRECT)
+        const response = await userApi.get("/agents");
+        const agentsData = response.data || [];
 
-  const filteredAgents = agents.filter(agent => {
-    const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         agent.company.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCity = selectedCity === "all" || agent.city === selectedCity;
-    return matchesSearch && matchesCity;
-  });
+        if (agentsData.length === 0) {
+          setAgents([]);
+          return;
+        }
 
+        // ✅ Fetch properties per agent
+        const agentsWithStats = await Promise.all(
+          agentsData.map(async (agent) => {
+            try {
+              const propResp = await propertyApi.get(`/agent/${agent.id}`);
+              const properties = propResp.data || [];
+
+              const listed = properties.filter(p => p.isListed === true);
+              const unlisted = properties.filter(p => p.isListed === false);
+
+              const profileImage = agent.name
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=0ea5e9&color=fff&size=200&bold=true`
+                : `https://ui-avatars.com/api/?name=Agent&background=0ea5e9&color=fff&size=200&bold=true`;
+
+              return {
+                id: agent.id,
+                name: agent.name || "Agent",
+                email: agent.email,
+                role: agent.role,
+                profileImage,
+                propertiesListed: listed.length,
+                propertiesSold: unlisted.length, // logical inactive
+                totalProperties: properties.length,
+                isVerified: true
+              };
+            } catch (err) {
+              console.error(`Error loading properties for agent ${agent.id}`, err);
+
+              return {
+                id: agent.id,
+                name: agent.name || "Agent",
+                email: agent.email,
+                role: agent.role,
+                profileImage: `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name || "Agent")}&background=0ea5e9&color=fff&size=200&bold=true`,
+                propertiesListed: 0,
+                propertiesSold: 0,
+                totalProperties: 0,
+                isVerified: true
+              };
+            }
+          })
+        );
+
+        setAgents(agentsWithStats);
+      } catch (err) {
+        console.error("Error fetching agents:", err);
+        setError("Failed to load agents. Please try again later.");
+        setAgents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAgents();
+  }, []);
+
+  /* ================= FILTER ================= */
+  const filteredAgents = agents.filter(agent =>
+    agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    agent.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  /* ================= UI ================= */
   return (
     <div className="agents-page">
       <Navbar />
@@ -123,92 +103,96 @@ function Agents() {
       <div className="agents-hero">
         <div className="agents-hero-content">
           <h1>Find Top Real Estate Agents</h1>
-          <p>Connect with verified agents who can help you find your dream property</p>
+          <p>Connect with verified agents</p>
         </div>
       </div>
 
       <div className="agents-container">
-        {/* Search and Filter */}
         <div className="agents-filters">
           <div className="search-box">
             <FiSearch className="search-icon" />
             <input
               type="text"
-              placeholder="Search by agent name or company..."
+              placeholder="Search by agent name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-
-          <div className="city-filter">
-            {cities.map(city => (
-              <button
-                key={city}
-                className={`city-btn ${selectedCity === city ? 'active' : ''}`}
-                onClick={() => setSelectedCity(city)}
-              >
-                {city === "all" ? "All Cities" : city}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Results */}
         <div className="agents-results">
-          <p className="results-count">{filteredAgents.length} Agents Found</p>
+          {loading ? (
+            <div className="loading-state">
+              <div className="loader"></div>
+              <p>Loading agents...</p>
+            </div>
+          ) : error ? (
+            <div className="no-results">
+              <h3>Error</h3>
+              <p>{error}</p>
+            </div>
+          ) : (
+            <>
+              <p className="results-count">
+                {filteredAgents.length} Agent{filteredAgents.length !== 1 ? "s" : ""} Found
+              </p>
 
-          <div className="agents-grid">
-            {filteredAgents.map(agent => (
-              <div key={agent.id} className="agent-card">
-                <div className="agent-header">
-                  <img src={agent.image} alt={agent.name} className="agent-image" />
-                  {agent.isVerified && <span className="verified-badge">✓ Verified</span>}
+              {filteredAgents.length === 0 ? (
+                <div className="no-results">
+                  <h3>No Agents Found</h3>
                 </div>
+              ) : (
+                <div className="agents-grid">
+                  {filteredAgents.map(agent => (
+                    <div key={agent.id} className="agent-card">
+                      <div className="agent-header">
+                        <img
+                          src={agent.profileImage}
+                          alt={agent.name}
+                          className="agent-image"
+                        />
+                        {agent.isVerified && (
+                          <span className="verified-badge">✓ Verified</span>
+                        )}
+                      </div>
 
-                <div className="agent-info">
-                  <h3>{agent.name}</h3>
-                  <p className="company">{agent.company}</p>
-                  <p className="location">
-                    <FiMapPin /> {agent.city}
-                  </p>
-                  <p className="specialization">{agent.specialization}</p>
+                      <div className="agent-info">
+                        <h3>{agent.name}</h3>
+                        <p className="company">{agent.email}</p>
 
-                  <div className="agent-rating">
-                    <FiStar className="star-icon" />
-                    <span className="rating">{agent.rating}</span>
-                    <span className="reviews">({agent.reviews} reviews)</span>
-                  </div>
+                        <div className="agent-stats">
+                          <div className="stat">
+                            <span className="value">{agent.propertiesListed}</span>
+                            <span className="label">Listed</span>
+                          </div>
+                          <div className="stat">
+                            <span className="value">{agent.propertiesSold}</span>
+                            <span className="label">Inactive</span>
+                          </div>
+                          <div className="stat">
+                            <span className="value">{agent.totalProperties}</span>
+                            <span className="label">Total</span>
+                          </div>
+                        </div>
 
-                  <div className="agent-stats">
-                    <div className="stat">
-                      <span className="value">{agent.propertiesListed}</span>
-                      <span className="label">Listed</span>
+                        <div className="agent-actions">
+                          <a href={`mailto:${agent.email}`} className="action-btn email">
+                            <FiMail /> Email
+                          </a>
+                          <button
+                            className="action-btn properties"
+                            onClick={() => navigate(`/properties?agentId=${agent.id}`)}
+                          >
+                            <FiHome /> Properties
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="stat">
-                      <span className="value">{agent.propertiesSold}</span>
-                      <span className="label">Sold</span>
-                    </div>
-                    <div className="stat">
-                      <span className="value">{agent.experience}</span>
-                      <span className="label">Experience</span>
-                    </div>
-                  </div>
-
-                  <div className="agent-actions">
-                    <a href={`tel:${agent.phone}`} className="action-btn call">
-                      <FiPhone /> Call
-                    </a>
-                    <a href={`mailto:${agent.email}`} className="action-btn email">
-                      <FiMail /> Email
-                    </a>
-                    <button className="action-btn properties">
-                      <FiHome /> Properties
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -218,4 +202,3 @@ function Agents() {
 }
 
 export default Agents;
-

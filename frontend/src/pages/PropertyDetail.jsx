@@ -3,89 +3,96 @@ import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/PropertyDetail.css";
-import { FiMapPin, FiHome, FiMaximize, FiCalendar, FiUser, FiPhone, FiMail, FiHeart, FiShare2, FiCheck, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import {
+  FiMapPin,
+  FiHome,
+  FiMaximize,
+  FiCalendar,
+  FiUser,
+  FiPhone,
+  FiMail,
+  FiHeart,
+  FiCheck,
+  FiChevronLeft,
+  FiChevronRight,
+  FiEye
+} from "react-icons/fi";
+import { propertyApi } from "../api";
 
 function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showContactForm, setShowContactForm] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const storageKey = user ? `savedProperties_${user.id}` : null;
+
+  /* ================= FETCH PROPERTY ================= */
   useEffect(() => {
-    // Fetch real property data from API
     const fetchProperty = async () => {
       try {
-        const response = await fetch(`http://localhost:8082/api/properties/${id}`);
-        if (!response.ok) {
-          throw new Error("Property not found");
-        }
-        const data = await response.json();
+        const resp = await propertyApi.get(`/${id}`);
+        const data = resp.data;
 
-        // Fetch agent's property count
-        let agentPropertyCount = 0;
-        try {
-          const agentPropsResponse = await fetch(`http://localhost:8082/api/properties/agent/${data.agentId}`);
-          if (agentPropsResponse.ok) {
-            const agentProps = await agentPropsResponse.json();
-            agentPropertyCount = agentProps.length;
-          }
-        } catch (e) {
-          console.log("Could not fetch agent properties");
-        }
-
-        // Transform backend data to frontend format
         const transformedProperty = {
           id: data.id,
           title: data.title,
-          description: data.description || `Beautiful ${data.bhk} BHK ${data.type} available for sale. This property offers ${data.area} sq.ft of living space with modern amenities and great connectivity.`,
-          type: data.type,
-          purpose: "Sale",
+          description:
+            data.description ||
+            `Beautiful ${data.bhk} BHK ${data.type}. This property offers ${data.area} sq.ft.`,
           price: data.price,
-          pricePerSqft: data.area > 0 ? Math.round(data.price / data.area) : 0,
+          pricePerSqft: data.area ? Math.round(data.price / data.area) : 0,
           area: data.area,
           bhk: data.bhk,
-          bathrooms: data.bhk,
-          balconies: Math.max(1, data.bhk - 1),
-          floor: "Ground Floor",
-          facing: "East",
-          furnishing: "Semi-Furnished",
           age: "Ready to Move",
-          city: data.city || "India",
-          location: data.location || "Prime Location",
-          address: data.address || "Contact agent for address details",
-          images: data.photos ? data.photos.split(",") : [
-            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200"
-          ],
+          address: data.pinCode || "Prime Location",
+          images:
+            data.photos
+              ? data.photos
+                  .split(",")
+                  .filter(p => p && !p.startsWith("blob:"))
+                  .map(p =>
+                    p.startsWith("http")
+                      ? p
+                      : `http://localhost:8085/uploads/${encodeURIComponent(p)}`
+                  )
+              : [
+                  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200"
+                ],
+
+
           amenities: [
-            "Parking", "Security", "Power Backup", "Lift",
-            "Water Supply", "Gym", "Garden"
+            "Parking",
+            "Security",
+            "Power Backup",
+            "Lift",
+            "Water Supply"
           ],
-          isVerified: true,
-          isRERA: false,
-          reraId: "",
+          agentId: data.agentId, // ✅ FIX
           agent: {
             name: data.agentName || "Agent",
-            company: "Real Estate Agent",
-            phone: "+91 98765 43210",
-            email: data.agentEmail || "agent@realestate.com",
-            image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200",
-            rating: 4.5,
-            reviews: Math.floor(Math.random() * 100) + 10,
-            propertiesListed: agentPropertyCount
+            email: data.agentEmail || "agent@email.com"
           },
-          agentId: data.agentId,
-          postedDate: "Recently",
-          views: Math.floor(Math.random() * 500) + 100,
-          enquiries: Math.floor(Math.random() * 20) + 5
+          views: data.views || 0
         };
 
         setProperty(transformedProperty);
+
+        if (storageKey) {
+          const saved = JSON.parse(localStorage.getItem(storageKey)) || [];
+          setIsSaved(saved.some(p => p.id === transformedProperty.id));
+        }
+
         setLoading(false);
-      } catch (error) {
-        console.error("Error fetching property:", error);
+      } catch {
         setProperty(null);
         setLoading(false);
       }
@@ -94,35 +101,123 @@ function PropertyDetail() {
     fetchProperty();
   }, [id]);
 
-  const formatPrice = (price) => {
-    if (price >= 10000000) {
-      return `₹${(price / 10000000).toFixed(2)} Cr`;
-    } else if (price >= 100000) {
-      return `₹${(price / 100000).toFixed(2)} L`;
+  /* ================= FETCH CHAT HISTORY ================= */
+useEffect(() => {
+  if (!showChat) return;
+  if (!user) return;
+  if (!property?.id) return;
+  if (!property?.agentId) return;
+
+  const fetchChats = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:8085/api/chat/conversation?propertyId=${property.id}&buyerId=${user.id}&agentId=${property.agentId}`
+      );
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      setChatMessages(data);
+    } catch (err) {
+      console.error("Chat fetch failed", err);
     }
-    return `₹${price.toLocaleString()}`;
   };
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) =>
-      prev === property.images.length - 1 ? 0 : prev + 1
+  fetchChats();
+}, [showChat, property, user]);
+
+
+
+  /* ================= HELPERS ================= */
+  const nextImage = () =>
+    setCurrentImageIndex(i =>
+      i === property.images.length - 1 ? 0 : i + 1
     );
-  };
 
-  const prevImage = () => {
-    setCurrentImageIndex((prev) =>
-      prev === 0 ? property.images.length - 1 : prev - 1
+  const prevImage = () =>
+    setCurrentImageIndex(i =>
+      i === 0 ? property.images.length - 1 : i - 1
     );
+
+  const toggleSave = () => {
+    if (!user) return alert("Please login to save property");
+
+    let saved = JSON.parse(localStorage.getItem(storageKey)) || [];
+    if (isSaved) saved = saved.filter(p => p.id !== property.id);
+    else saved.push(property);
+
+    localStorage.setItem(storageKey, JSON.stringify(saved));
+    setIsSaved(!isSaved);
   };
 
+  /* ================= SEND MESSAGE ================= */
+const sendMessage = async () => {
+  if (!user) {
+    alert("Please login first to chat");
+    return;
+  }
+
+  if (user.role !== "BUYER") {
+    alert("Only buyers can chat with agents");
+    return;
+  }
+
+  if (!property?.id || !property?.agentId) {
+    alert("Chat not ready. Please refresh page.");
+    return;
+  }
+
+  if (!chatMessage.trim()) return;
+
+  const payload = {
+    propertyId: property.id,
+    buyerId: user.id,
+    agentId: property.agentId,
+    sender: "BUYER",
+    message: chatMessage
+  };
+
+  try {
+    const res = await fetch("http://localhost:8085/api/chat/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error("Send failed");
+
+    const savedMsg = await res.json();
+    setChatMessages(prev => [...prev, savedMsg]);
+    setChatMessage("");
+  } catch (err) {
+    console.error(err);
+    alert("Message not sent");
+  }
+};
+
+const fetchChatHistory = async () => {
+  if (!user || user.role !== "BUYER") return;
+
+  try {
+    const res = await fetch(
+      `http://localhost:8085/api/chat/conversation?propertyId=${property.id}&buyerId=${user.id}&agentId=${property.agentId}`
+    );
+
+    const data = await res.json();
+    setChatMessages(data);
+  } catch (err) {
+    console.error("Failed to load chat history", err);
+  }
+};
+
+
+
+  /* ================= UI STATES ================= */
   if (loading) {
     return (
       <div className="property-detail-page">
         <Navbar />
-        <div className="loading-state">
-          <div className="loader"></div>
-          <p>Loading property details...</p>
-        </div>
+        <div className="not-found">Loading property...</div>
       </div>
     );
   }
@@ -131,14 +226,12 @@ function PropertyDetail() {
     return (
       <div className="property-detail-page">
         <Navbar />
-        <div className="not-found">
-          <h2>Property Not Found</h2>
-          <button onClick={() => navigate("/properties")}>Browse Properties</button>
-        </div>
+        <div className="not-found">Property not available</div>
       </div>
     );
   }
 
+  /* ================= MAIN UI ================= */
   return (
     <div className="property-detail-page">
       <Navbar />
@@ -167,80 +260,119 @@ function PropertyDetail() {
               {currentImageIndex + 1} / {property.images.length}
             </div>
           </div>
-          <div className="thumbnail-strip">
-            {property.images.map((img, index) => (
-              <div
-                key={index}
-                className={`thumbnail ${index === currentImageIndex ? 'active' : ''}`}
-                onClick={() => setCurrentImageIndex(index)}
-              >
-                <img src={img} alt={`View ${index + 1}`} />
-              </div>
-            ))}
-          </div>
         </div>
 
-        {/* Content Section */}
         <div className="property-content">
           <div className="main-content">
-            {/* Title and Price */}
+            {/* Header */}
             <div className="property-header">
-              <div className="title-section">
+              <div>
                 <div className="badges">
-                  {property.isVerified && <span className="badge verified">✓ Verified</span>}
-                  {property.isRERA && <span className="badge rera">RERA</span>}
-                  <span className="badge type">{property.purpose}</span>
+                  <span className="badge verified">Verified</span>
+                  <span className="badge type">{property.bhk} BHK</span>
                 </div>
                 <h1>{property.title}</h1>
                 <p className="location">
                   <FiMapPin /> {property.address}
                 </p>
               </div>
+
               <div className="price-section">
-                <h2 className="price">{formatPrice(property.price)}</h2>
-                <p className="price-per-sqft">₹{property.pricePerSqft.toLocaleString()}/sq.ft</p>
+                <div className="price">
+                  ₹{(property.price / 100000).toFixed(2)} L
+                </div>
+                <div className="price-per-sqft">
+                  ₹{property.pricePerSqft}/sq.ft
+                </div>
               </div>
             </div>
 
             {/* Quick Info */}
             <div className="quick-info">
-              <div className="info-item">
-                <FiHome />
-                <span>{property.bhk} BHK</span>
-              </div>
-              <div className="info-item">
-                <FiMaximize />
-                <span>{property.area} sq.ft</span>
-              </div>
-              <div className="info-item">
-                <span>🚿</span>
-                <span>{property.bathrooms} Baths</span>
-              </div>
-              <div className="info-item">
-                <span>🏢</span>
-                <span>{property.floor}</span>
-              </div>
-              <div className="info-item">
-                <span>🧭</span>
-                <span>{property.facing} Facing</span>
-              </div>
+              <div className="info-item"><FiHome /> {property.bhk} BHK</div>
+              <div className="info-item"><FiMaximize /> {property.area} sq.ft</div>
+              <div className="info-item"><FiCalendar /> {property.age}</div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="action-buttons">
               <button
-                className={`action-btn ${isSaved ? 'saved' : ''}`}
-                onClick={() => setIsSaved(!isSaved)}
+                className={`action-btn ${isSaved ? "saved" : ""}`}
+                onClick={toggleSave}
               >
-                <FiHeart /> {isSaved ? 'Saved' : 'Save'}
+                <FiHeart /> {isSaved ? "Saved" : "Save"}
               </button>
-              <button className="action-btn">
-                <FiShare2 /> Share
-              </button>
-              <button className="action-btn primary" onClick={() => setShowContactForm(true)}>
+
+              <button className="action-btn primary">
                 <FiPhone /> Contact Agent
               </button>
+
+              <button
+                className="action-btn"
+                onClick={() => {
+                  if (!user) {
+                    alert("Please login first to chat with agent");
+                    return;
+                  }
+
+                  if (user.role !== "BUYER") {
+                    alert("Only buyers can chat with agents");
+                    return;
+                  }
+
+                  if (!property?.agentId) {
+                    alert("Agent not available");
+                    return;
+                  }
+
+                  setShowChat(true);
+                  fetchChatHistory();
+
+                }}
+              >
+                💬 Chat with Agent
+              </button>
+
             </div>
+
+            {/* CHAT BOX */}
+            {showChat && user?.role === "BUYER" && (
+              <div className="agent-card chat-box">
+                <h4>Chat with {property.agent.name}</h4>
+
+                <div className="chat-messages">
+                  {chatMessages.length === 0 ? (
+                    <p className="chat-empty">Start the conversation</p>
+                  ) : (
+                    chatMessages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`chat-message ${
+                          msg.sender === "BUYER" ? "buyer" : "agent"
+                        }`}
+                      >
+                        {msg.message}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="chat-input">
+                  <input
+                    type="text"
+                    placeholder="Type your message..."
+                    value={chatMessage}
+                    onChange={e => setChatMessage(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && sendMessage()}
+                  />
+                  <button onClick={sendMessage}>Send</button>
+                </div>
+
+                <button className="close-chat" onClick={() => setShowChat(false)}>
+                  Close
+                </button>
+              </div>
+            )}
 
             {/* Description */}
             <div className="section">
@@ -248,124 +380,46 @@ function PropertyDetail() {
               <p className="description">{property.description}</p>
             </div>
 
-            {/* Property Details */}
-            <div className="section">
-              <h3>Property Details</h3>
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="label">Property Type</span>
-                  <span className="value">{property.type}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Bedrooms</span>
-                  <span className="value">{property.bhk}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Bathrooms</span>
-                  <span className="value">{property.bathrooms}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Balconies</span>
-                  <span className="value">{property.balconies}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Super Built-up Area</span>
-                  <span className="value">{property.area} sq.ft</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Floor</span>
-                  <span className="value">{property.floor}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Facing</span>
-                  <span className="value">{property.facing}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Furnishing</span>
-                  <span className="value">{property.furnishing}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Property Age</span>
-                  <span className="value">{property.age}</span>
-                </div>
-                {property.isRERA && (
-                  <div className="detail-item">
-                    <span className="label">RERA ID</span>
-                    <span className="value">{property.reraId}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Amenities */}
             <div className="section">
               <h3>Amenities</h3>
               <div className="amenities-grid">
-                {property.amenities.map((amenity, index) => (
-                  <div key={index} className="amenity-item">
-                    <FiCheck /> {amenity}
+                {property.amenities.map((a, i) => (
+                  <div key={i} className="amenity-item">
+                    <FiCheck /> {a}
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Sidebar - Agent Info */}
+          {/* Sidebar */}
           <div className="sidebar">
             <div className="agent-card">
               <div className="agent-header">
-                <div className="agent-avatar">
-                  <FiUser size={40} />
-                </div>
+                <div className="agent-avatar"><FiUser /></div>
                 <div>
                   <h4>{property.agent.name}</h4>
-                  <p>{property.agent.company}</p>
-                  <div className="agent-rating">
-                    ⭐ {property.agent.rating} ({property.agent.reviews} reviews)
-                  </div>
+                  <p>{property.agent.email}</p>
                 </div>
               </div>
-              <div className="agent-stats">
-                <div className="stat">
-                  <span className="value">{property.agent.propertiesListed}</span>
-                  <span className="label">Properties</span>
-                </div>
-                <div className="stat">
-                  <span className="value">{property.agent.reviews}</span>
-                  <span className="label">Reviews</span>
-                </div>
-              </div>
+
               <div className="agent-actions">
-                <a href={`tel:${property.agent.phone}`} className="contact-btn phone">
-                  <FiPhone /> Call Now
-                </a>
                 <a href={`mailto:${property.agent.email}`} className="contact-btn email">
                   <FiMail /> Email
                 </a>
+                <a href="tel:+919999999999" className="contact-btn phone">
+                  <FiPhone /> Call
+                </a>
               </div>
             </div>
 
-            {/* Enquiry Form */}
-            <div className="enquiry-form">
-              <h4>Interested in this property?</h4>
-              <form>
-                <input type="text" placeholder="Your Name" required />
-                <input type="email" placeholder="Email Address" required />
-                <input type="tel" placeholder="Phone Number" required />
-                <textarea placeholder="I am interested in this property. Please contact me with more details." rows="4"></textarea>
-                <button type="submit" className="submit-btn">Send Enquiry</button>
-              </form>
-            </div>
-
-            {/* Property Stats */}
             <div className="property-stats">
               <div className="stat-item">
-                <FiCalendar />
-                <span>Posted {property.postedDate}</span>
+                <FiEye /> {property.views} Views
               </div>
               <div className="stat-item">
-                <FiUser />
-                <span>{property.views} views</span>
+                <FiCalendar /> Posted Recently
               </div>
             </div>
           </div>
@@ -378,4 +432,3 @@ function PropertyDetail() {
 }
 
 export default PropertyDetail;
-

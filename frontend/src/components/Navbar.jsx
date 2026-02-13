@@ -17,20 +17,29 @@ function Navbar() {
 
   const isActive = (path) => location.pathname === path;
 
+  const getPropertiesType = () => {
+    try {
+      const params = new URLSearchParams(location.search);
+      return (params.get("type") || "").toLowerCase();
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const currentPropType = getPropertiesType();
+
   return (
     <>
       <header className="site-header">
         <div className="header-inner">
-          {/* make brand clickable and reload the page */}
+          {/* Brand */}
           <div
             className="brand"
             role="button"
-            onClick={() => {
-              // do a full navigation to root (causes page refresh)
-              window.location.href = "/";
-            }}
+            onClick={() => (window.location.href = "/")}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") window.location.href = "/";
+              if (e.key === "Enter" || e.key === " ")
+                window.location.href = "/";
             }}
             tabIndex={0}
           >
@@ -39,11 +48,58 @@ function Navbar() {
           </div>
 
           <nav className="main-nav">
-            <Link to="/properties?type=buy" className={isActive('/properties') ? 'active' : ''}>Buy</Link>
-            <Link to="/properties?type=rent">Rent</Link>
-            <Link to="/properties?type=projects">Projects</Link>
-            <Link to="/agents" className={isActive('/agents') ? 'active' : ''}>Agents</Link>
-            <Link to="/properties?type=commercial">Commercial</Link>
+            {/* ✅ FIXED: Buy only active when type=buy */}
+            <Link
+              to="/properties?type=buy"
+              className={
+                location.pathname === "/properties" &&
+                currentPropType === "buy"
+                  ? "active"
+                  : ""
+              }
+            >
+              Buy
+            </Link>
+
+            <Link
+              to="/properties?type=rent"
+              className={
+                location.pathname === "/properties" &&
+                currentPropType === "rent"
+                  ? "active"
+                  : ""
+              }
+            >
+              Rent
+            </Link>
+
+            <Link
+              to="/properties?type=projects"
+              className={
+                location.pathname === "/properties" &&
+                currentPropType === "projects"
+                  ? "active"
+                  : ""
+              }
+            >
+              Projects
+            </Link>
+
+            <Link to="/agents" className={isActive("/agents") ? "active" : ""}>
+              Agents
+            </Link>
+
+            <Link
+              to="/properties?type=commercial"
+              className={
+                location.pathname === "/properties" &&
+                currentPropType === "commercial"
+                  ? "active"
+                  : ""
+              }
+            >
+              Commercial
+            </Link>
           </nav>
 
           <div className="header-actions">
@@ -55,6 +111,7 @@ function Navbar() {
                 Post Property
               </button>
             )}
+
             {user ? (
               <img
                 src={profile}

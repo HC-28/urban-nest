@@ -62,11 +62,11 @@ function Footer() {
             <h4>Contact Us</h4>
             <div className="contact-item">
               <FiMapPin />
-              <span>123 Business Park, Andheri East, Mumbai 400069</span>
+              <span>321 Nilkanth Business-Hub Katargam , Surat-395004</span>
             </div>
             <div className="contact-item">
               <FiPhone />
-              <span>+91 1800-123-4567 (Toll Free)</span>
+              <span>+91 9408146236 (Toll Free)</span>
             </div>
             <div className="contact-item">
               <FiMail />

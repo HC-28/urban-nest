@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 import "../styles/PostProperty.css";
 import { FiUpload, FiX, FiCheck } from "react-icons/fi";
 import { propertyApi } from "../api";
-
+import heroBg from "../assets/re-back.jpg"; // Add this line with other imports
 function PostProperty() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
@@ -14,21 +14,18 @@ function PostProperty() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
     type: "Apartment",
-    purpose: "Sale",
+    purpose: "For Sale",
     price: "",
     area: "",
     bhk: "2",
-    bathrooms: "2",
     balconies: "1",
     floor: "",
     totalFloors: "",
-    facing: "East",
-    furnishing: "Unfurnished",
     age: "New Construction",
-    city: "",
+    // Removed city field - use pinCode instead
     location: "",
+    pinCode: "",
     address: "",
     amenities: [],
     images: []
@@ -40,12 +37,48 @@ function PostProperty() {
     "Covered Parking", "Intercom", "Fire Safety", "Rain Water Harvesting",
     "Garden", "CCTV", "Visitor Parking", "Maintenance Staff"
   ];
+const purposeOptions = [
+  "For Sale",
+  "For Rent",
+  "Commercial",
+  "Project"
+];
+
+// 🔥 Property Type Options (UI only)
+const propertyTypeOptions = [
+  "Apartment",
+  "Villa",
+  "Independent House",
+  "Penthouse",
+  "Studio",
+  "Plot / Land",
+  "Commercial"
+];
+
 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+const handlePropertyTypeSelect = (type) => {
+  setFormData(prev => ({
+    ...prev,
+    type,
+    floor: type === "Apartment" ? prev.floor : "",
+    totalFloors: type === "Apartment" ? prev.totalFloors : ""
+  }));
+};
+
+
+const handlePurposeSelect = (purpose) => {
+  setFormData(prev => ({
+    ...prev,
+    purpose
+  }));
+};
+
 
   const handleAmenityToggle = (amenity) => {
     setFormData(prev => ({
@@ -56,96 +89,97 @@ function PostProperty() {
     }));
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const imageUrls = files.map(file => URL.createObjectURL(file));
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...imageUrls].slice(0, 10)
-    }));
-  };
+const handleImageUpload = (e) => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
 
-  const removeImage = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
+  const newFiles = files.slice(0, 10 - formData.images.length);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const imageObjects = newFiles.map(file => ({
+    file,
+    preview: URL.createObjectURL(file)
+  }));
+
+  setFormData(prev => ({
+    ...prev,
+    images: [...prev.images, ...imageObjects].slice(0, 10)
+  }));
+
+  // ✅ IMPORTANT: reset input
+  e.target.value = "";
+};
+
+
+
+
+ const removeImage = (index) => {
+   setFormData(prev => {
+     const imageToRemove = prev.images[index];
+
+     if (imageToRemove?.preview) {
+       URL.revokeObjectURL(imageToRemove.preview);
+     }
+
+     return {
+       ...prev,
+       images: prev.images.filter((_, i) => i !== index)
+     };
+   });
+ };
+
+
+const handleSubmit = async () => {
+  if (step !== 4) return;
+
+  try {
     setLoading(true);
 
-    try {
-      // Validate required fields
-      if (!formData.title || !formData.price || !formData.area) {
-        alert("Please fill in all required fields (Title, Price, Area)");
-        setLoading(false);
-        return;
-      }
+    const formDataToSend = new FormData();
 
-      // Check if user is logged in
-      if (!user || !user.id) {
-        alert("Please login to post a property");
-        setLoading(false);
-        navigate("/login");
-        return;
-      }
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append("type", formData.type);
+    formDataToSend.append("price", Number(formData.price) || 0);
+    formDataToSend.append("area", Number(formData.area) || 0);
+    formDataToSend.append("bhk", parseInt(formData.bhk) || 2);
+    formDataToSend.append("pinCode", formData.pinCode);
+    formDataToSend.append("address", formData.address);
+    formDataToSend.append("location", formData.location);
+    formDataToSend.append("listed", true);
+    formDataToSend.append("purpose", formData.purpose);
+    formDataToSend.append("age", formData.age);
 
-      // Prepare property data for backend
-      const propertyData = {
-        title: formData.title,
-        type: formData.type || "Apartment",
-        price: parseFloat(formData.price) || 0,
-        photos: formData.images.length > 0 ? formData.images.join(",") : "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
-        area: parseFloat(formData.area) || 0,
-        bhk: parseInt(formData.bhk) || 2
-      };
-
-      console.log("User from localStorage:", user);
-      console.log("Submitting property:", propertyData);
-      console.log("Agent ID:", user.id);
-      console.log("Full URL:", `http://localhost:8082/api/properties?agentId=${user.id}`);
-
-      // Call backend API to add property
-      const response = await propertyApi.post("", propertyData, {
-        params: { agentId: user.id }
-      });
-
-      if (response.status === 200) {
-        alert("Property listed successfully!");
-        navigate("/dashboard");
-      }
-    } catch (error) {
-      console.error("Error posting property:", error);
-
-      let errorMessage = "Failed to list property. Please try again.";
-
-      if (error.response) {
-        const data = error.response.data;
-        const status = error.response.status;
-
-        if (typeof data === 'string' && data.length < 100) {
-          errorMessage = data;
-        } else if (status === 403) {
-          errorMessage = "Only agents can post properties.";
-        } else if (status === 404) {
-          errorMessage = "Server error. Please try again.";
-        } else if (status === 500) {
-          errorMessage = "Server error. Please try again later.";
-        }
-      } else if (error.request) {
-        errorMessage = "Unable to reach server. Please check your connection.";
-      }
-
-      alert(errorMessage);
-    } finally {
-      setLoading(false);
+    if (formData.type === "Apartment") {
+      formDataToSend.append("floor", formData.floor);
+      formDataToSend.append("totalFloors", formData.totalFloors);
     }
-  };
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
-  const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+    formData.images.forEach(img => {
+      if (img.file) {
+        formDataToSend.append("photos", img.file);
+      }
+    });
+
+await propertyApi.post("/upload", formDataToSend, {
+  params: { agentId: user.id }
+});
+
+
+    alert("Property listed successfully!");
+    navigate("/dashboard");
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to submit property");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+
+    const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
+    const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
 
   if (!user || user.role !== "AGENT") {
@@ -163,13 +197,19 @@ function PostProperty() {
   }
 
   return (
-    <div className="post-property-page">
+    <div style={{
+      backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), url(${heroBg})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <Navbar />
-
       <div className="post-property-container">
         <div className="post-header">
-          <h1>List Your Property</h1>
-          <p>Fill in the details to list your property and reach thousands of potential buyers</p>
+          <h1 style={{ color: '#ffffff' }}>List Your Property</h1>
+          <p style={{ color: '#cbd5e1' }}>Fill in the details to list your property and reach thousands of potential buyers</p>
         </div>
 
         {/* Progress Steps */}
@@ -195,7 +235,7 @@ function PostProperty() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="property-form">
+
           {/* Step 1: Basic Info */}
           {step === 1 && (
             <div className="form-step">
@@ -216,24 +256,45 @@ function PostProperty() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Property Type *</label>
-                  <select name="type" value={formData.type} onChange={handleChange}>
-                    <option value="Apartment">Apartment</option>
-                    <option value="Villa">Villa</option>
-                    <option value="House">Independent House</option>
-                    <option value="Penthouse">Penthouse</option>
-                    <option value="Studio">Studio</option>
-                    <option value="Plot">Plot/Land</option>
-                    <option value="Commercial">Commercial</option>
-                  </select>
+
+                  <div className="amenities-selection">
+                    {propertyTypeOptions.map((type) => (
+                      <div
+                        key={type}
+                        className={`amenity-chip ${
+                          formData.type === type ? "selected" : ""
+                        }`}
+                       onClick={() => handlePropertyTypeSelect(type)}
+
+                      >
+                        {formData.type === type && <FiCheck />}
+                        {type}
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
+
 
                 <div className="form-group">
                   <label>Purpose *</label>
-                  <select name="purpose" value={formData.purpose} onChange={handleChange}>
-                    <option value="Sale">For Sale</option>
-                    <option value="Rent">For Rent</option>
-                  </select>
+
+                  <div className="amenities-selection">
+                    {purposeOptions.map((purpose) => (
+                      <div
+                        key={purpose}
+                        className={`amenity-chip ${
+                          formData.purpose === purpose ? "selected" : ""
+                        }`}
+                        onClick={() => handlePurposeSelect(purpose)}
+                      >
+                        {formData.purpose === purpose && <FiCheck />}
+                        {purpose}
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
               </div>
 
               <div className="form-row">
@@ -262,17 +323,7 @@ function PostProperty() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Description *</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Describe your property in detail..."
-                  rows="5"
-                  required
-                />
-              </div>
+
             </div>
           )}
 
@@ -293,16 +344,7 @@ function PostProperty() {
                   </select>
                 </div>
 
-                <div className="form-group">
-                  <label>Bathrooms *</label>
-                  <select name="bathrooms" value={formData.bathrooms} onChange={handleChange}>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5+</option>
-                  </select>
-                </div>
+
 
                 <div className="form-group">
                   <label>Balconies</label>
@@ -315,76 +357,69 @@ function PostProperty() {
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Floor No.</label>
-                  <input
-                    type="number"
-                    name="floor"
-                    value={formData.floor}
-                    onChange={handleChange}
-                    placeholder="e.g., 5"
-                  />
-                </div>
+              {formData.type === "Apartment" && (
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Floor No. *</label>
+                    <input
+                      type="number"
+                      name="floor"
+                      value={formData.floor}
+                      onChange={handleChange}
+                      placeholder="e.g., 5"
+                      required
+                    />
+                  </div>
 
-                <div className="form-group">
-                  <label>Total Floors</label>
-                  <input
-                    type="number"
-                    name="totalFloors"
-                    value={formData.totalFloors}
-                    onChange={handleChange}
-                    placeholder="e.g., 20"
-                  />
+                  <div className="form-group">
+                    <label>Total Floors *</label>
+                    <input
+                      type="number"
+                      name="totalFloors"
+                      value={formData.totalFloors}
+                      onChange={handleChange}
+                      placeholder="e.g., 20"
+                      required
+                    />
+                  </div>
                 </div>
+              )}
+
+
+              <div className="form-row">
+
+
+
+
+               <div className="form-group">
+                 <label>Property Age *</label>
+                 <select
+                   name="age"
+                   value={formData.age}
+                   onChange={handleChange}
+                   required   // 🔥 IMPORTANT
+                 >
+                   <option value="">Select Property Age</option>
+                   <option value="New Construction">New Construction</option>
+                   <option value="Less than 1 year">Less than 1 year</option>
+                   <option value="1-3 years">1-3 years</option>
+                   <option value="3-5 years">3-5 years</option>
+                   <option value="5-10 years">5-10 years</option>
+                   <option value="More than 10 years">More than 10 years</option>
+                 </select>
+               </div>
+
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Facing</label>
-                  <select name="facing" value={formData.facing} onChange={handleChange}>
-                    <option value="East">East</option>
-                    <option value="West">West</option>
-                    <option value="North">North</option>
-                    <option value="South">South</option>
-                    <option value="North-East">North-East</option>
-                    <option value="North-West">North-West</option>
-                    <option value="South-East">South-East</option>
-                    <option value="South-West">South-West</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Furnishing</label>
-                  <select name="furnishing" value={formData.furnishing} onChange={handleChange}>
-                    <option value="Unfurnished">Unfurnished</option>
-                    <option value="Semi-Furnished">Semi-Furnished</option>
-                    <option value="Fully Furnished">Fully Furnished</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Property Age</label>
-                  <select name="age" value={formData.age} onChange={handleChange}>
-                    <option value="New Construction">New Construction</option>
-                    <option value="Less than 1 year">Less than 1 year</option>
-                    <option value="1-3 years">1-3 years</option>
-                    <option value="3-5 years">3-5 years</option>
-                    <option value="5-10 years">5-10 years</option>
-                    <option value="More than 10 years">More than 10 years</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>City *</label>
+                  <label>Pin Code *</label>
                   <input
                     type="text"
-                    name="city"
-                    value={formData.city}
+                    name="pinCode"
+                    value={formData.pinCode}
                     onChange={handleChange}
-                    placeholder="e.g., Mumbai"
+                    placeholder="e.g., 400069"
                     required
                   />
                 </div>
@@ -462,7 +497,8 @@ function PostProperty() {
                 <div className="uploaded-images">
                   {formData.images.map((img, index) => (
                     <div key={index} className="uploaded-image">
-                      <img src={img} alt={`Upload ${index + 1}`} />
+                      <img src={img.preview} alt={`Upload ${index + 1}`} />
+
                       <button
                         type="button"
                         className="remove-image"
@@ -476,36 +512,46 @@ function PostProperty() {
               )}
 
               {formData.images.length === 0 && (
-                <p className="upload-hint">Please upload at least one photo to continue</p>
+                <p className="upload-hint">Upload photos to showcase your property (optional)</p>
               )}
             </div>
           )}
 
           {/* Navigation Buttons */}
-          <div className="form-navigation">
-            {step > 1 && (
-              <button type="button" className="nav-btn prev" onClick={prevStep}>
-                Previous
-              </button>
-            )}
+      <div className="form-navigation">
+        {step > 1 && (
+          <button
+            type="button"
+            className="nav-btn prev"
+            onClick={prevStep}
+          >
+            Previous
+          </button>
+        )}
 
-            {step < 4 ? (
-              <button type="button" className="nav-btn next" onClick={nextStep}>
-                Next
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="nav-btn submit"
-                disabled={loading || formData.images.length === 0}
-              >
-                {loading ? "Submitting..." : "Submit Property"}
-              </button>
-            )}
-          </div>
-        </form>
+        {step < 4 ? (
+          <button
+            type="button"
+            className="nav-btn next"
+            onClick={nextStep}
+          >
+            Next
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="nav-btn submit"
+            disabled={loading}
+            onClick={handleSubmit}
+          >
+            {loading ? "Submitting..." : "Submit Property"}
+          </button>
+
+        )}
       </div>
 
+
+      </div>
       <Footer />
     </div>
   );

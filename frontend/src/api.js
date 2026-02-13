@@ -1,20 +1,30 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8082/api";
+// Base API URL
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8085/api";
 
 // User API
 export const userApi = axios.create({
   baseURL: `${BASE_URL}/users`,
+  withCredentials: true,
 });
 
 // Property API
 export const propertyApi = axios.create({
   baseURL: `${BASE_URL}/properties`,
+  timeout: 10000,
 });
 
-// Default export for backward compatibility
-export default axios.create({
+// Chat API
+export const chatApi = axios.create({
+  baseURL: `${BASE_URL}/chat`,
+  withCredentials: true,
+});
+
+// ✅ DEFAULT EXPORT (VERY IMPORTANT)
+const api = axios.create({
   baseURL: `${BASE_URL}/users`,
+  withCredentials: true,
 });
 
-
+export default api;

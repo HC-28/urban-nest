@@ -26,17 +26,42 @@ function Signup() {
       return;
     }
 
-    const res = await fetch("http://localhost:8082/api/users/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(user),
-    });
+    try {
+      // 🔹 SIGNUP
+      const res = await fetch("http://localhost:8085/api/users/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(user),
+      });
 
-    const msg = await res.text();
-    alert(msg);
+      const msg = await res.text();
 
-    if (msg === "Signup successful" || msg === "Email already exists") {
-      navigate("/login");
+      if (msg !== "Signup successful") {
+        alert(msg);
+        return;
+      }
+
+      // 🔹 AUTO LOGIN
+      const loginRes = await fetch("http://localhost:8085/api/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          password: user.password,
+        }),
+      });
+
+      const loggedUser = await loginRes.json();
+
+      // 🔹 SAVE USER
+      localStorage.setItem("user", JSON.stringify(loggedUser));
+
+      // 🔹 REDIRECT HOME
+      navigate("/");
+
+    } catch (err) {
+      console.error(err);
+      alert("Server not reachable. Please check backend.");
     }
   };
 

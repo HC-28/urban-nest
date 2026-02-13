@@ -2,12 +2,47 @@ import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { propertyApi } from "../api";
+import { propertyApi } from "../api.js";
 import "../styles/Dashboard.css";
-import { FiEdit2, FiTrash2, FiEye, FiEyeOff, FiPlus, FiHome, FiDollarSign, FiMapPin } from "react-icons/fi";
+import { FiMessageCircle } from "react-icons/fi";
+
+
+import {
+  FiEdit2,
+  FiTrash2,
+  FiEye,
+  FiEyeOff,
+  FiPlus,
+  FiHome
+} from "react-icons/fi";
+
+
+const IMAGE_BASE_URL = "http://localhost:8085/uploads/";
+
+const resolveImage = (photos) => {
+  if (!photos || !photos.trim()) {
+    return "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100";
+  }
+
+  const first = photos.split(",")[0];
+
+  if (first.startsWith("http")) {
+    return first;
+  }
+
+  return IMAGE_BASE_URL + encodeURIComponent(first);
+};
+
 
 function Dashboard() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  // make `user` stateful so changes to localStorage (login/logout) can be reflected
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch (e) {
+      return null;
+    }
+  });
   const navigate = useNavigate();
   const [myProperties, setMyProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,23 +54,34 @@ function Dashboard() {
     inactive: 0
   });
 
+  // re-run fetch when `user` changes (login/logout) so dashboard shows correct data
   useEffect(() => {
     if (user && user.role === "AGENT") {
       fetchMyProperties();
     } else {
+      // if not agent or not logged in, stop loader
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchMyProperties = async () => {
+    // guard: don't run when user is not available
+    if (!user) {
+      setMyProperties([]);
+      setStats({ total: 0, active: 0, inactive: 0 });
+      setLoading(false);
+      return;
+    }
     try {
-      const response = await propertyApi.get(`/agent/${user.id}`);
+      // Use agent/all endpoint so agents can see unlisted properties (owner view)
+      const response = await propertyApi.get(`/agent/all/${user.id}`);
       const properties = response.data;
       setMyProperties(properties);
       setStats({
         total: properties.length,
-        active: properties.filter(p => p.active).length,
-        inactive: properties.filter(p => !p.active).length
+        active: properties.filter(p => p.listed).length,
+        inactive: properties.filter(p => !p.listed).length
       });
       setLoading(false);
     } catch (error) {
@@ -45,13 +91,52 @@ function Dashboard() {
     }
   };
 
+  // Listen for cross-tab `localStorage` changes and a same-tab custom event.
+  // Posting page should set: localStorage.setItem('propertyPosted','1') and/or
+  // dispatch a same-tab event: window.dispatchEvent(new Event('property-posted'))
+  useEffect(() => {
+    const onStorage = (e) => {
+      try {
+        if (e.key === 'propertyPosted' && e.newValue) {
+          fetchMyProperties();
+          // do not call removeItem here because storage event runs in other tabs only;
+          // posting tab can clear the key after handling if desired
+        }
+        if (e.key === 'user') {
+          // reflect login/logout across tabs
+          try {
+            setUser(e.newValue ? JSON.parse(e.newValue) : null);
+          } catch (err) {
+            setUser(null);
+          }
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    const onCustom = (ev) => {
+      if (ev && ev.type === 'property-posted') {
+        fetchMyProperties();
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('property-posted', onCustom);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('property-posted', onCustom);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleDelete = async (propertyId) => {
     if (!window.confirm("Are you sure you want to delete this property?")) {
       return;
     }
 
     try {
-      await propertyApi.delete(`/${propertyId}?agentId=${user.id}`);
+      await propertyApi.delete(`/${propertyId}`, { params: { agentId: user.id } });
       alert("Property deleted successfully!");
       fetchMyProperties();
     } catch (error) {
@@ -62,20 +147,19 @@ function Dashboard() {
 
   const handleToggleActive = async (property) => {
     try {
-      if (property.active) {
-        // Unlist the property
-        await propertyApi.put(`/${property.id}/sold?agentId=${user.id}`);
+      if (property.listed) {
+        // Unlist property
+        await propertyApi.put(`/${property.id}/unlist`, null, { params: { agentId: user.id } });
         alert("Property unlisted successfully!");
       } else {
-        // Re-list the property
-        const updatedProperty = { ...property, active: true };
-        await propertyApi.put(`/${property.id}?agentId=${user.id}`, updatedProperty);
-        alert("Property listed successfully!");
+        // Re-list property
+        await propertyApi.put(`/${property.id}/list`, null, { params: { agentId: user.id } });
+        alert("Property relisted successfully!");
       }
       fetchMyProperties();
     } catch (error) {
-      console.error("Error updating property:", error);
-      alert("Failed to update property. Please try again.");
+      console.error("Error toggling property listing:", error);
+      alert("Failed to change property listing status. Please try again.");
     }
   };
 
@@ -86,7 +170,8 @@ function Dashboard() {
       type: property.type,
       price: property.price,
       area: property.area,
-      bhk: property.bhk,
+      // initialize purpose: prefer stored value, otherwise infer from title or default to 'For Sale'
+      purpose: property.purpose || ((property.title || '').toLowerCase().includes('rent') ? 'For Rent' : 'For Sale'),
       photos: property.photos
     });
   };
@@ -157,26 +242,43 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="dashboard-actions">
-          <h2>Quick Actions</h2>
-          <div className="action-buttons">
-            <button className="action-btn" onClick={() => navigate("/properties")}>
-              🏠 Browse Properties
-            </button>
-            {user.role === "AGENT" && (
-              <button className="action-btn primary" onClick={() => navigate("/post-property")}>
-                <FiPlus /> Post New Property
-              </button>
-            )}
-          </div>
-        </div>
+       <div className="dashboard-actions">
+         <h2>Quick Actions</h2>
+         <div className="action-buttons">
+           <button
+             className="action-btn"
+             onClick={() => navigate("/properties")}
+           >
+             🏠 Browse Properties
+           </button>
+
+           {user.role === "AGENT" && (
+             <>
+               <button
+                 className="action-btn"
+                 onClick={() => navigate("/agent/chats")}
+               >
+                 💬 Chats
+               </button>
+
+               <button
+                 className="action-btn primary"
+                 onClick={() => navigate("/post-property")}
+               >
+                 <FiPlus /> Post New Property
+               </button>
+             </>
+           )}
+         </div>
+       </div>
+
 
         {/* My Properties Section - Only for Agents */}
         {user.role === "AGENT" && (
           <div className="my-properties-section">
             <div className="section-header">
               <h2>My Properties</h2>
-              <button className="add-property-btn" onClick={() => navigate("/post-property")}>
+              <button className="add-property-btn" onClick={() => navigate("/post-property") }>
                 <FiPlus /> Add New
               </button>
             </div>
@@ -190,7 +292,7 @@ function Dashboard() {
                 <FiHome size={48} />
                 <h3>No Properties Yet</h3>
                 <p>You haven't posted any properties yet. Start by posting your first property!</p>
-                <button className="action-btn primary" onClick={() => navigate("/post-property")}>
+                <button className="action-btn primary" onClick={() => navigate("/post-property") }>
                   <FiPlus /> Post Your First Property
                 </button>
               </div>
@@ -203,14 +305,14 @@ function Dashboard() {
                       <th>Type</th>
                       <th>Price</th>
                       <th>Area</th>
-                      <th>BHK</th>
+                      <th>Purpose</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {myProperties.map(property => (
-                      <tr key={property.id} className={!property.active ? 'inactive-row' : ''}>
+                      <tr key={property.id} className={!property.listed ? 'inactive-row' : ''}>
                         {editingProperty === property.id ? (
                           <>
                             <td>
@@ -251,18 +353,20 @@ function Dashboard() {
                               />
                             </td>
                             <td>
-                              <input
-                                type="number"
-                                value={editForm.bhk}
-                                onChange={(e) => setEditForm({...editForm, bhk: parseInt(e.target.value)})}
+                              <select
+                                value={editForm.purpose}
+                                onChange={(e) => setEditForm({...editForm, purpose: e.target.value})}
                                 className="edit-input"
-                                min="1"
-                                max="10"
-                              />
+                              >
+                                <option value="For Sale">For Sale</option>
+                                <option value="For Rent">For Rent</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Project">Project</option>
+                              </select>
                             </td>
                             <td>
-                              <span className={`status-badge ${property.active ? 'active' : 'inactive'}`}>
-                                {property.active ? 'Active' : 'Unlisted'}
+                              <span className={`status-badge ${property.listed ? 'active' : 'inactive'}`}>
+                                {property.listed ? 'Active' : 'Unlisted'}
                               </span>
                             </td>
                             <td className="actions-cell">
@@ -279,20 +383,21 @@ function Dashboard() {
                             <td>
                               <div className="property-info">
                                 <img
-                                  src={property.photos || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100"}
+                                  src={resolveImage(property.photos)}
                                   alt={property.title}
                                   className="property-thumb"
                                 />
+
                                 <span className="property-title">{property.title}</span>
                               </div>
                             </td>
                             <td>{property.type}</td>
                             <td>{formatPrice(property.price)}</td>
                             <td>{property.area} sq.ft</td>
-                            <td>{property.bhk} BHK</td>
+                            <td>{property.purpose || ((property.title || '').toLowerCase().includes('rent') ? 'For Rent' : 'For Sale')}</td>
                             <td>
-                              <span className={`status-badge ${property.active ? 'active' : 'inactive'}`}>
-                                {property.active ? 'Active' : 'Unlisted'}
+                              <span className={`status-badge ${property.listed ? 'active' : 'inactive'}`}>
+                                {property.listed ? 'Active' : 'Unlisted'}
                               </span>
                             </td>
                             <td className="actions-cell">
@@ -306,9 +411,9 @@ function Dashboard() {
                               <button
                                 className="action-icon toggle"
                                 onClick={() => handleToggleActive(property)}
-                                title={property.active ? 'Unlist' : 'List'}
+                                title={property.listed ? 'Unlist' : 'List'}
                               >
-                                {property.active ? <FiEyeOff /> : <FiEye />}
+                                {property.listed ? <FiEyeOff /> : <FiEye />}
                               </button>
                               <button
                                 className="action-icon delete"

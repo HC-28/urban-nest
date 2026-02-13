@@ -1,35 +1,64 @@
 package com.realestate.backend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Column;
+import jakarta.persistence.*;
 
 @Entity
+@Table(name = "properties")
 public class Property {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // ---------------- BASIC INFO ----------------
     private String title;
-    private String type;
+    private String type;           // Apartment, Villa, Plot, etc.
+    private String purpose = "For Sale";
+
     private double price;
-    @Column(length = 2000)
-    private String photos;
     private double area;
     private int bhk;
 
-    // Agent details
+    // ---------------- LOCATION ----------------
+    private String pinCode;
+
+    @Column(length = 500)
+    private String address;
+
+    private String location;
+
+    // ---------------- PROPERTY DETAILS ----------------
+    private String age;            // New Construction, 1-3 years, etc.
+
+    // Apartment-only (nullable for others)
+    private Integer floor;
+    private Integer totalFloors;
+
+    // ---------------- AGENT INFO ----------------
     private Long agentId;
     private String agentName;
     private String agentEmail;
 
-    // Status
-    @Column(name = "is_active")
-    private boolean isActive = true;
+    // ---------------- MEDIA ----------------
+    @Column(length = 2000)
+    private String photos;          // comma-separated URLs
 
-    // Getters and Setters
+    // ---------------- STATUS ----------------
+    private Boolean listed = true;
+    private Boolean deleted = false;
+    private Integer views = 0;
+
+    // ---------------- DEFAULTS ----------------
+    @PrePersist
+    public void prePersistDefaults() {
+        if (this.listed == null) this.listed = true;
+        if (this.deleted == null) this.deleted = false;
+        if (this.views == null) this.views = 0;
+        if (this.purpose == null) this.purpose = "For Sale";
+    }
+
+    // ---------------- GETTERS & SETTERS ----------------
+
     public Long getId() {
         return id;
     }
@@ -54,20 +83,20 @@ public class Property {
         this.type = type;
     }
 
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
+    }
+
     public double getPrice() {
         return price;
     }
 
     public void setPrice(double price) {
         this.price = price;
-    }
-
-    public String getPhotos() {
-        return photos;
-    }
-
-    public void setPhotos(String photos) {
-        this.photos = photos;
     }
 
     public double getArea() {
@@ -84,6 +113,54 @@ public class Property {
 
     public void setBhk(int bhk) {
         this.bhk = bhk;
+    }
+
+    public String getPinCode() {
+        return pinCode;
+    }
+
+    public void setPinCode(String pinCode) {
+        this.pinCode = pinCode;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getAge() {
+        return age;
+    }
+
+    public void setAge(String age) {
+        this.age = age;
+    }
+
+    public Integer getFloor() {
+        return floor;
+    }
+
+    public void setFloor(Integer floor) {
+        this.floor = floor;
+    }
+
+    public Integer getTotalFloors() {
+        return totalFloors;
+    }
+
+    public void setTotalFloors(Integer totalFloors) {
+        this.totalFloors = totalFloors;
     }
 
     public Long getAgentId() {
@@ -110,11 +187,35 @@ public class Property {
         this.agentEmail = agentEmail;
     }
 
-    public boolean isActive() {
-        return isActive;
+    public String getPhotos() {
+        return photos;
     }
 
-    public void setActive(boolean active) {
-        isActive = active;
+    public void setPhotos(String photos) {
+        this.photos = photos;
+    }
+
+    public boolean isListed() {
+        return Boolean.TRUE.equals(listed);
+    }
+
+    public void setListed(boolean listed) {
+        this.listed = listed;
+    }
+
+    public boolean isDeleted() {
+        return Boolean.TRUE.equals(deleted);
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public Integer getViews() {
+        return views == null ? 0 : views;
+    }
+
+    public void setViews(Integer views) {
+        this.views = views;
     }
 }

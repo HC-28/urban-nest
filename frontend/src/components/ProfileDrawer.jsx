@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api";
 import "../styles/ProfileDrawer.css";
@@ -7,20 +7,30 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isOnDashboard = location.pathname === "/dashboard";
+
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || "");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ✅ favourites state
+  const [favourites, setFavourites] = useState([]);
+
+  // 🔁 load favourites when drawer opens
+  useEffect(() => {
+    if (user && user.role === "BUYER") {
+      const key = `savedProperties_${user.id}`;
+      const saved = JSON.parse(localStorage.getItem(key) || "[]");
+      setFavourites(saved);
+    }
+  }, [isOpen, user]);
+
   if (!isOpen) return null;
 
   const handleLogout = () => {
-    // Clear client-side auth state
-    localStorage.removeItem('user');
-    // Close the drawer
+    localStorage.removeItem("user");
     onClose();
-    // Redirect to home page with full refresh to update navbar
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   const handleEditName = () => {
@@ -45,19 +55,14 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
     setError("");
 
     try {
-      const response = await api.put("/update-name", {
+      await api.put("/update-name", {
         email: user.email,
         name: newName.trim()
       });
 
-      // Update localStorage with new user data
       const updatedUser = { ...user, name: newName.trim() };
       localStorage.setItem("user", JSON.stringify(updatedUser));
-
-      // Notify parent component about the update
-      if (onUserUpdate) {
-        onUserUpdate(updatedUser);
-      }
+      if (onUserUpdate) onUserUpdate(updatedUser);
 
       setIsEditingName(false);
     } catch (err) {
@@ -68,30 +73,15 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
     }
   };
 
-  // Mock stats - in real app, fetch from backend
-  const userStats = {
-    propertiesSold: user.role === "AGENT" ? 15 : 0,
-    propertiesBought: user.role === "BUYER" ? 3 : 0,
-    propertiesListed: user.role === "AGENT" ? 12 : 0,
-    rating: 4.5,
-    reviews: 28
-  };
-
   return (
     <>
-      {/* Backdrop */}
       <div className="drawer-backdrop" onClick={onClose}></div>
 
-      {/* Drawer */}
       <div className="drawer">
+        {/* HEADER */}
         <div className="drawer-header">
-          <img
-            src="/src/assets/profile.png"
-            alt="Profile"
-            className="drawer-avatar"
-          />
+          <img src="/src/assets/profile.png" alt="Profile" className="drawer-avatar" />
 
-          {/* Editable Name Section */}
           <div className="name-section">
             {isEditingName ? (
               <div className="edit-name-container">
@@ -100,22 +90,13 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   className="edit-name-input"
-                  placeholder="Enter your name"
                   autoFocus
                 />
                 <div className="edit-name-actions">
-                  <button
-                    className="save-name-btn"
-                    onClick={handleSaveName}
-                    disabled={isLoading}
-                  >
+                  <button className="save-name-btn" onClick={handleSaveName} disabled={isLoading}>
                     {isLoading ? "Saving..." : "Save"}
                   </button>
-                  <button
-                    className="cancel-name-btn"
-                    onClick={handleCancelEdit}
-                    disabled={isLoading}
-                  >
+                  <button className="cancel-name-btn" onClick={handleCancelEdit}>
                     Cancel
                   </button>
                 </div>
@@ -124,9 +105,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
             ) : (
               <div className="display-name-container">
                 <h3>{user.name}</h3>
-                <button className="edit-name-btn" onClick={handleEditName} title="Edit name">
-                  ✏️
-                </button>
+                <button className="edit-name-btn" onClick={handleEditName}>✏️</button>
               </div>
             )}
           </div>
@@ -135,68 +114,85 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
           <span className="user-role-badge">{user.role}</span>
         </div>
 
-        {/* User Stats Section */}
+        {/* STATS */}
         <div className="drawer-stats">
-          {user.role === "AGENT" ? (
+          {user.role === "BUYER" ? (
             <>
               <div className="stat-item">
-                <span className="stat-value">{userStats.propertiesSold}</span>
-                <span className="stat-label">Properties Sold</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{userStats.propertiesListed}</span>
-                <span className="stat-label">Listed</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">⭐ {userStats.rating}</span>
-                <span className="stat-label">{userStats.reviews} Reviews</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="stat-item">
-                <span className="stat-value">{userStats.propertiesBought}</span>
+                <span className="stat-value">0</span>
                 <span className="stat-label">Properties Bought</span>
               </div>
               <div className="stat-item">
-                <span className="stat-value">5</span>
+                <span className="stat-value">{favourites.length}</span>
                 <span className="stat-label">Saved Properties</span>
               </div>
               <div className="stat-item">
-                <span className="stat-value">12</span>
+                <span className="stat-value">0</span>
                 <span className="stat-label">Enquiries</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="stat-item">
+                <span className="stat-value">0</span>
+                <span className="stat-label">Properties Sold</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">0</span>
+                <span className="stat-label">Listed</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">⭐ 0</span>
+                <span className="stat-label">Reviews</span>
               </div>
             </>
           )}
         </div>
 
+        {/* MENU */}
         <div className="drawer-menu">
           {!isOnDashboard && (
-            <button onClick={() => { navigate("/dashboard"); onClose(); }}>Go to Dashboard</button>
+            <button onClick={() => { navigate("/dashboard"); onClose(); }}>
+              Go to Dashboard
+            </button>
           )}
           <button onClick={() => navigate("/properties")}>Browse Properties</button>
-          {user.role === "AGENT" && <button onClick={() => navigate("/post-property")}>Post Property</button>}
-          {user.role === "BUYER" && <button>Favourites</button>}
+          {user.role === "AGENT" && (
+            <button onClick={() => navigate("/post-property")}>Post Property</button>
+          )}
         </div>
 
+        {/* CONTENT */}
         <div className="drawer-content">
-          {user.role === "AGENT" ? (
+          {user.role === "BUYER" ? (
             <>
-              <h4>My Properties</h4>
-              <div className="property-card">Luxury Villa – Bangalore</div>
-              <div className="property-card">2BHK Apartment – Pune</div>
-              <div className="property-card">Commercial Space – Mumbai</div>
+              <h4>Favourite Properties</h4>
+              {favourites.length === 0 ? (
+                <p style={{ color: "#aaa" }}>No favourites yet</p>
+              ) : (
+                favourites.map((p) => (
+                  <div
+                    key={p.id}
+                    className="property-card"
+                    onClick={() => {
+                      onClose();
+                      navigate(`/property/${p.id}`);
+                    }}
+                  >
+                    {p.title}
+                  </div>
+                ))
+              )}
             </>
           ) : (
             <>
-              <h4>Favourite Properties</h4>
-              <div className="property-card">3BHK Flat – Hyderabad</div>
-              <div className="property-card">Independent House – Chennai</div>
+              <h4>My Properties</h4>
+              <p style={{ color: "#aaa" }}>Coming soon...</p>
             </>
           )}
         </div>
 
-        {/* Logout Button at Bottom */}
+        {/* FOOTER */}
         <div className="drawer-footer">
           <button className="logout-btn-drawer" onClick={handleLogout}>
             🚪 Logout
