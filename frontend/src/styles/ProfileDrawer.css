@@ -1,0 +1,280 @@
+/* Backdrop */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+  backdrop-filter: blur(2px);
+}
+
+/* Drawer */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 350px;
+  height: 100vh;
+  background: var(--primary-color);
+  /* Forest Green Background */
+  color: var(--text-light);
+  z-index: 101;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Header */
+.drawer-header {
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 24px;
+}
+
+.drawer-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  margin-bottom: 12px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  object-fit: cover;
+}
+
+/* Text Colors override for dark drawer */
+.drawer-header h3,
+.display-name-container h3 {
+  margin: 6px 0;
+  font-size: 1.5rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.user-email {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 12px;
+}
+
+/* Editable Name Styles */
+.name-section {
+  margin: 12px 0;
+}
+
+.display-name-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.edit-name-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  color: white;
+  transition: all 0.2s;
+}
+
+.edit-name-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.edit-name-input {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  text-align: center;
+}
+
+.save-name-btn {
+  padding: 6px 14px;
+  background: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cancel-name-btn {
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.user-role-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--secondary-light);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Stats Section */
+.drawer-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Menu */
+.drawer-menu {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.drawer-menu button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.drawer-menu button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  color: white;
+}
+
+/* Content */
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Scrollbar for dark theme */
+.drawer-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.drawer-content h4 {
+  margin-bottom: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+/* Fav Items */
+.drawer-fav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.drawer-fav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.fav-thumb {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.fav-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.fav-title {
+  font-size: 14px;
+  color: white;
+  font-weight: 500;
+}
+
+.fav-price {
+  font-size: 13px;
+  color: var(--secondary-light);
+  font-weight: 600;
+}
+
+.no-favs {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  margin-top: 20px;
+}
+
+/* Footer */
+.drawer-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn-drawer {
+  width: 100%;
+  padding: 14px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.logout-btn-drawer:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: white;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .drawer {
+    width: 85%;
+  }
+}
