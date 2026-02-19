@@ -2,7 +2,7 @@ package com.realestate.backend.controller;
 
 import com.realestate.backend.entity.Favorite;
 import com.realestate.backend.entity.Property;
-import com.realestate.backend.entity.User;
+import com.realestate.backend.entity.AppUser;
 import com.realestate.backend.repository.FavoriteRepository;
 import com.realestate.backend.repository.PropertyRepository;
 import com.realestate.backend.repository.UserRepository;
@@ -35,7 +35,7 @@ public class FavoriteController {
     @GetMapping(value = "/user/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getUserFavorites(@PathVariable Long userId) {
         try {
-            List<Favorite> favorites = favoriteRepository.findByUserId(userId);
+            List<Favorite> favorites = favoriteRepository.findByUser_Id(userId);
             // Extract properties to return a clean list of properties
             List<Property> properties = new ArrayList<>();
             for (Favorite fav : favorites) {
@@ -52,7 +52,7 @@ public class FavoriteController {
     @GetMapping(value = "/check", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> checkFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
         try {
-            boolean exists = favoriteRepository.existsByUserIdAndPropertyId(userId, propertyId);
+            boolean exists = favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId);
             return ResponseEntity.ok(Map.of("isFavorite", exists));
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -65,16 +65,16 @@ public class FavoriteController {
     public ResponseEntity<?> addFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
         try {
             // Check limit (Max 10)
-            long count = favoriteRepository.countByUserId(userId);
+            long count = favoriteRepository.countByUser_Id(userId);
             if (count >= 10) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You can only favorite up to 10 properties.");
             }
 
-            if (favoriteRepository.existsByUserIdAndPropertyId(userId, propertyId)) {
+            if (favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId)) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Property already in favorites");
             }
 
-            User user = userRepository.findById(userId).orElse(null);
+            AppUser user = userRepository.findById(userId).orElse(null);
             Property property = propertyRepository.findById(propertyId).orElse(null);
 
             if (user == null || property == null) {
@@ -88,7 +88,8 @@ public class FavoriteController {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Server error: " + ex.getMessage());
         }
     }
 
@@ -97,11 +98,11 @@ public class FavoriteController {
     @Transactional
     public ResponseEntity<?> removeFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
         try {
-            if (!favoriteRepository.existsByUserIdAndPropertyId(userId, propertyId)) {
+            if (!favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Favorite not found");
             }
 
-            favoriteRepository.deleteByUserIdAndPropertyId(userId, propertyId);
+            favoriteRepository.deleteByUser_IdAndProperty_Id(userId, propertyId);
             return ResponseEntity.ok("Removed from favorites");
 
         } catch (Exception ex) {

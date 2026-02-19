@@ -8,8 +8,12 @@ import PropertyDetail from "./pages/PropertyDetail";
 import PostProperty from "./pages/PostProperty";
 import Agents from "./pages/Agents";
 import AgentProfile from "./pages/AgentProfile";
+import AgentChats from "./pages/AgentChats";
+import BuyerChats from "./pages/BuyerChats";
+import PropertyChat from "./pages/PropertyChat";
 import Favorites from "./pages/Favorites";
 import ProfilePage from "./pages/ProfilePage";
+import BuyerPropertyChat from "./pages/BuyerPropertyChat";
 
 // Leaflet CSS for maps
 import "leaflet/dist/leaflet.css";
@@ -25,7 +29,11 @@ function App() {
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="/post-property" element={<PostProperty />} />
             <Route path="/agents" element={<Agents />} />
+            <Route path="/agent/chats" element={<AgentChats />} />
+            <Route path="/chats" element={<BuyerChats />} />
+            <Route path="/agent/chat/:propertyId/:buyerId" element={<PropertyChat />} />
             <Route path="/agent/:id" element={<AgentProfile />} />
+            <Route path="/buyer/chat/:propertyId/:agentId" element={<BuyerPropertyChat />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/profile" element={<ProfilePage />} />
         </Routes>

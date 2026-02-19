@@ -8,8 +8,13 @@ import java.util.List;
 
 @Repository
 public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
-    List<Favorite> findByUserId(Long userId);
-    boolean existsByUserIdAndPropertyId(Long userId, Long propertyId);
-    void deleteByUserIdAndPropertyId(Long userId, Long propertyId);
-    long countByUserId(Long userId);
+    List<Favorite> findByUser_Id(Long userId);
+
+    boolean existsByUser_IdAndProperty_Id(Long userId, Long propertyId);
+
+    void deleteByUser_IdAndProperty_Id(Long userId, Long propertyId);
+
+    long countByUser_Id(Long userId);
+
+    long countByProperty_Id(Long propertyId); // For analytics tracking
 }

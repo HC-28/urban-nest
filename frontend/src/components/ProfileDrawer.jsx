@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { userApi, favoritesApi } from "../api/api.js";
+import { userApi, favoritesApi, propertyApi } from "../api/api.js";
 import "../styles/ProfileDrawer.css";
 import PropertyCard from "./PropertyCard.jsx";
 import { formatPrice } from "../utils/priceUtils.js";
@@ -20,7 +20,10 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
   const [favorites, setFavorites] = useState([]);
   const [loadingFavs, setLoadingFavs] = useState(false);
 
-  // Fetch favorites when drawer opens
+  // Properties count for agents
+  const [propertiesCount, setPropertiesCount] = useState(0);
+
+  // Fetch favorites and properties count when drawer opens
   useEffect(() => {
     if (isOpen && user) {
       setLoadingFavs(true);
@@ -28,6 +31,13 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
         .then(res => setFavorites(res.data))
         .catch(err => console.error("Error fetching favorites", err))
         .finally(() => setLoadingFavs(false));
+
+      // Fetch properties count for agents
+      if (user.role === "AGENT") {
+        propertyApi.get(`/agent/${user.id}`)
+          .then(res => setPropertiesCount(res.data.length))
+          .catch(err => console.error("Error fetching properties count", err));
+      }
     }
   }, [isOpen, user]);
 
@@ -115,7 +125,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
   const userStats = {
     propertiesSold: user.role === "AGENT" ? 15 : 0,
     propertiesBought: user.role === "BUYER" ? 3 : 0,
-    propertiesListed: user.role === "AGENT" ? 12 : 0,
+    propertiesListed: user.role === "AGENT" ? propertiesCount : 0,
     rating: 4.5,
     reviews: 28
   };
@@ -135,7 +145,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
               alt="Profile"
               className="drawer-avatar"
               style={{ opacity: isUploadingPicture ? 0.5 : 1 }}
-              onError={(e) => { e.target.src = "https://via.placeholder.com/100"; }}
+              onError={(e) => { e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e2e8f0' width='100' height='100'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='14' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EUser%3C/text%3E%3C/svg%3E"; }}
             />
             <label htmlFor="profile-picture-input" className="camera-icon-label" style={{
               position: 'absolute', bottom: '0', right: '0', background: '#2563eb',
@@ -188,7 +198,34 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
               favorites.length > 0 ? (
                 favorites.map(p => (
                   <div key={p.id} className="drawer-fav-item" onClick={() => { navigate(`/property/${p.id}`); onClose(); }}>
-                    <img src={p.photos ? p.photos[0] : ""} alt="prop" className="fav-thumb" onError={(e) => e.target.src = "https://via.placeholder.com/50"} />
+                    <div style={{ position: 'relative' }}>
+                      <img src={p.photos ? p.photos[0] : ""} alt="prop" className="fav-thumb" onError={(e) => e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'%3E%3Crect fill='%23e2e8f0' width='50' height='50'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='8' dy='3' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EIMG%3C/text%3E%3C/svg%3E"} />
+                      <button
+                        className="fav-toggle-mini"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUnfav(p.id);
+                          favoritesApi.delete(`/remove?userId=${user.id}&propertyId=${p.id}`);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '-5px',
+                          right: '-5px',
+                          background: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '20px',
+                          height: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          fontSize: '10px'
+                        }}
+                      >
+                        ❤️
+                      </button>
+                    </div>
                     <div className="fav-info">
                       <span className="fav-title">{p.title}</span>
                       <span className="fav-price">{formatPrice(p.price)}</span>

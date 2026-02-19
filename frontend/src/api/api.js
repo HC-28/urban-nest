@@ -40,10 +40,34 @@ export const favoritesApi = axios.create({
   timeout: 10000,
 });
 
+// ---------------- Chat API ----------------
+export const chatApi = axios.create({
+  baseURL: `${BASE_URL}/chat`,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 10000,
+});
+
+// ---------------- Analytics API ----------------
+export const analyticsApi = axios.create({
+  baseURL: `${BASE_URL}/analytics`,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 15000,
+});
+
+// ---------------- Auth API (Alias for User API for now) ----------------
+export const authApi = userApi;
+
 // ---------------- Default Export (Optional) ----------------
 export default {
   propertyApi,
   userApi,
+  authApi,
   agentsApi,
-  favoritesApi
+  favoritesApi,
+  chatApi,
+  analyticsApi
 };

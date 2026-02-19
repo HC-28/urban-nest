@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FiHeart, FiMapPin, FiHome, FiMaximize } from "react-icons/fi";
+import { FiMapPin, FiHome, FiMaximize } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import "../styles/PropertyCard.css";
 import { favoritesApi } from "../api/api";
@@ -33,12 +33,12 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
 
   // Check if saved on mount
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       favoritesApi.get(`/check?userId=${user.id}&propertyId=${propertyId}`)
         .then(res => setIsSaved(res.data.isFavorite))
         .catch(err => console.error("Error checking favorite", err));
     }
-  }, [user, propertyId]);
+  }, [user?.id, propertyId]);
 
   const handleToggleFavorite = async (e) => {
     e.stopPropagation();
@@ -53,9 +53,11 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
         await favoritesApi.delete(`/remove?userId=${user.id}&propertyId=${propertyId}`);
         setIsSaved(false);
         if (onUnfav) onUnfav(propertyId);
+        // Optional: toast notice
       } else {
         await favoritesApi.post(`/add?userId=${user.id}&propertyId=${propertyId}`);
         setIsSaved(true);
+        alert("Added to favorites!");
       }
     } catch (error) {
       if (error.response && error.response.status === 400) {
@@ -104,9 +106,8 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
           className={`save-btn ${isSaved ? "active" : ""}`}
           onClick={handleToggleFavorite}
           aria-label={isSaved ? "Unsave property" : "Save property"}
-          style={{ color: isSaved ? "#ef4444" : "inherit" }}
         >
-          <FiHeart fill={isSaved ? "#ef4444" : "none"} />
+          <span className="heart-icon">{isSaved ? "♥" : "♡"}</span>
         </button>
       </div>
 

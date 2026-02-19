@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/PropertyDetail.css";
@@ -15,8 +15,11 @@ import {
   FiCheck,
   FiChevronLeft,
   FiChevronRight,
+  FiMessageSquare,
+  FiSend,
+  FiMaximize2
 } from "react-icons/fi";
-import { propertyApi, favoritesApi } from "../api/api";
+import { propertyApi, favoritesApi, chatApi, agentsApi } from "../api/api";
 import { parsePropertyImages } from "../utils/imageUtils";
 import { formatPrice } from "../utils/priceUtils";
 
@@ -29,22 +32,34 @@ function PropertyDetail() {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
+  const [miniMessages, setMiniMessages] = useState([]);
+  const [miniText, setMiniText] = useState("");
   const [isHoveringCarousel, setIsHoveringCarousel] = useState(false);
+  const [activeTab, setActiveTab] = useState("description");
+  const miniChatBodyRef = useRef(null);
+
+  // Scroll bottom chat to bottom
+  useEffect(() => {
+    const chatBody = document.querySelector('.chat-bar-body');
+    if (chatBody) {
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+  }, [miniMessages]);
 
   useEffect(() => {
     const fetchProperty = async () => {
       try {
         const { data } = await propertyApi.get(`/${id}`);
 
-        // Fetch agent's property count safely
-        let agentPropertyCount = 0;
-        try {
-          const { data: agentProps } = await propertyApi.get(
-            `/agent/${data.agentId}`
-          );
-          agentPropertyCount = agentProps?.length || 0;
-        } catch (e) {
-          console.log("Could not fetch agent properties:", e.message);
+        // Fetch real agent profile (image + property count) from /api/agents/{agentId}
+        let agentProfile = null;
+        if (data.agentId) {
+          try {
+            const { data: agentData } = await agentsApi.get(`/${data.agentId}`);
+            agentProfile = agentData;
+          } catch (e) {
+            console.log("Could not fetch agent profile:", e.message);
+          }
         }
 
         // Transform property to handle defaults
@@ -79,16 +94,19 @@ function PropertyDetail() {
           isRERA: data.isRERA ?? false,
           reraId: data.reraId || "",
           agent: {
-            name: data.agentName || "Agent",
-            company: data.agentCompany || "Real Estate Agent",
-            phone: data.agentPhone || "+91 98765 43210",
-            email: data.agentEmail || "agent@realestate.com",
+            name: agentProfile?.name || data.agentName || "Agent",
+            company: agentProfile?.company || data.agentCompany || "Real Estate Agent",
+            phone: agentProfile?.phone || data.agentPhone || "+91 98765 43210",
+            email: agentProfile?.email || data.agentEmail || "agent@realestate.com",
+            // ✅ Use real profile picture from /api/agents/{id}
             image:
+              agentProfile?.profilePicture ||
               data.agentImage ||
               "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200",
-            rating: data.agentRating ?? 4.5,
-            reviews: data.agentReviews ?? Math.floor(Math.random() * 100) + 10,
-            propertiesListed: agentPropertyCount,
+            rating: agentProfile?.rating ?? data.agentRating ?? 4.5,
+            reviews: agentProfile?.reviews ?? data.agentReviews ?? Math.floor(Math.random() * 50) + 10,
+            // ✅ Use real property count from /api/agents/{id}
+            propertiesListed: agentProfile?.propertiesListed ?? 0,
           },
           agentId: data.agentId,
           postedDate: data.postedDate || "Recently",
@@ -110,12 +128,12 @@ function PropertyDetail() {
 
   // Check saved status
   useEffect(() => {
-    if (user && id) {
+    if (user?.id && id) {
       favoritesApi.get(`/check?userId=${user.id}&propertyId=${id}`)
         .then(res => setIsSaved(res.data.isFavorite))
         .catch(err => console.error(err));
     }
-  }, [user, id]);
+  }, [user?.id, id]);
 
   // Auto-scroll images every 3.5 seconds, pause on hover
   useEffect(() => {
@@ -132,7 +150,59 @@ function PropertyDetail() {
     return () => clearInterval(interval);
   }, [property, isHoveringCarousel]);
 
-  const handleToggleFavorite = async () => {
+  // Mini-Chat Logic
+  useEffect(() => {
+    if (user && property && user.role !== "AGENT") {
+      const fetchMessages = async () => {
+        try {
+          const res = await chatApi.get("/conversation", {
+            params: {
+              propertyId: property.id,
+              buyerId: user.id,
+              agentId: property.agentId
+            }
+          });
+          if (Array.isArray(res.data)) {
+            setMiniMessages(res.data);
+          } else {
+            console.error("Chat response is not an array:", res.data);
+            setMiniMessages([]);
+          }
+        } catch (err) {
+          console.error("Mini-chat fetch error:", err);
+        }
+      };
+
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 10000); // Sync with 10s refresh
+      return () => clearInterval(interval);
+    }
+  }, [user, property]);
+
+  const sendMiniMessage = async () => {
+    if (!miniText.trim()) return;
+    try {
+      const res = await chatApi.post("/send", {
+        propertyId: property.id,
+        buyerId: user.id,
+        agentId: property.agentId,
+        sender: "BUYER",
+        message: miniText
+      });
+      setMiniMessages(prev => [...prev, res.data]);
+      setMiniText("");
+    } catch (err) {
+      console.error("Send error:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (miniChatBodyRef.current) {
+      miniChatBodyRef.current.scrollTop = miniChatBodyRef.current.scrollHeight;
+    }
+  }, [miniMessages]);
+
+  const toggleFavorite = async () => {
     if (!user) {
       alert("Please login to save properties");
       navigate("/login");
@@ -143,7 +213,7 @@ function PropertyDetail() {
         await favoritesApi.delete(`/remove?userId=${user.id}&propertyId=${id}`);
         setIsSaved(false);
       } else {
-        await favoritesApi.post(`/add?userId=${user.id}&propertyId=${id}`);
+        await favoritesApi.post(`/add?userId=${user.id}&propertyId=${id}`, {});
         setIsSaved(true);
       }
     } catch (error) {
@@ -201,7 +271,7 @@ function PropertyDetail() {
         <div className="breadcrumb">
           <span onClick={() => navigate("/")}>Home</span> /{" "}
           <span onClick={() => navigate("/properties")}>Properties</span> /{" "}
-          <span className="current">{property.title}</span>
+          <span className="current" style={{ color: '#e2e8f0' }}>{property.title}</span>
         </div>
 
         {/* Image Gallery / Carousel Section */}
@@ -293,13 +363,13 @@ function PropertyDetail() {
             <div className="action-buttons">
               <button
                 className={`action-btn ${isSaved ? "saved" : ""}`}
-                onClick={handleToggleFavorite}
+                onClick={toggleFavorite}
                 style={{
                   color: isSaved ? "#ef4444" : "inherit",
                   borderColor: isSaved ? "#ef4444" : "#e2e8f0"
                 }}
               >
-                <FiHeart fill={isSaved ? "#ef4444" : "none"} /> {isSaved ? "Saved" : "Save"}
+                <FiHeart fill={isSaved ? "#ef4444" : "rgba(255, 255, 255, 0.2)"} stroke="white" strokeWidth={2.5} /> {isSaved ? "Saved" : "Save"}
               </button>
               <button className="action-btn share" onClick={() => {
                 navigator.clipboard.writeText(window.location.href);
@@ -307,12 +377,97 @@ function PropertyDetail() {
               }}>
                 <FiShare2 /> Share
               </button>
+
+              {user?.role !== "AGENT" && (
+                <button
+                  className={`action-btn chat ${activeTab === "chat" ? "active" : ""}`}
+                  onClick={() => {
+                    if (!user) {
+                      alert("Please login to chat");
+                      navigate("/login");
+                    } else {
+                      setActiveTab("chat");
+                      document.querySelector('.tabbed-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                >
+                  <FiMessageSquare /> Chat
+                </button>
+              )}
             </div>
 
-            {/* Description */}
-            <div className="section">
-              <h3>Description</h3>
-              <p>{property.description}</p>
+            {/* Tabbed Content Section */}
+            <div className="section tabbed-section">
+              <div className="tabs-header">
+                <button
+                  className={`tab-btn ${activeTab === "description" ? "active" : ""}`}
+                  onClick={() => setActiveTab("description")}
+                >
+                  Description
+                </button>
+                {user?.role !== "AGENT" && (
+                  <button
+                    className={`tab-btn ${activeTab === "chat" ? "active" : ""}`}
+                    onClick={() => {
+                      if (!user) {
+                        alert("Please login to chat");
+                        navigate("/login");
+                      } else {
+                        setActiveTab("chat");
+                      }
+                    }}
+                  >
+                    Chat with Agent
+                  </button>
+                )}
+              </div>
+
+              <div className="tab-content">
+                {activeTab === "description" ? (
+                  <div className="description-content">
+                    <p>{property.description}</p>
+                  </div>
+                ) : (
+                  <div className="embedded-chat-container">
+                    <div className="chat-area-header">
+                      <h4>Chatting with {property.agent.name}</h4>
+                      <Link
+                        to={`/buyer/chat/${property.id}/${property.agentId}`}
+                        className="full-chat-link"
+                        title="Open Dedicated Chat Page"
+                      >
+                        <FiMaximize2 /> Open Full Chat
+                      </Link>
+                    </div>
+                    <div className="chat-area-body" ref={miniChatBodyRef}>
+                      {miniMessages.length === 0 ? (
+                        <div className="empty-chat-state">
+                          <FiMessageSquare />
+                          <p>Start a conversation about this property.</p>
+                        </div>
+                      ) : (
+                        miniMessages.map((msg, idx) => (
+                          <div key={idx} className={`chat-bubble ${msg.sender === "BUYER" ? "me" : "them"}`}>
+                            {msg.message}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="chat-area-input">
+                      <input
+                        type="text"
+                        placeholder="Type your message..."
+                        value={miniText}
+                        onChange={(e) => setMiniText(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && sendMiniMessage()}
+                      />
+                      <button onClick={sendMiniMessage} disabled={!miniText.trim()} title="Send Message">
+                        <FiSend size={20} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Property Details */}
@@ -376,18 +531,21 @@ function PropertyDetail() {
           {/* Sidebar */}
           <div className="sidebar">
             <div className="agent-card">
-              <div className="agent-header">
-                <div className="agent-avatar">
-                  <img src={property.agent.image} alt={property.agent.name} />
-                </div>
-                <div>
-                  <h4>{property.agent.name}</h4>
-                  <p>{property.agent.company}</p>
-                  <div className="agent-rating">
-                    ⭐ {property.agent.rating} ({property.agent.reviews} reviews)
+              <Link to={`/agent/${property.agentId}`} className="agent-header-link">
+                <div className="agent-header">
+                  <div className="agent-avatar">
+                    <img src={property.agent.image} alt={property.agent.name}
+                      onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200" }} />
+                  </div>
+                  <div>
+                    <h4>{property.agent.name}</h4>
+                    <p>{property.agent.company}</p>
+                    <div className="agent-rating">
+                      ⭐ {property.agent.rating} ({property.agent.reviews} reviews)
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
               <div className="agent-stats">
                 <div className="stat">
                   <span className="value">{property.agent.propertiesListed}</span>
@@ -407,8 +565,10 @@ function PropertyDetail() {
         </div>
       </div>
 
+
+
       <Footer />
-    </div>
+    </div >
   );
 }
 

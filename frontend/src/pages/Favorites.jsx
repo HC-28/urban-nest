@@ -22,9 +22,13 @@ function Favorites() {
         const fetchFavorites = async () => {
             try {
                 const response = await favoritesApi.get(`/user/${user.id}`);
+                console.log("Fetched favorites:", response.data);
                 setFavorites(response.data);
             } catch (error) {
                 console.error("Error fetching favorites:", error);
+                if (error.response) {
+                    console.error("Backend response error:", error.response.data);
+                }
             } finally {
                 setLoading(false);
             }

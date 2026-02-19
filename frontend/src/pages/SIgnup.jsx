@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../styles/Auth.css";
-import logo from "../assets/logo.png";
-import heroBg from "../assets/re-back.jpg"; // Unified Background
-import { userApi } from "../api/api"; // Using your Axios instance
+import heroBg from "../assets/re-back.jpg";
+import { userApi } from "../api/api";
 
 function Signup() {
   const navigate = useNavigate();
@@ -15,202 +14,143 @@ function Signup() {
     phone: "",
     pincode: "",
     role: "BUYER",
-    profilePicture: "", // Optional profile picture
+    profilePicture: "",
   });
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [error, setError] = useState(null);
 
-  // Handle input change
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  // Handle profile picture upload
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file');
+      setError('Please select a valid image file');
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      setError('Image size should be less than 5MB');
       return;
     }
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64Image = reader.result;
-      setUser({ ...user, profilePicture: base64Image });
-      setPreviewImage(base64Image);
+      setPreviewImage(reader.result);
+      setUser({ ...user, profilePicture: reader.result });
+      setError(null);
     };
     reader.readAsDataURL(file);
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
 
     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
     if (!gmailRegex.test(user.email)) {
-      alert("Only valid Gmail addresses allowed");
+      setError("Only valid Gmail addresses allowed");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Signup request
       const res = await userApi.post("/signup", user);
-      const msg = res.data?.message || "Signup successful";
 
-      if (msg === "Email already exists") {
-        alert("Email already exists. Please login.");
-        navigate("/login");
-        return;
-      }
+      const loginRes = await userApi.post("/login", {
+        email: user.email,
+        password: user.password,
+      });
 
-      alert(msg);
+      localStorage.setItem("user", JSON.stringify(loginRes.data));
+      navigate("/dashboard");
 
-      if (msg === "Signup successful") {
-        // Auto-login
-        const loginRes = await userApi.post("/login", {
-          email: user.email,
-          password: user.password,
-        });
-
-        localStorage.setItem("user", JSON.stringify(loginRes.data));
-        navigate("/dashboard");
-      }
     } catch (err) {
       console.error("Signup error:", err);
-      const message = err.response?.data?.message || "Something went wrong. Please try again.";
-      alert(message);
+      setError(err.response?.data?.message || "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
-      <form className="auth-box" onSubmit={handleSubmit}>
-        <img src={logo} className="auth-logo" alt="Logo" />
-        <h2>Create Account</h2>
+    <div className="auth-page" style={{ backgroundImage: `url(${heroBg})` }}>
+      <div className="auth-overlay"></div>
 
-        <input
-          name="name"
-          placeholder="Full Name"
-          value={user.name}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          name="email"
-          placeholder="Email"
-          value={user.email}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={user.password}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          name="city"
-          placeholder="City (e.g., Mumbai, Delhi)"
-          value={user.city}
-          onChange={handleChange}
-        />
-
-        <input
-          name="phone"
-          type="tel"
-          placeholder="Phone Number (e.g., 9876543210)"
-          value={user.phone}
-          onChange={handleChange}
-        />
-
-        <input
-          name="pincode"
-          type="text"
-          placeholder="Pincode (6 digits)"
-          value={user.pincode}
-          onChange={(e) => {
-            const value = e.target.value.replace(/\D/g, "");
-            if (value.length <= 6) {
-              setUser({ ...user, pincode: value });
-            }
-          }}
-          maxLength="6"
-          pattern="\d{6}"
-        />
-
-        <select name="role" value={user.role} onChange={handleChange}>
-          <option value="BUYER">Buyer</option>
-          <option value="AGENT">Agent</option>
-        </select>
-
-        {/* Optional Profile Picture Upload */}
-        <div style={{ marginTop: '10px' }}>
-          <label htmlFor="profile-pic-upload" style={{
-            display: 'block',
-            marginBottom: '5px',
-            fontSize: '14px',
-            color: '#666'
-          }}>
-            Profile Picture (Optional)
-          </label>
-          <input
-            id="profile-pic-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '8px',
-              marginBottom: '10px'
-            }}
-          />
-          {previewImage && (
-            <div style={{ textAlign: 'center', marginTop: '10px' }}>
-              <img
-                src={previewImage}
-                alt="Preview"
-                style={{
-                  width: '100px',
-                  height: '100px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid #2563eb'
-                }}
-              />
-              <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                Profile Picture Preview
-              </p>
-            </div>
-          )}
+      <div className="auth-card glass-strong">
+        <div className="auth-header">
+          <div className="auth-logo-icon">✨</div>
+          <h2>Create Account</h2>
+          <p>Join Urban Nest to start your journey</p>
         </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Creating Account..." : "Sign Up"}
-        </button>
+        {error && <div className="auth-error">{error}</div>}
 
-        <p className="auth-link" onClick={() => navigate("/login")}>
-          Already have an account? Login
-        </p>
-      </form>
+        <form onSubmit={handleSubmit} className="auth-form">
+
+          <div className="form-group">
+            <input name="name" placeholder="Full Name" value={user.name} onChange={handleChange} required />
+          </div>
+
+          <div className="form-group">
+            <input name="email" type="email" placeholder="Email Address" value={user.email} onChange={handleChange} required />
+          </div>
+
+          <div className="form-group">
+            <input name="password" type="password" placeholder="Password" value={user.password} onChange={handleChange} required />
+          </div>
+
+          <div className="form-group">
+            <select name="role" value={user.role} onChange={handleChange}>
+              <option value="BUYER">I am a Buyer/Renter</option>
+              <option value="AGENT">I am an Agent/Seller</option>
+            </select>
+          </div>
+
+          {/* Additional fields grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="form-group">
+              <input name="city" placeholder="City" value={user.city} onChange={handleChange} />
+            </div>
+            <div className="form-group">
+              <input name="pincode" placeholder="Pincode" value={user.pincode} onChange={handleChange} maxLength="6" />
+            </div>
+          </div>
+          <div className="form-group">
+            <input name="phone" placeholder="Phone" value={user.phone} onChange={handleChange} />
+          </div>
+
+          {user.role === "AGENT" && (
+            <div className="form-group">
+              <input name="agencyName" placeholder="Agency Name" value={user.agencyName || ""} onChange={handleChange} />
+            </div>
+          )}
+
+          {/* Profile Picture Upload */}
+          <div className="form-group">
+            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ background: 'rgba(255,255,255,0.1)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.9rem' }}>
+                {previewImage ? "✨ Change Photo" : "📷 Upload Photo"}
+              </span>
+              <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+              {previewImage && <img src={previewImage} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />}
+            </label>
+          </div>
+
+          <button type="submit" className="auth-btn glow-amber" disabled={loading}>
+            {loading ? "Creating Account..." : "Sign Up"}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          <p>Already have an account? <Link to="/login">Login</Link></p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 package com.realestate.backend.controller;
 
 import com.realestate.backend.entity.Property;
-import com.realestate.backend.entity.User;
+import com.realestate.backend.entity.AppUser;
 import com.realestate.backend.repository.PropertyRepository;
 import com.realestate.backend.repository.UserRepository;
 
@@ -34,14 +34,14 @@ public class AgentController {
     public ResponseEntity<?> getAllAgents() {
         try {
             // Find all users with role "AGENT"
-            List<User> agents = userRepository.findAll().stream()
+            List<AppUser> agents = userRepository.findAll().stream()
                     .filter(user -> "AGENT".equalsIgnoreCase(user.getRole()))
                     .toList();
 
             // Enrich each agent with property statistics
             List<Map<String, Object>> enrichedAgents = new ArrayList<>();
 
-            for (User agent : agents) {
+            for (AppUser agent : agents) {
                 Map<String, Object> agentData = new HashMap<>();
 
                 // Basic agent info
@@ -93,7 +93,7 @@ public class AgentController {
     public ResponseEntity<?> getAgentProfile(@PathVariable Long id) {
         try {
             // Find agent by ID
-            User agent = userRepository.findById(id).orElse(null);
+            AppUser agent = userRepository.findById(id).orElse(null);
 
             if (agent == null || !"AGENT".equalsIgnoreCase(agent.getRole())) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Agent not found");

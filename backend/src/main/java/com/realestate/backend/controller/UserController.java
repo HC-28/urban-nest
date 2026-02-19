@@ -1,7 +1,7 @@
 package com.realestate.backend.controller;
 
 import com.realestate.backend.entity.Property;
-import com.realestate.backend.entity.User;
+import com.realestate.backend.entity.AppUser;
 import com.realestate.backend.repository.PropertyRepository;
 import com.realestate.backend.repository.UserRepository;
 
@@ -31,7 +31,7 @@ public class UserController {
     // SIGNUP API
 
     @PostMapping(value = "/signup", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> signup(@RequestBody User user) {
+    public ResponseEntity<?> signup(@RequestBody AppUser user) {
         try {
             if (user == null) {
                 return ResponseEntity.badRequest().body("Invalid request body");
@@ -56,7 +56,7 @@ public class UserController {
     // LOGIN API
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> login(@RequestBody User user) {
+    public ResponseEntity<?> login(@RequestBody AppUser user) {
         try {
             if (user == null) {
                 return ResponseEntity.badRequest().body("Invalid request body");
@@ -66,7 +66,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Only Gmail login allowed");
             }
 
-            User dbUser = userRepository.findByEmail(user.getEmail())
+            AppUser dbUser = userRepository.findByEmail(user.getEmail())
                     .orElse(null);
 
             if (dbUser == null) {
@@ -104,13 +104,13 @@ public class UserController {
     // UPDATE USER NAME API
 
     @PutMapping(value = "/update-name", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateName(@RequestBody User user) {
+    public ResponseEntity<?> updateName(@RequestBody AppUser user) {
         try {
             if (user == null || user.getEmail() == null || user.getName() == null) {
                 return ResponseEntity.badRequest().body("Invalid request - email and name are required");
             }
 
-            User dbUser = userRepository.findByEmail(user.getEmail())
+            AppUser dbUser = userRepository.findByEmail(user.getEmail())
                     .orElse(null);
 
             if (dbUser == null) {
@@ -144,7 +144,7 @@ public class UserController {
                 return ResponseEntity.badRequest().body("Invalid image format - must be base64 encoded image");
             }
 
-            User dbUser = userRepository.findByEmail(email)
+            AppUser dbUser = userRepository.findByEmail(email)
                     .orElse(null);
 
             if (dbUser == null) {
@@ -163,13 +163,13 @@ public class UserController {
 
     // UPDATE FULL PROFILE API
     @PutMapping(value = "/update-profile", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateProfile(@RequestBody User user) {
+    public ResponseEntity<?> updateProfile(@RequestBody AppUser user) {
         try {
             if (user == null || user.getEmail() == null) {
                 return ResponseEntity.badRequest().body("Invalid request - email is required");
             }
 
-            User dbUser = userRepository.findByEmail(user.getEmail())
+            AppUser dbUser = userRepository.findByEmail(user.getEmail())
                     .orElse(null);
 
             if (dbUser == null) {

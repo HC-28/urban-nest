@@ -39,7 +39,7 @@ function Dashboard() {
   });
 
   useEffect(() => {
-    if (user && user.role === "AGENT") {
+    if (user && user.role?.toUpperCase() === "AGENT") {
       fetchMyProperties();
     } else {
       setLoading(false);
@@ -86,8 +86,7 @@ function Dashboard() {
         alert("Property unlisted successfully!");
       } else {
         // Re-list property
-        const updatedProperty = { ...property, active: true };
-        await propertyApi.put(`/${property.id}?agentId=${user.id}`, updatedProperty);
+        await propertyApi.put(`/${property.id}/relist?agentId=${user.id}`);
         alert("Property listed successfully!");
       }
       fetchMyProperties();
@@ -168,7 +167,7 @@ function Dashboard() {
         </div>
 
         {/* Stats cards - Different for Agent vs Buyer */}
-        {user.role === "AGENT" ? (
+        {user.role?.toUpperCase() === "AGENT" ? (
           <div className="dash-cards">
             <div className="dash-card">
               <FiHome size={24} />
@@ -188,7 +187,7 @@ function Dashboard() {
             <div className="dash-card">
               <span className="role-icon">👤</span>
               <h3>Role</h3>
-              <p className="role-badge">{user.role || "Agent"}</p>
+              <p className="role-badge">{user.role?.toUpperCase() || "AGENT"}</p>
             </div>
           </div>
         ) : (
@@ -196,22 +195,22 @@ function Dashboard() {
             <div className="dash-card">
               <span className="role-icon">👤</span>
               <h3>Role</h3>
-              <p className="role-badge">{user.role || "Buyer"}</p>
+              <p className="role-badge">{user.role?.toUpperCase() || "BUYER"}</p>
             </div>
             <div className="dash-card">
               <span role="img" aria-label="email">📧</span>
               <h3>Email</h3>
-              <p style={{ fontSize: '0.95rem', color: '#475569' }}>{user.email}</p>
+              <p className="stat-value secondary">{user.email}</p>
             </div>
             <div className="dash-card">
               <span role="img" aria-label="city">🏙️</span>
               <h3>City</h3>
-              <p style={{ fontSize: '1rem', color: '#475569' }}>{user.city || 'Not set'}</p>
+              <p className="stat-value secondary">{user.city || 'Not set'}</p>
             </div>
             <div className="dash-card">
               <span role="img" aria-label="phone">📱</span>
               <h3>Phone</h3>
-              <p style={{ fontSize: '1rem', color: '#475569' }}>{user.phone || 'Not set'}</p>
+              <p className="stat-value secondary">{user.phone || 'Not set'}</p>
             </div>
           </div>
         )}
@@ -226,7 +225,7 @@ function Dashboard() {
             >
               🏠 Browse Properties
             </button>
-            {user.role === "AGENT" && (
+            {user.role?.toUpperCase() === "AGENT" && (
               <button
                 className="action-btn primary"
                 onClick={() => navigate("/post-property")}
@@ -238,7 +237,7 @@ function Dashboard() {
         </div>
 
         {/* My Properties - Only for Agents */}
-        {user.role === "AGENT" && (
+        {user.role?.toUpperCase() === "AGENT" && (
           <div className="my-properties-section">
             <div className="section-header">
               <h2>My Properties</h2>

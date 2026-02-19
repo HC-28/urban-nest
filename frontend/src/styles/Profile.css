@@ -1,4 +1,4 @@
-/* Profile Page Styles */
+/* ============ Profile Page - 99acres Inspired ============ */
 .profile-page {
     min-height: 100vh;
     background: var(--bg-primary);
@@ -7,105 +7,119 @@
 }
 
 .profile-container {
-    max-width: 1200px;
-    margin: 40px auto;
+    max-width: 1100px;
+    margin: 80px auto 40px;
     padding: 0 20px;
     display: flex;
-    gap: 30px;
+    gap: 24px;
 }
 
 @media (max-width: 900px) {
     .profile-container {
         flex-direction: column;
+        margin-top: 70px;
     }
 }
 
-/* Sidebar Styling */
+/* ============ Sidebar ============ */
 .profile-sidebar {
-    flex: 0 0 300px;
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 30px;
-    box-shadow: var(--shadow-lg);
-    color: var(--text-dark);
+    flex: 0 0 260px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    color: #1e293b;
     height: fit-content;
+    overflow: hidden;
 }
 
 .profile-sidebar-header {
     text-align: center;
-    margin-bottom: 30px;
+    padding: 30px 20px 20px;
+    background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+    color: white;
+    margin-bottom: 0;
 }
 
 .profile-sidebar-avatar {
-    width: 120px;
-    height: 120px;
-    border-radius: var(--radius-full);
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
     object-fit: cover;
-    margin-bottom: 15px;
-    border: 4px solid var(--primary-light);
+    margin-bottom: 12px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 .profile-sidebar-name {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
+    color: #ffffff;
 }
 
 .profile-sidebar-role {
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
     color: var(--primary-color);
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    background: rgba(245, 158, 11, 0.15);
+    padding: 3px 12px;
+    border-radius: 20px;
+    display: inline-block;
 }
 
 .profile-nav {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    padding: 8px;
+    gap: 2px;
 }
 
 .profile-nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     padding: 12px 16px;
-    border-radius: var(--radius-md);
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     font-weight: 500;
+    font-size: 0.9rem;
     color: #64748b;
 }
 
 .profile-nav-item:hover {
     background: #f1f5f9;
-    color: var(--primary-color);
+    color: #1e293b;
 }
 
 .profile-nav-item.active {
     background: var(--primary-color);
-    color: white;
+    color: #1a1a2e;
+    font-weight: 600;
 }
 
-/* Content Area Styling */
+/* ============ Content Area ============ */
 .profile-content {
     flex: 1;
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 40px;
-    box-shadow: var(--shadow-lg);
-    color: var(--text-dark);
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    color: #1e293b;
 }
 
 .section-title {
-    font-size: 1.8rem;
-    margin-bottom: 25px;
-    color: var(--bg-primary);
+    font-size: 1.4rem;
+    margin-bottom: 24px;
+    color: #1e293b;
     border-bottom: 2px solid #f1f5f9;
-    padding-bottom: 15px;
+    padding-bottom: 14px;
+    font-weight: 700;
 }
 
-/* Form Styling */
+/* ============ Form ============ */
 .profile-form {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -130,10 +144,42 @@
 
 .profile-form label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-weight: 600;
-    font-size: 0.9rem;
-    color: #475569;
+    font-size: 0.8rem;
+    color: #64748b;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* Avatar Upload */
+.profile-avatar-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 12px;
+}
+
+.avatar-upload-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    border: 2px solid white;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.avatar-upload-btn:hover {
+    transform: scale(1.1);
+    background: var(--primary-dark);
 }
 
 .profile-form input,
@@ -141,51 +187,64 @@
 .profile-form select {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: var(--radius-md);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 10px;
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.95rem;
     transition: all 0.2s ease;
+    background: rgba(248, 250, 252, 0.8);
+    /* Glass-ish */
+    backdrop-filter: blur(4px);
+    color: #1e293b;
 }
 
 .profile-form input:focus,
 .profile-form textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+    background: white;
 }
 
 .save-profile-btn {
-    background: var(--primary-color);
-    color: white;
-    padding: 14px 30px;
-    border-radius: var(--radius-md);
+    background: var(--primary-gradient);
+    color: #1a1a2e;
+    padding: 12px 32px;
+    border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
     border: none;
-    margin-top: 20px;
+    margin-top: 16px;
     transition: all 0.3s ease;
+    font-size: 0.95rem;
+    letter-spacing: 0.3px;
 }
 
 .save-profile-btn:hover {
-    background: var(--primary-dark);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
 }
 
-/* Agent Specialties Tags */
+.save-profile-btn:disabled {
+    opacity: 0.5;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ============ Specialties ============ */
 .specialties-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .specialty-tag {
-    background: #f1f5f9;
-    color: #475569;
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 0.85rem;
+    background: #fff7ed;
+    color: #d97706;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
     font-weight: 500;
+    border: 1px solid #fed7aa;
 }

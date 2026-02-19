@@ -1,11 +1,12 @@
 package com.realestate.backend.entity;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "favorites", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "property_id"})
+        @UniqueConstraint(columnNames = { "user_id", "property_id" })
 })
 public class Favorite {
 
@@ -15,7 +16,7 @@ public class Favorite {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private AppUser user;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "property_id", nullable = false)
@@ -27,7 +28,7 @@ public class Favorite {
         this.savedDate = LocalDateTime.now();
     }
 
-    public Favorite(User user, Property property) {
+    public Favorite(AppUser user, Property property) {
         this.user = user;
         this.property = property;
         this.savedDate = LocalDateTime.now();
@@ -41,11 +42,11 @@ public class Favorite {
         this.id = id;
     }
 
-    public User getUser() {
+    public AppUser getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(AppUser user) {
         this.user = user;
     }
 

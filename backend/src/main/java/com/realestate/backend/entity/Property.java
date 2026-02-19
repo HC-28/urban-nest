@@ -58,8 +58,32 @@ public class Property {
     @Column(name = "is_featured")
     private boolean isFeatured = false;
 
+    // Analytics tracking fields
+    @Column(name = "views")
+    private int views = 0;
+
+    @Column(name = "favorites")
+    private int favorites = 0;
+
+    @Column(name = "inquiries")
+    private int inquiries = 0;
+
+    @Column(name = "listed_date")
+    private java.time.LocalDateTime listedDate;
+
+    @Column(name = "last_viewed_at")
+    private java.time.LocalDateTime lastViewedAt;
+
     // Default Constructor
     public Property() {
+    }
+
+    // Lifecycle callback to set listed_date when property is first created
+    @PrePersist
+    protected void onCreate() {
+        if (this.listedDate == null) {
+            this.listedDate = java.time.LocalDateTime.now();
+        }
     }
 
     // Getters and Setters
@@ -269,5 +293,46 @@ public class Property {
 
     public void setFeatured(boolean featured) {
         isFeatured = featured;
+    }
+
+    // Analytics getters and setters
+    public int getViews() {
+        return views;
+    }
+
+    public void setViews(int views) {
+        this.views = views;
+    }
+
+    public int getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(int favorites) {
+        this.favorites = favorites;
+    }
+
+    public int getInquiries() {
+        return inquiries;
+    }
+
+    public void setInquiries(int inquiries) {
+        this.inquiries = inquiries;
+    }
+
+    public java.time.LocalDateTime getListedDate() {
+        return listedDate;
+    }
+
+    public void setListedDate(java.time.LocalDateTime listedDate) {
+        this.listedDate = listedDate;
+    }
+
+    public java.time.LocalDateTime getLastViewedAt() {
+        return lastViewedAt;
+    }
+
+    public void setLastViewedAt(java.time.LocalDateTime lastViewedAt) {
+        this.lastViewedAt = lastViewedAt;
     }
 }

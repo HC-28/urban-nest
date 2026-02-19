@@ -1,21 +1,26 @@
+/* ============ Navbar - Unique Design ============ */
 .site-header {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  background: linear-gradient(180deg, var(--primary-dark) 0%, rgba(36, 66, 57, 0.6) 80%, transparent 100%);
-  backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
+  background: rgba(15, 23, 42, 0.85);
+  /* Dark blue transparency */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 .header-inner {
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 16px 32px;
 }
 
 .brand {
@@ -23,132 +28,239 @@
   align-items: center;
   gap: 12px;
   cursor: pointer;
+  position: relative;
 }
 
 .brand-logo {
   height: 42px;
-  filter: brightness(1.1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.brand:hover .brand-logo {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .brand-title {
-  font-weight: 700;
-  color: #FFFFFF;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
   font-size: 24px;
   letter-spacing: -0.5px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+/* Navigation Links */
 .main-nav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 6px;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .main-nav a {
-  color: rgba(255, 255, 255, 0.9);
+  color: #94A3B8;
   text-decoration: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 15px;
-  transition: all 0.3s ease;
+  padding: 10px 20px;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .main-nav a:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  color: #F8FAFC;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .main-nav a.active {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
 }
 
 .map-btn {
-  color: #ffffff;
+  color: #E2E8F0;
   font-weight: 600;
-  font-size: 15px;
-  border-radius: 8px;
-  border: 2px solid var(--secondary-color);
-  padding: 10px 18px;
-  background: transparent;
+  font-size: 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .map-btn:hover {
-  background: var(--secondary-color);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary-color);
+  color: var(--primary-light);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
 }
 
+/* Right Actions */
 .header-actions {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
+/* Messages Icon Button */
+.messages-btn {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #E2E8F0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.messages-btn:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--primary-color);
+  color: var(--primary-light);
+  transform: rotate(10deg);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.messages-btn .msg-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #EF4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0F172A;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Post Property Button */
 .post-btn {
-  background: var(--primary-gradient);
-  color: #fff;
-  padding: 11px 24px;
+  background: transparent;
+  color: white;
+  padding: 10px 24px;
   border-radius: 50px;
-  border: none;
-  font-weight: 600;
+  border: 1px solid var(--primary-color);
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.post-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 100%;
+  background: var(--primary-gradient);
+  transition: width 0.3s ease;
+  z-index: -1;
 }
 
 .post-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(44, 62, 80, 0.3);
+  color: white;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+  border-color: transparent;
 }
 
+.post-btn:hover::before {
+  width: 100%;
+}
+
+/* Auth Links */
 .signup-link {
-  color: rgba(255, 255, 255, 0.9);
+  color: #94A3B8;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   transition: all 0.3s ease;
 }
 
 .signup-link:hover {
-  color: #ffffff;
+  color: #FFFFFF;
 }
 
 .login-btn {
-  background: #ffffff;
-  color: var(--primary-dark);
-  font-weight: 600;
+  background: var(--primary-gradient);
+  color: #FFFFFF;
+  font-weight: 700;
   font-size: 14px;
-  padding: 11px 26px;
+  padding: 12px 28px;
   border-radius: 50px;
   text-decoration: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  display: inline-block;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .login-btn:hover {
-  background: var(--bg-tertiary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
 }
 
+/* Profile Avatar */
 .nav-profile {
   height: 42px;
   width: 42px;
   border-radius: 50%;
   cursor: pointer;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(245, 158, 11, 0.5);
   transition: all 0.3s ease;
   object-fit: cover;
+  padding: 2px;
+  background: rgba(15, 23, 42, 0.5);
 }
 
 .nav-profile:hover {
-  border-color: #ffffff;
-  transform: scale(1.08);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .main-nav {
+    display: none;
+  }
+
+  .header-inner {
+    padding: 12px 20px;
+  }
+
+  .brand-title {
+    font-size: 20px;
+  }
 }

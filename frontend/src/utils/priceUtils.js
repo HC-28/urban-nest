@@ -7,9 +7,14 @@
 export const formatPrice = (price) => {
     if (!price || isNaN(price)) return "Price on Request";
 
-    // Convert to number
     const numPrice = Number(price);
 
-    // Format using Indian locale
+    if (numPrice >= 10000000) {
+        return `₹${(numPrice / 10000000).toFixed(2)} Cr`;
+    }
+    if (numPrice >= 100000) {
+        return `₹${(numPrice / 100000).toFixed(2)} L`;
+    }
+
     return `₹${numPrice.toLocaleString("en-IN")}`;
 };

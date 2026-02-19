@@ -1,12 +1,34 @@
 import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { userApi } from "../api/api";
+import { userApi, propertyApi, favoritesApi } from "../api/api";
 import "../styles/Profile.css";
-import { FiUser, FiSettings, FiPhone, FiMapPin, FiBriefcase, FiAward, FiInfo } from "react-icons/fi";
+import {
+    FiUser,
+    FiSettings,
+    FiPhone,
+    FiMapPin,
+    FiBriefcase,
+    FiArrowLeft,
+    FiGrid,
+    FiHeart,
+    FiLogOut,
+    FiList
+} from "react-icons/fi";
+import PropertyCard from "../components/PropertyCard";
 
 function ProfilePage() {
+    const navigate = useNavigate();
     const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+    const [activeTab, setActiveTab] = useState("overview"); // overview, listings, favorites, settings
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState({ type: "", text: "" });
+
+    // Data states
+    const [myProperties, setMyProperties] = useState([]);
+    const [favorites, setFavorites] = useState([]);
+
     const [formData, setFormData] = useState({
         name: user?.name || "",
         phone: user?.phone || "",
@@ -17,9 +39,37 @@ function ProfilePage() {
         experience: user?.experience || "",
         specialties: user?.specialties || "",
     });
-    const [activeTab, setActiveTab] = useState("overview");
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState({ type: "", text: "" });
+
+    useEffect(() => {
+        if (!user) {
+            navigate("/login");
+            return;
+        }
+
+        if (activeTab === "listings" && user.role?.toUpperCase() === "AGENT") {
+            fetchMyProperties();
+        } else if (activeTab === "favorites") {
+            fetchFavorites();
+        }
+    }, [activeTab, user, navigate]);
+
+    const fetchMyProperties = async () => {
+        try {
+            const res = await propertyApi.get(`/agent/${user.id}`);
+            setMyProperties(res.data);
+        } catch (err) {
+            console.error("Error fetching properties", err);
+        }
+    };
+
+    const fetchFavorites = async () => {
+        try {
+            const res = await favoritesApi.get(`/user/${user.id}`);
+            setFavorites(res.data);
+        } catch (err) {
+            console.error("Error fetching favorites", err);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -50,19 +100,14 @@ function ProfilePage() {
         }
     };
 
-    if (!user) {
-        return (
-            <div className="profile-page">
-                <Navbar />
-                <div className="profile-container">
-                    <p>Please login to view your profile.</p>
-                </div>
-                <Footer />
-            </div>
-        );
-    }
+    const handleLogout = () => {
+        localStorage.removeItem("user");
+        window.location.href = "/";
+    };
 
-    const isAgent = user.role === "AGENT";
+    if (!user) return null;
+
+    const isAgent = user.role?.toUpperCase() === "AGENT";
 
     return (
         <div className="profile-page">
@@ -71,33 +116,77 @@ function ProfilePage() {
                 {/* Sidebar */}
                 <div className="profile-sidebar">
                     <div className="profile-sidebar-header">
-                        <img
-                            src={user.profilePicture || "https://via.placeholder.com/150"}
-                            alt={user.name}
-                            className="profile-sidebar-avatar"
-                            onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
-                        />
+                        <div className="profile-avatar-container">
+                            <img
+                                src={formData.profilePicture || user.profilePicture || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23e2e8f0' width='150' height='150'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='16' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EUser%3C/text%3E%3C/svg%3E"}
+                                alt={user.name}
+                                className="profile-sidebar-avatar"
+                                onError={(e) => { e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23e2e8f0' width='150' height='150'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='16' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EUser%3C/text%3E%3C/svg%3E"; }}
+                            />
+                            <label htmlFor="avatar-upload" className="avatar-upload-btn">
+                                📷
+                            </label>
+                            <input
+                                id="avatar-upload"
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file) {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                            setFormData(prev => ({ ...prev, profilePicture: reader.result }));
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }
+                                }}
+                                style={{ display: 'none' }}
+                            />
+                        </div>
                         <h2 className="profile-sidebar-name">{user.name}</h2>
-                        <span className="profile-sidebar-role">{user.role}</span>
+                        <span className="profile-sidebar-role">{user.role || "User"}</span>
                     </div>
-
                     <div className="profile-nav">
+                        <div
+                            className="profile-nav-item"
+                            onClick={() => navigate("/")}
+                            style={{ color: "var(--primary-color)", fontWeight: "bold" }}
+                        >
+                            <FiArrowLeft /> Back to Home
+                        </div>
                         <div
                             className={`profile-nav-item ${activeTab === "overview" ? "active" : ""}`}
                             onClick={() => setActiveTab("overview")}
                         >
-                            <FiUser /> {isAgent ? "Professional Profile" : "Personal Info"}
+                            <div className="nav-icon">👤</div> Edit Profile
+                        </div>
+                        {isAgent && (
+                            <div
+                                className={`profile-nav-item ${activeTab === "listings" ? "active" : ""}`}
+                                onClick={() => setActiveTab("listings")}
+                            >
+                                <FiList /> My Listings
+                            </div>
+                        )}
+                        <div
+                            className={`profile-nav-item ${activeTab === "favorites" ? "active" : ""}`}
+                            onClick={() => setActiveTab("favorites")}
+                        >
+                            <FiHeart /> Favorites
                         </div>
                         <div
                             className={`profile-nav-item ${activeTab === "settings" ? "active" : ""}`}
                             onClick={() => setActiveTab("settings")}
                         >
-                            <FiSettings /> Account Settings
+                            <FiSettings /> Settings
+                        </div>
+                        <div className="profile-nav-item" onClick={handleLogout} style={{ color: "#ef4444" }}>
+                            <FiLogOut /> Logout
                         </div>
                     </div>
                 </div>
 
-                {/* content Area */}
+                {/* Content Area */}
                 <div className="profile-content">
                     {activeTab === "overview" && (
                         <div className="profile-section">
@@ -217,16 +306,67 @@ function ProfilePage() {
                         </div>
                     )}
 
+                    {activeTab === "listings" && isAgent && (
+                        <div className="profile-section">
+                            <h1 className="section-title">My Properties</h1>
+                            <div className="properties-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                                {myProperties.length > 0 ? (
+                                    myProperties.map(p => (
+                                        <div key={p.id} style={{ position: 'relative' }}>
+                                            <PropertyCard property={p} />
+                                            <div style={{ padding: '10px', background: '#f8fafc', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px', marginTop: '-10px', border: '1px solid #e2e8f0', borderTop: 'none' }}>
+                                                <span className={`status-badge ${p.active ? 'active' : 'inactive'}`} style={{
+                                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem',
+                                                    background: p.active ? '#dcfce7' : '#fee2e2',
+                                                    color: p.active ? '#166534' : '#991b1b'
+                                                }}>
+                                                    {p.active ? 'Active' : 'Unlisted'}
+                                                </span>
+                                                <Link to="/dashboard" style={{ float: 'right', fontSize: '0.9rem', color: '#3b82f6' }}>Manage in Dashboard</Link>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>No properties listed yet.</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "favorites" && (
+                        <div className="profile-section">
+                            <h1 className="section-title">My Favorites</h1>
+                            <div className="properties-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                                {favorites.length > 0 ? (
+                                    favorites.map(p => <PropertyCard key={p.id} property={p} />)
+                                ) : (
+                                    <p>No favorites yet.</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === "settings" && (
                         <div className="profile-section">
                             <h1 className="section-title">Account Settings</h1>
-                            <p style={{ color: '#64748b' }}>Account security and privacy settings coming soon.</p>
+                            <div className="settings-options">
+                                <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '20px' }}>
+                                    <h3>Change Password</h3>
+                                    <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '15px' }}>Ensure your account is secure by using a strong password.</p>
+                                    <button disabled style={{ padding: '8px 16px', background: '#94a3b8', color: 'white', border: 'none', borderRadius: '6px', cursor: 'not-allowed' }}>Change Password (Coming Soon)</button>
+                                </div>
+                                <div style={{ padding: '20px', border: '1px solid #fee2e2', borderRadius: '8px', background: '#fef2f2' }}>
+                                    <h3 style={{ color: '#b91c1c' }}>Danger Zone</h3>
+                                    <p style={{ color: '#b91c1c', fontSize: '0.9rem', marginBottom: '15px' }}>Once you delete your account, there is no going back. Please be certain.</p>
+                                    <button disabled style={{ padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'not-allowed' }}>Delete Account</button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
             </div>
             <Footer />
-        </div>
+        </div >
     );
 }
 

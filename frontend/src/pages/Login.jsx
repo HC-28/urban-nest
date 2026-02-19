@@ -1,80 +1,85 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/Auth.css";
+import { Link } from "react-router-dom";
+import { authApi } from "../api/api";
+import "../styles/Auth.css"; // We'll create/update this shared CSS
+import heroBg from "../assets/re-back.jpg";
 import logo from "../assets/logo.png";
-import heroBg from "../assets/re-back.jpg"; // Unified Background
-import { userApi } from "../api/api"; // your axios instance
 
 function Login() {
   const navigate = useNavigate();
-  const [user, setUser] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setUser({ ...user, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+    setError(null);
     try {
-      const res = await userApi.post("/login", user, { withCredentials: true });
-      const data = res.data;
-
-      // Save user info to localStorage
-      localStorage.setItem("user", JSON.stringify(data));
-
-      alert("Login successful!");
-      navigate("/dashboard");
+      const res = await authApi.post("/login", formData);
+      localStorage.setItem("user", JSON.stringify(res.data));
+      window.dispatchEvent(new Event("storage"));
+      navigate("/");
     } catch (err) {
-      console.error("Login error:", err);
-
-      let msg = "Login failed. Please try again.";
-      if (err.response?.data?.message) {
-        msg = err.response.data.message;
-      } else if (!err.response) {
-        msg = "Unable to reach server. Please try again.";
-      }
-
-      alert(msg);
+      setError(err.response?.data || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
-      <form className="auth-box" onSubmit={handleSubmit}>
-        <img src={logo} className="auth-logo" alt="Logo" />
-        <h2>Login</h2>
+    <div className="auth-page" style={{ backgroundImage: `url(${heroBg})` }}>
+      <div className="auth-overlay"></div>
 
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={user.email}
-          onChange={handleChange}
-          required
-        />
+      <div className="auth-card glass-strong arrow-border">
+        <div className="auth-header">
+          {/* Logo or Icon could go here */}
+          <div className="auth-logo-icon">🏠</div>
+          <h2>Welcome Back</h2>
+          <p>Login to access your personalized dashboard</p>
+        </div>
 
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={user.password}
-          onChange={handleChange}
-          required
-        />
+        {error && <div className="auth-error">{error}</div>}
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label>Email Address</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="name@example.com"
+              required
+            />
+          </div>
 
-        <p className="auth-link" onClick={() => navigate("/signup")}>
-          Don’t have an account? Sign up
-        </p>
-      </form>
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <button type="submit" className="auth-btn glow-amber" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
+        </div>
+      </div>
     </div>
   );
 }

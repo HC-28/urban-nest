@@ -64,10 +64,10 @@ function AgentProfile() {
                 <div className="agent-profile-container">
                     <div className="agent-profile-info">
                         <img
-                            src={agent.profilePicture || "https://via.placeholder.com/150"}
+                            src={agent.profilePicture || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23e2e8f0' width='150' height='150'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='16' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EAgent%3C/text%3E%3C/svg%3E"}
                             alt={agent.name}
                             className="agent-profile-image"
-                            onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+                            onError={(e) => { e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23e2e8f0' width='150' height='150'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='16' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EAgent%3C/text%3E%3C/svg%3E"; }}
                         />
                         <div className="agent-details">
                             <h1>{agent.name}</h1>

@@ -59,6 +59,15 @@ function Navbar() {
                     </nav>
 
                     <div className="header-actions">
+                        {user && (
+                            <button
+                                className="messages-btn"
+                                onClick={() => navigate(user.role === "AGENT" ? "/agent/chats" : "/chats")}
+                                title="Messages"
+                            >
+                                💬
+                            </button>
+                        )}
                         {user && user.role === "AGENT" && (
                             <button
                                 className="post-btn"
