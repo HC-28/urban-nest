@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { userApi, propertyApi, favoritesApi } from "../api/api";
+import { FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import "../styles/Profile.css";
 import {
     FiUser,
@@ -28,6 +29,13 @@ function ProfilePage() {
     // Data states
     const [myProperties, setMyProperties] = useState([]);
     const [favorites, setFavorites] = useState([]);
+
+    // Change password state
+    const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    const [passwordMessage, setPasswordMessage] = useState({ type: "", text: "" });
+    const [changingPassword, setChangingPassword] = useState(false);
+    const [showCurrentPw, setShowCurrentPw] = useState(false);
+    const [showNewPw, setShowNewPw] = useState(false);
 
     const [formData, setFormData] = useState({
         name: user?.name || "",
@@ -56,9 +64,45 @@ function ProfilePage() {
     const fetchMyProperties = async () => {
         try {
             const res = await propertyApi.get(`/agent/${user.id}`);
-            setMyProperties(res.data);
+            // Sort: featured first, then by id descending
+            const sorted = [...res.data].sort((a, b) => {
+                if (a.featured && !b.featured) return -1;
+                if (!a.featured && b.featured) return 1;
+                return (b.id || 0) - (a.id || 0);
+            });
+            setMyProperties(sorted);
         } catch (err) {
             console.error("Error fetching properties", err);
+        }
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        setPasswordMessage({ type: "", text: "" });
+
+        if (passwordData.newPassword.length < 6) {
+            setPasswordMessage({ type: "error", text: "New password must be at least 6 characters" });
+            return;
+        }
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            setPasswordMessage({ type: "error", text: "New passwords do not match" });
+            return;
+        }
+
+        setChangingPassword(true);
+        try {
+            await userApi.put("/change-password", {
+                email: user.email,
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+            });
+            setPasswordMessage({ type: "success", text: "Password changed successfully!" });
+            setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        } catch (err) {
+            const msg = err.response?.data || "Failed to change password";
+            setPasswordMessage({ type: "error", text: typeof msg === 'string' ? msg : "Failed to change password" });
+        } finally {
+            setChangingPassword(false);
         }
     };
 
@@ -291,8 +335,8 @@ function ProfilePage() {
                                             padding: '10px',
                                             borderRadius: '5px',
                                             marginBottom: '15px',
-                                            backgroundColor: message.type === 'success' ? '#dcfce7' : '#fee2e2',
-                                            color: message.type === 'success' ? '#166534' : '#991b1b',
+                                            backgroundColor: message.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                                            color: message.type === 'success' ? '#34D399' : '#F87171',
                                             fontSize: '0.9rem'
                                         }}>
                                             {message.text}
@@ -313,16 +357,16 @@ function ProfilePage() {
                                 {myProperties.length > 0 ? (
                                     myProperties.map(p => (
                                         <div key={p.id} style={{ position: 'relative' }}>
-                                            <PropertyCard property={p} />
-                                            <div style={{ padding: '10px', background: '#f8fafc', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px', marginTop: '-10px', border: '1px solid #e2e8f0', borderTop: 'none' }}>
+                                            <PropertyCard property={p} showFeaturedBadge={true} />
+                                            <div style={{ padding: '10px', background: 'rgba(15, 23, 42, 0.5)', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px', marginTop: '-10px', border: '1px solid rgba(255,255,255,0.06)', borderTop: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                                 <span className={`status-badge ${p.active ? 'active' : 'inactive'}`} style={{
                                                     padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem',
-                                                    background: p.active ? '#dcfce7' : '#fee2e2',
-                                                    color: p.active ? '#166534' : '#991b1b'
+                                                    background: p.active ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                                                    color: p.active ? '#34D399' : '#F87171'
                                                 }}>
                                                     {p.active ? 'Active' : 'Unlisted'}
                                                 </span>
-                                                <Link to="/dashboard" style={{ float: 'right', fontSize: '0.9rem', color: '#3b82f6' }}>Manage in Dashboard</Link>
+                                                <Link to="/dashboard" style={{ fontSize: '0.9rem', color: 'var(--primary-color)' }}>Manage in Dashboard</Link>
                                             </div>
                                         </div>
                                     ))
@@ -350,15 +394,83 @@ function ProfilePage() {
                         <div className="profile-section">
                             <h1 className="section-title">Account Settings</h1>
                             <div className="settings-options">
-                                <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '20px' }}>
-                                    <h3>Change Password</h3>
-                                    <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '15px' }}>Ensure your account is secure by using a strong password.</p>
-                                    <button disabled style={{ padding: '8px 16px', background: '#94a3b8', color: 'white', border: 'none', borderRadius: '6px', cursor: 'not-allowed' }}>Change Password (Coming Soon)</button>
+                                {/* Change Password */}
+                                <div style={{ padding: '24px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', marginBottom: '20px', background: 'rgba(30,41,59,0.5)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                                        <FiLock style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }} />
+                                        <h3 style={{ color: 'white', margin: 0 }}>Change Password</h3>
+                                    </div>
+                                    <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '20px' }}>Ensure your account is secure by using a strong password.</p>
+
+                                    {passwordMessage.text && (
+                                        <div style={{
+                                            padding: '10px 14px', borderRadius: '8px', marginBottom: '16px',
+                                            background: passwordMessage.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                                            color: passwordMessage.type === 'success' ? '#34D399' : '#F87171',
+                                            fontSize: '0.9rem'
+                                        }}>
+                                            {passwordMessage.text}
+                                        </div>
+                                    )}
+
+                                    <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '400px' }}>
+                                        <div style={{ position: 'relative' }}>
+                                            <label style={{ display: 'block', color: '#94A3B8', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Current Password</label>
+                                            <input
+                                                type={showCurrentPw ? 'text' : 'password'}
+                                                value={passwordData.currentPassword}
+                                                onChange={(e) => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))}
+                                                required
+                                                style={{ width: '100%', padding: '12px 40px 12px 16px', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#E2E8F0', fontSize: '0.95rem', fontFamily: 'inherit' }}
+                                                placeholder="Enter current password"
+                                            />
+                                            <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} style={{ position: 'absolute', right: '12px', top: '34px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px' }}>
+                                                {showCurrentPw ? <FiEyeOff /> : <FiEye />}
+                                            </button>
+                                        </div>
+                                        <div style={{ position: 'relative' }}>
+                                            <label style={{ display: 'block', color: '#94A3B8', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>New Password</label>
+                                            <input
+                                                type={showNewPw ? 'text' : 'password'}
+                                                value={passwordData.newPassword}
+                                                onChange={(e) => setPasswordData(p => ({ ...p, newPassword: e.target.value }))}
+                                                required
+                                                minLength={6}
+                                                style={{ width: '100%', padding: '12px 40px 12px 16px', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#E2E8F0', fontSize: '0.95rem', fontFamily: 'inherit' }}
+                                                placeholder="Min 6 characters"
+                                            />
+                                            <button type="button" onClick={() => setShowNewPw(!showNewPw)} style={{ position: 'absolute', right: '12px', top: '34px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px' }}>
+                                                {showNewPw ? <FiEyeOff /> : <FiEye />}
+                                            </button>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', color: '#94A3B8', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Confirm New Password</label>
+                                            <input
+                                                type="password"
+                                                value={passwordData.confirmPassword}
+                                                onChange={(e) => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))}
+                                                required
+                                                minLength={6}
+                                                style={{ width: '100%', padding: '12px 16px', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#E2E8F0', fontSize: '0.95rem', fontFamily: 'inherit' }}
+                                                placeholder="Re-enter new password"
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={changingPassword}
+                                            className="save-profile-btn"
+                                            style={{ marginTop: '4px', width: 'fit-content' }}
+                                        >
+                                            {changingPassword ? 'Changing...' : 'Change Password'}
+                                        </button>
+                                    </form>
                                 </div>
-                                <div style={{ padding: '20px', border: '1px solid #fee2e2', borderRadius: '8px', background: '#fef2f2' }}>
-                                    <h3 style={{ color: '#b91c1c' }}>Danger Zone</h3>
-                                    <p style={{ color: '#b91c1c', fontSize: '0.9rem', marginBottom: '15px' }}>Once you delete your account, there is no going back. Please be certain.</p>
-                                    <button disabled style={{ padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'not-allowed' }}>Delete Account</button>
+
+                                {/* Danger Zone */}
+                                <div style={{ padding: '24px', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '12px', background: 'rgba(239,68,68,0.08)' }}>
+                                    <h3 style={{ color: '#F87171', marginBottom: '8px' }}>Danger Zone</h3>
+                                    <p style={{ color: '#FCA5A5', fontSize: '0.9rem', marginBottom: '15px' }}>Once you delete your account, there is no going back. Please be certain.</p>
+                                    <button disabled style={{ padding: '8px 16px', background: '#991B1B', color: '#FCA5A5', border: 'none', borderRadius: '6px', cursor: 'not-allowed' }}>Delete Account</button>
                                 </div>
                             </div>
                         </div>

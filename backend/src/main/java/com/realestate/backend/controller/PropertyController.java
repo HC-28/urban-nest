@@ -43,6 +43,19 @@ public class PropertyController {
         }
     }
 
+    // GET PROPERTIES BY AGENT ID - For agent dashboard
+    @GetMapping(value = "/agent/{agentId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getPropertiesByAgent(@PathVariable Long agentId) {
+        try {
+            List<Property> properties = propertyRepository.findByAgentId(agentId);
+            return ResponseEntity.ok(properties);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error");
+        }
+    }
+
     // ... existing endpoints ...
 
     // GET SINGLE PROPERTY BY ID

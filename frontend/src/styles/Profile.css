@@ -1,4 +1,4 @@
-/* ============ Profile Page - 99acres Inspired ============ */
+/* ============ Profile Page - Dark Theme ============ */
 .profile-page {
     min-height: 100vh;
     background: var(--bg-primary);
@@ -24,11 +24,13 @@
 /* ============ Sidebar ============ */
 .profile-sidebar {
     flex: 0 0 260px;
-    background: #ffffff;
-    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
     padding: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    color: #1e293b;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #CBD5E1;
     height: fit-content;
     overflow: hidden;
 }
@@ -36,9 +38,10 @@
 .profile-sidebar-header {
     text-align: center;
     padding: 30px 20px 20px;
-    background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
     color: white;
     margin-bottom: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .profile-sidebar-avatar {
@@ -47,7 +50,8 @@
     border-radius: 50%;
     object-fit: cover;
     margin-bottom: 12px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .profile-sidebar-name {
@@ -63,7 +67,7 @@
     text-transform: uppercase;
     color: var(--primary-color);
     letter-spacing: 1.5px;
-    background: rgba(245, 158, 11, 0.15);
+    background: rgba(224, 122, 56, 0.15);
     padding: 3px 12px;
     border-radius: 20px;
     display: inline-block;
@@ -81,40 +85,58 @@
     align-items: center;
     gap: 10px;
     padding: 12px 16px;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
     font-weight: 500;
     font-size: 0.9rem;
-    color: #64748b;
+    color: #94A3B8;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
 }
 
 .profile-nav-item:hover {
-    background: #f1f5f9;
-    color: #1e293b;
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
 }
 
 .profile-nav-item.active {
-    background: var(--primary-color);
-    color: #1a1a2e;
+    background: rgba(224, 122, 56, 0.15);
+    color: var(--primary-color);
     font-weight: 600;
+}
+
+.profile-nav-item.logout {
+    color: #EF4444;
+    margin-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0 0 10px 10px;
+}
+
+.profile-nav-item.logout:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #F87171;
 }
 
 /* ============ Content Area ============ */
 .profile-content {
     flex: 1;
-    background: #ffffff;
-    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
     padding: 32px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    color: #1e293b;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #E2E8F0;
 }
 
 .section-title {
     font-size: 1.4rem;
     margin-bottom: 24px;
-    color: #1e293b;
-    border-bottom: 2px solid #f1f5f9;
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding-bottom: 14px;
     font-weight: 700;
 }
@@ -147,7 +169,7 @@
     margin-bottom: 6px;
     font-weight: 600;
     font-size: 0.8rem;
-    color: #64748b;
+    color: #94A3B8;
     letter-spacing: 0.3px;
     text-transform: uppercase;
 }
@@ -172,7 +194,7 @@
     justify-content: center;
     color: white;
     cursor: pointer;
-    border: 2px solid white;
+    border: 2px solid rgba(15, 23, 42, 0.8);
     font-size: 14px;
     transition: all 0.2s ease;
 }
@@ -187,30 +209,34 @@
 .profile-form select {
     width: 100%;
     padding: 12px 16px;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     font-family: inherit;
     font-size: 0.95rem;
     transition: all 0.2s ease;
-    background: rgba(248, 250, 252, 0.8);
-    /* Glass-ish */
+    background: rgba(15, 23, 42, 0.5);
     backdrop-filter: blur(4px);
-    color: #1e293b;
+    color: #E2E8F0;
 }
 
 .profile-form input:focus,
 .profile-form textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
-    background: white;
+    box-shadow: 0 0 0 3px rgba(224, 122, 56, 0.15);
+    background: rgba(15, 23, 42, 0.7);
+}
+
+.profile-form input::placeholder,
+.profile-form textarea::placeholder {
+    color: #64748B;
 }
 
 .save-profile-btn {
     background: var(--primary-gradient);
-    color: #1a1a2e;
+    color: white;
     padding: 12px 32px;
-    border-radius: 8px;
+    border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
     border: none;
@@ -222,7 +248,7 @@
 
 .save-profile-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 15px rgba(224, 122, 56, 0.3);
 }
 
 .save-profile-btn:disabled {
@@ -240,11 +266,25 @@
 }
 
 .specialty-tag {
-    background: #fff7ed;
-    color: #d97706;
+    background: rgba(224, 122, 56, 0.1);
+    color: var(--primary-color);
     padding: 5px 12px;
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
-    border: 1px solid #fed7aa;
+    border: 1px solid rgba(224, 122, 56, 0.2);
+}
+
+/* ============ Favorites Grid ============ */
+.profile-content .properties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+/* ============ My Listings Section ============ */
+.listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
 }

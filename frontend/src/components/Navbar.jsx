@@ -14,7 +14,12 @@ function Navbar() {
     const location = useLocation();
 
     const handleUserUpdate = (updatedUser) => setUser(updatedUser);
-    const isActive = (path) => location.pathname === path;
+    const isActive = (path, search) => {
+        if (search) {
+            return location.pathname === path && location.search.includes(search);
+        }
+        return location.pathname === path;
+    };
 
     return (
         <>
@@ -33,12 +38,22 @@ function Navbar() {
                     <nav className="main-nav">
                         <Link
                             to="/properties?purpose=Sale"
-                            className={isActive("/properties") ? "active" : ""}
+                            className={isActive("/properties", "purpose=Sale") ? "active" : ""}
                         >
                             Buy
                         </Link>
-                        <Link to="/properties?purpose=Rent">Rent</Link>
-                        <Link to="/properties?type=Projects">Projects</Link>
+                        <Link
+                            to="/properties?purpose=Rent"
+                            className={isActive("/properties", "purpose=Rent") ? "active" : ""}
+                        >
+                            Rent
+                        </Link>
+                        <Link
+                            to="/properties?type=Projects"
+                            className={isActive("/properties", "type=Projects") ? "active" : ""}
+                        >
+                            Projects
+                        </Link>
                         <Link
                             to="/agents"
                             className={isActive("/agents") ? "active" : ""}

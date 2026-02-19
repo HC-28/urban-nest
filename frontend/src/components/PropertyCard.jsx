@@ -6,7 +6,7 @@ import { favoritesApi } from "../api/api";
 import { formatPrice as defaultFormatPrice } from "../utils/priceUtils";
 import { parsePropertyImages } from "../utils/imageUtils";
 
-function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, onUnfav }) {
+function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, onUnfav, showFeaturedBadge = false }) {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
@@ -94,7 +94,7 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
           </span>
         )}
 
-        {property.featured && (
+        {showFeaturedBadge && property.featured && (
           <span className="featured-badge">Featured</span>
         )}
 

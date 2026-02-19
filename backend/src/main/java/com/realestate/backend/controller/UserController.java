@@ -205,4 +205,40 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error");
         }
     }
+
+    // CHANGE PASSWORD API
+    @PutMapping(value = "/change-password", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            String currentPassword = request.get("currentPassword");
+            String newPassword = request.get("newPassword");
+
+            if (email == null || currentPassword == null || newPassword == null) {
+                return ResponseEntity.badRequest().body("Email, current password, and new password are required");
+            }
+
+            if (newPassword.length() < 6) {
+                return ResponseEntity.badRequest().body("New password must be at least 6 characters");
+            }
+
+            AppUser dbUser = userRepository.findByEmail(email).orElse(null);
+
+            if (dbUser == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+
+            if (!dbUser.getPassword().equals(currentPassword)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Current password is incorrect");
+            }
+
+            dbUser.setPassword(newPassword);
+            userRepository.save(dbUser);
+
+            return ResponseEntity.ok("Password changed successfully");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error");
+        }
+    }
 }

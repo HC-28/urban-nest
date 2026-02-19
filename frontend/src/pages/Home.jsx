@@ -113,7 +113,8 @@ export default function Home() {
             try {
                 const res = await propertyApi.get("");
                 const data = res.data;
-                const transformed = data.slice(0, 4).map((prop) => {
+                const sorted = data.sort((a, b) => (b.views || 0) - (a.views || 0));
+                const transformed = sorted.slice(0, 4).map((prop) => {
                     return {
                         id: prop.id,
                         title: prop.title || "Untitled Property",
@@ -125,7 +126,7 @@ export default function Home() {
                         // Let's pass raw price and let PropertyCard format it, OR match PropertyCard expectations.
                         // PropertyCard uses: price, title, location|city|pinCode, purpose, bhk, area, bathrooms
                         type: prop.type,
-                        purpose: "Sale", // Default or from prop
+                        purpose: prop.purpose || "Sale",
                         bhk: prop.bhk,
                         area: prop.area,
                         bathrooms: prop.bathrooms,

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/PostProperty.css";
 import { FiUpload, FiX, FiCheck } from "react-icons/fi";
 import { propertyApi } from "../api/api";
-import heroBg from "../assets/re-back.jpg"; // Add this line with other imports
+import heroBg from "../assets/re-back.jpg";
 function PostProperty() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
@@ -35,21 +35,44 @@ function PostProperty() {
     images: []
   });
 
-  // Popular cities and localities
-  const popularCities = [
-    "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Ahmedabad",
-    "Chennai", "Kolkata", "Pune", "Jaipur", "Surat",
-    "Lucknow", "Kanpur", "Nagpur", "Indore", "Thane",
-    "Bhopal", "Visakhapatnam", "Pimpri-Chinchwad", "Patna", "Vadodara"
-  ];
+  // Supported cities (matching geojson files)
+  const supportedCities = ["Mumbai", "Ahmedabad", "Bangalore"];
 
-  const locationsByCity = {
-    "Mumbai": ["Bandra", "Andheri", "Powai", "Juhu", "Worli", "Colaba", "Dadar", "Malad"],
-    "Delhi": ["Connaught Place", "Dwarka", "Rohini", "Saket", "Vasant Kunj", "Karol Bagh"],
-    "Bangalore": ["Koramangala", "Whitefield", "Indiranagar", "HSR Layout", "Electronic City"],
-    "Hyderabad": ["Banjara Hills", "Jubilee Hills", "Gachibowli", "Madhapur", "Hitech City"],
-    "Pune": ["Koregaon Park", "Hinjewadi", "Wakad", "Baner", "Kothrud", "Viman Nagar"]
-  };
+  // Dynamic area/pincode state from geojson
+  const [geoAreas, setGeoAreas] = useState([]); // [{area_name, pin_code}, ...]
+  const [loadingGeo, setLoadingGeo] = useState(false);
+
+  // When city changes, fetch geojson and extract areas
+  useEffect(() => {
+    if (!formData.city) {
+      setGeoAreas([]);
+      return;
+    }
+    const cityFile = formData.city.toLowerCase();
+    setLoadingGeo(true);
+    fetch(`/geo/${cityFile}.geojson`)
+      .then(res => res.json())
+      .then(data => {
+        // Extract unique area_name + pin_code pairs
+        const areaMap = new Map();
+        data.features.forEach(f => {
+          const area = f.properties.area_name || f.properties.name || "";
+          const pin = String(f.properties.pin_code || "");
+          if (area && !areaMap.has(area)) {
+            areaMap.set(area, pin);
+          }
+        });
+        const areas = Array.from(areaMap.entries())
+          .map(([area_name, pin_code]) => ({ area_name, pin_code }))
+          .sort((a, b) => a.area_name.localeCompare(b.area_name));
+        setGeoAreas(areas);
+      })
+      .catch(err => {
+        console.error("Error loading geojson:", err);
+        setGeoAreas([]);
+      })
+      .finally(() => setLoadingGeo(false));
+  }, [formData.city]);
 
   // Check if property type needs BHK/floor fields
   const needsBHK = !["Plot", "Commercial"].includes(formData.type);
@@ -272,7 +295,7 @@ function PostProperty() {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        backgroundImage: `url(${heroBg})`,
+        backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95)), url(${heroBg})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed'
@@ -504,11 +527,13 @@ function PostProperty() {
                   <select
                     name="city"
                     value={formData.city}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, city: e.target.value, location: "", pinCode: "" }));
+                    }}
                     required
                   >
                     <option value="">Select City</option>
-                    {popularCities.map(city => (
+                    {supportedCities.map(city => (
                       <option key={city} value={city}>{city}</option>
                     ))}
                   </select>
@@ -516,18 +541,25 @@ function PostProperty() {
 
                 <div className="form-group">
                   <label>Location/Area *</label>
-                  {formData.city && locationsByCity[formData.city] ? (
+                  {formData.city && geoAreas.length > 0 ? (
                     <select
                       name="location"
                       value={formData.location}
-                      onChange={handleChange}
+                      onChange={(e) => {
+                        const selectedArea = e.target.value;
+                        const match = geoAreas.find(a => a.area_name === selectedArea);
+                        setFormData(prev => ({
+                          ...prev,
+                          location: selectedArea,
+                          pinCode: match ? match.pin_code : prev.pinCode
+                        }));
+                      }}
                       required
                     >
-                      <option value="">Select Location</option>
-                      {locationsByCity[formData.city].map(loc => (
-                        <option key={loc} value={loc}>{loc}</option>
+                      <option value="">{loadingGeo ? "Loading areas..." : "Select Area"}</option>
+                      {geoAreas.map(a => (
+                        <option key={a.area_name} value={a.area_name}>{a.area_name}</option>
                       ))}
-                      <option value="other">Other (Type below)</option>
                     </select>
                   ) : (
                     <input
@@ -535,28 +567,42 @@ function PostProperty() {
                       name="location"
                       value={formData.location}
                       onChange={handleChange}
-                      placeholder="e.g., Bandra West"
+                      placeholder={formData.city ? "Loading areas..." : "Select a city first"}
                       required
+                      disabled={!formData.city}
                     />
                   )}
                 </div>
                 <div className="form-group">
                   <label>Pincode *</label>
-                  <input
-                    type="text"
-                    name="pinCode"
-                    required
-                    placeholder="Enter 6-digit pincode"
-                    maxLength="6"
-                    // Regex: Only allows exactly 6 digits
-                    pattern="\d{6}"
-                    value={formData.pinCode}
-                    onChange={(e) => {
-                      // Prevent typing non-numeric characters
-                      const value = e.target.value.replace(/\D/g, "");
-                      setFormData({ ...formData, pinCode: value });
-                    }}
-                  />
+                  {formData.city && geoAreas.length > 0 ? (
+                    <select
+                      name="pinCode"
+                      value={formData.pinCode}
+                      onChange={(e) => setFormData(prev => ({ ...prev, pinCode: e.target.value }))}
+                      required
+                    >
+                      <option value="">Select Pincode</option>
+                      {[...new Set(geoAreas.map(a => a.pin_code))].sort().map(pin => (
+                        <option key={pin} value={pin}>{pin}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      name="pinCode"
+                      required
+                      placeholder="Select a city first"
+                      maxLength="6"
+                      pattern="\d{6}"
+                      value={formData.pinCode}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setFormData({ ...formData, pinCode: value });
+                      }}
+                      disabled={!formData.city}
+                    />
+                  )}
                 </div>
               </div>
 

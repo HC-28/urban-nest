@@ -117,7 +117,7 @@ function AgentProfile() {
                         </div>
                         <div className="properties-grid">
                             {agent.featuredProperties.map((property) => (
-                                <PropertyCard key={property.id} property={property} />
+                                <PropertyCard key={property.id} property={property} showFeaturedBadge={true} />
                             ))}
                         </div>
                     </div>
