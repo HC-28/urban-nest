@@ -74,6 +74,16 @@ public class Property {
     @Column(name = "last_viewed_at")
     private java.time.LocalDateTime lastViewedAt;
 
+    // --- Sold Property Fields ---
+    @Column(name = "is_sold")
+    private boolean isSold = false;
+
+    @Column(name = "sold_to_user_id")
+    private Long soldToUserId;
+
+    @Column(name = "sold_at")
+    private java.time.LocalDateTime soldAt;
+
     // Default Constructor
     public Property() {
     }
@@ -334,5 +344,29 @@ public class Property {
 
     public void setLastViewedAt(java.time.LocalDateTime lastViewedAt) {
         this.lastViewedAt = lastViewedAt;
+    }
+
+    public boolean isSold() {
+        return isSold;
+    }
+
+    public void setSold(boolean sold) {
+        isSold = sold;
+    }
+
+    public Long getSoldToUserId() {
+        return soldToUserId;
+    }
+
+    public void setSoldToUserId(Long soldToUserId) {
+        this.soldToUserId = soldToUserId;
+    }
+
+    public java.time.LocalDateTime getSoldAt() {
+        return soldAt;
+    }
+
+    public void setSoldAt(java.time.LocalDateTime soldAt) {
+        this.soldAt = soldAt;
     }
 }

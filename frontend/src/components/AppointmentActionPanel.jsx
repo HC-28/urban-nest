@@ -1,0 +1,213 @@
+import React, { useState, useEffect } from "react";
+import { appointmentApi, slotsApi, chatApi } from "../api/api";
+import "../styles/AppointmentActionPanel.css";
+
+export default function AppointmentActionPanel({
+    propertyId,
+    buyerId,
+    agentId,
+    userRole,
+    isHeader = false
+}) {
+    const [appointment, setAppointment] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [availableSlots, setAvailableSlots] = useState([]);
+    const [showSlots, setShowSlots] = useState(false);
+
+    useEffect(() => {
+        fetchAppointmentStatus();
+    }, [propertyId, buyerId, agentId]);
+
+    const fetchAppointmentStatus = async () => {
+        setLoading(true);
+        try {
+            // Fetch appointments for buyer, filter by this property/agent
+            const res = await appointmentApi.get(`/buyer/${buyerId}`);
+            if (res.data && Array.isArray(res.data)) {
+                const activeAppt = res.data.find(a =>
+                    String(a.propertyId) === String(propertyId) &&
+                    String(a.agentId) === String(agentId) &&
+                    a.status !== 'cancelled' // keep expired, pending, confirmed, awaiting_buyer, etc.
+                );
+
+                // If there's an active appointment, sort to find the latest
+                if (activeAppt) {
+                    const sorted = res.data
+                        .filter(a => String(a.propertyId) === String(propertyId) && String(a.agentId) === String(agentId) && a.status !== 'cancelled')
+                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    setAppointment(sorted[0]);
+                } else {
+                    setAppointment(null);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch appointment status", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFetchSlots = async () => {
+        try {
+            const res = await slotsApi.get(`/property/${propertyId}`);
+            setAvailableSlots(res.data);
+            setShowSlots(true);
+        } catch (e) {
+            alert("No slots available currently");
+        }
+    };
+
+    const handleBookAppointment = async (slotId) => {
+        try {
+            await appointmentApi.post("", {
+                slotId: slotId,
+                buyerId: buyerId
+            });
+            alert("Appointment booked! Agent will be notified.");
+            setShowSlots(false);
+            fetchAppointmentStatus();
+        } catch (e) {
+            alert(e.response?.data || "Failed to book");
+        }
+    };
+
+    const handleBuyerConfirm = async (answer) => {
+        if (!appointment) return;
+        try {
+            await appointmentApi.put(`/${appointment.id}/buyer-confirm`, { answer });
+            alert(answer === "YES" ? "Confirmed! Waiting for Agent to verify." : "Purchase denied.");
+            fetchAppointmentStatus();
+        } catch (e) {
+            alert(e.response?.data || "Failed to confirm");
+        }
+    };
+
+    const handleAgentConfirm = async (answer) => {
+        if (!appointment) return;
+        try {
+            await appointmentApi.put(`/${appointment.id}/agent-confirm`, { answer });
+            alert(answer === "YES" ? "Sale Confirmed! Property marked as SOLD." : "Sale denied.");
+
+            // If yes, trigger a broadcast chat message
+            if (answer === "YES") {
+                await chatApi.post("/send", {
+                    propertyId,
+                    buyerId,
+                    agentId,
+                    sender: "SYSTEM",
+                    message: "🚨 UPDATE: This property has been officially SOLD to a verified buyer. Thank you for your interest."
+                });
+            }
+
+            fetchAppointmentStatus();
+        } catch (e) {
+            alert(e.response?.data || "Failed to confirm");
+        }
+    };
+
+    if (loading) return <div className="panel-loading">Loading...</div>;
+
+    const renderBuyerView = () => {
+        if (!appointment || appointment.status === 'expired') {
+            return (
+                <div className="panel-ready">
+                    {appointment?.status === 'expired' && <span className="status-label expired">Previous timer expired.</span>}
+                    <button className="book-btn" onClick={handleFetchSlots}>Book Appointment</button>
+                    {showSlots && (
+                        <div className="slots-dropdown">
+                            <button className="close-slots" onClick={() => setShowSlots(false)}>×</button>
+                            {availableSlots.length > 0 ? availableSlots.map(s => (
+                                <div key={s.id} className="slot-option">
+                                    <span>{s.slotDate} {s.slotTime}</span>
+                                    <button onClick={() => handleBookAppointment(s.id)}>Select</button>
+                                </div>
+                            )) : <p>No slots found</p>}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (appointment.status === 'confirmed') {
+            return (
+                <div className="panel-timer">
+                    <span className="status-label active">Appointment at {appointment.appointmentTime}</span>
+                </div>
+            );
+        }
+
+        if (appointment.status === 'awaiting_buyer') {
+            return (
+                <div className="panel-verify">
+                    <span className="status-label warning">Did you buy this?</span>
+                    <button className="yes-btn" onClick={() => handleBuyerConfirm('YES')}>Yes</button>
+                    <button className="no-btn" onClick={() => handleBuyerConfirm('NO')}>No</button>
+                    <span className="expires-txt">Expires: {new Date(appointment.confirmationDeadline).toLocaleDateString()}</span>
+                </div>
+            );
+        }
+
+        if (appointment.status === 'awaiting_agent') {
+            return <span className="status-label info">Waiting for Agent confirmation</span>;
+        }
+
+        if (appointment.status === 'sold') {
+            return <span className="status-label sold">Sale Completed ✓</span>;
+        }
+
+        return null;
+    };
+
+    const renderAgentView = () => {
+        if (!appointment) return <span className="status-label">No active appointment</span>;
+
+        if (appointment.status === 'confirmed') {
+            return (
+                <div className="panel-timer">
+                    <span className="status-label active">Appt at {appointment.appointmentTime}</span>
+                    <button
+                        className="verify-btn"
+                        onClick={async () => {
+                            // Automatically simulate the 5day timer trigger logic for demo
+                            try {
+                                // Direct update using repo isn't here, normally ScheduledTask does this or Agent clicks "Showed Property"
+                                // We simulate passing it to verifying state
+                                await fetch(`/api/appointments/${appointment.id}/simulate-visit`, { method: 'POST' });
+                                fetchAppointmentStatus();
+                            } catch (e) { }
+                        }}
+                    >
+                        Mark as Shown
+                    </button>
+                </div>
+            );
+        }
+
+        if (appointment.status === 'awaiting_buyer') {
+            return <span className="status-label info">Waiting for Buyer to respond (5-day timer)</span>;
+        }
+
+        if (appointment.status === 'awaiting_agent') {
+            return (
+                <div className="panel-verify">
+                    <span className="status-label warning">Buyer confirmed purchase. Verify?</span>
+                    <button className="yes-btn" onClick={() => handleAgentConfirm('YES')}>Approve</button>
+                    <button className="no-btn" onClick={() => handleAgentConfirm('NO')}>Deny</button>
+                </div>
+            );
+        }
+
+        if (appointment.status === 'sold') {
+            return <span className="status-label sold">Sale Completed ✓</span>;
+        }
+
+        return <span className="status-label expired">Expired / Cancelled</span>;
+    };
+
+    return (
+        <div className={`appointment-action-panel ${isHeader ? 'header-mode' : ''}`}>
+            {userRole === 'BUYER' ? renderBuyerView() : renderAgentView()}
+        </div>
+    );
+}
+

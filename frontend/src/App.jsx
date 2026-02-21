@@ -14,6 +14,7 @@ import PropertyChat from "./pages/PropertyChat";
 import Favorites from "./pages/Favorites";
 import ProfilePage from "./pages/ProfilePage";
 import BuyerPropertyChat from "./pages/BuyerPropertyChat";
+import AdminDashboard from "./pages/AdminDashboard";
 
 // Leaflet CSS for maps
 import "leaflet/dist/leaflet.css";
@@ -36,6 +37,7 @@ function App() {
             <Route path="/buyer/chat/:propertyId/:agentId" element={<BuyerPropertyChat />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
     );
 }

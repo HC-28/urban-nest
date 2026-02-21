@@ -91,6 +91,15 @@ function Navbar() {
                                 Post Property
                             </button>
                         )}
+                        {user && user.role === "ADMIN" && (
+                            <button
+                                className="post-btn"
+                                onClick={() => navigate("/admin")}
+                                style={{ background: 'var(--primary-gradient)' }}
+                            >
+                                🛡️ Admin
+                            </button>
+                        )}
 
                         {user ? (
                             <img

@@ -234,7 +234,7 @@
 
 .save-profile-btn {
     background: var(--primary-gradient);
-    color: white;
+    color: var(--text-on-primary);
     padding: 12px 32px;
     border-radius: 10px;
     font-weight: 700;

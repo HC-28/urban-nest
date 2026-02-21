@@ -35,9 +35,11 @@ export default function Properties() {
           data = data.filter((p) => p.type && p.type.toLowerCase() === typeQuery.toLowerCase());
         }
         if (purposeQuery) {
-          // Note: backend currently doesn't key 'purpose' in DB for most, default is Sale
-          // If update needed, check backend entity. For now assuming filtered locally if field exists
-          data = data.filter((p) => (p.purpose || "Sale").toLowerCase() === purposeQuery.toLowerCase());
+          const query = purposeQuery.toLowerCase();
+          data = data.filter((p) => {
+            const pPurpose = (p.purpose || "Sale").toLowerCase();
+            return pPurpose.includes(query) || query.includes(pPurpose);
+          });
         }
         if (pincodeQuery) {
           data = data.filter((p) => p.pinCode === pincodeQuery);

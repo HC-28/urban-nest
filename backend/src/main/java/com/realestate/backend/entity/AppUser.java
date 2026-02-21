@@ -37,6 +37,14 @@ public class AppUser {
     private String experience;
     private String specialties;
 
+    // Admin approval for Agents (false = pending, true = approved)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean verified = true;
+
+    // Account deletion request flag
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean deletionRequested = false;
+
     // Getters & Setters
 
     public Long getId() {
@@ -141,5 +149,21 @@ public class AppUser {
 
     public void setSpecialties(String specialties) {
         this.specialties = specialties;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
+    public boolean isDeletionRequested() {
+        return deletionRequested;
+    }
+
+    public void setDeletionRequested(boolean deletionRequested) {
+        this.deletionRequested = deletionRequested;
     }
 }

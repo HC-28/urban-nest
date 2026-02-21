@@ -224,7 +224,7 @@ function ProfilePage() {
                         >
                             <FiSettings /> Settings
                         </div>
-                        <div className="profile-nav-item" onClick={handleLogout} style={{ color: "#ef4444" }}>
+                        <div className="profile-nav-item" onClick={handleLogout} style={{ color: "var(--danger-color)" }}>
                             <FiLogOut /> Logout
                         </div>
                     </div>
@@ -398,9 +398,9 @@ function ProfilePage() {
                                 <div style={{ padding: '24px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', marginBottom: '20px', background: 'rgba(30,41,59,0.5)' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                                         <FiLock style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }} />
-                                        <h3 style={{ color: 'white', margin: 0 }}>Change Password</h3>
+                                        <h3 style={{ color: 'var(--text-primary)', margin: 0 }}>Change Password</h3>
                                     </div>
-                                    <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '20px' }}>Ensure your account is secure by using a strong password.</p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>Ensure your account is secure by using a strong password.</p>
 
                                     {passwordMessage.text && (
                                         <div style={{
@@ -415,7 +415,7 @@ function ProfilePage() {
 
                                     <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '400px' }}>
                                         <div style={{ position: 'relative' }}>
-                                            <label style={{ display: 'block', color: '#94A3B8', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Current Password</label>
+                                            <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Current Password</label>
                                             <input
                                                 type={showCurrentPw ? 'text' : 'password'}
                                                 value={passwordData.currentPassword}
@@ -429,7 +429,7 @@ function ProfilePage() {
                                             </button>
                                         </div>
                                         <div style={{ position: 'relative' }}>
-                                            <label style={{ display: 'block', color: '#94A3B8', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>New Password</label>
+                                            <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>New Password</label>
                                             <input
                                                 type={showNewPw ? 'text' : 'password'}
                                                 value={passwordData.newPassword}
@@ -444,7 +444,7 @@ function ProfilePage() {
                                             </button>
                                         </div>
                                         <div>
-                                            <label style={{ display: 'block', color: '#94A3B8', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Confirm New Password</label>
+                                            <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Confirm New Password</label>
                                             <input
                                                 type="password"
                                                 value={passwordData.confirmPassword}

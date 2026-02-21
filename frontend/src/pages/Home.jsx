@@ -10,7 +10,7 @@ import mumbaiImg from "../assets/Mumbai.jpeg";
 import puneImg from "../assets/Pune.jpg";
 import delhiImg from "../assets/delhi.jpg";
 import { FiSearch, FiArrowRight, FiHeart } from "react-icons/fi";
-import { propertyApi, favoritesApi } from "../api/api";
+import { propertyApi, favoritesApi, analyticsApi } from "../api/api";
 import { parsePropertyImages } from "../utils/imageUtils";
 import { formatPrice } from "../utils/priceUtils";
 import PropertyCard from "../components/PropertyCard";
@@ -45,7 +45,10 @@ function Hero({ onSearch }) {
     const [searchCity, setSearchCity] = useState("");
 
     const handleSearch = () => {
-        if (!searchCity.trim()) return;
+        if (!searchCity.trim()) {
+            alert("Please enter a city or location to search.");
+            return;
+        }
         onSearch(searchCity, activeTab.toLowerCase());
     };
 
@@ -100,8 +103,11 @@ function Hero({ onSearch }) {
 export default function Home() {
     const navigate = useNavigate();
     const [featuredProperties, setFeaturedProperties] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [recentProperties, setRecentProperties] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchParams, setSearchParams] = useState(null);
+
+    const user = JSON.parse(localStorage.getItem("user"));
 
     const handleSearch = (city, type) => {
         navigate(`/properties?city=${city}&type=${type}`);
@@ -109,42 +115,29 @@ export default function Home() {
 
     useEffect(() => {
         const fetchProperties = async () => {
-            setLoading(true);
             try {
-                const res = await propertyApi.get("");
-                const data = res.data;
-                const sorted = data.sort((a, b) => (b.views || 0) - (a.views || 0));
-                const transformed = sorted.slice(0, 4).map((prop) => {
-                    return {
-                        id: prop.id,
-                        title: prop.title || "Untitled Property",
-                        // PropertyCard uses 'photos' or 'images'
-                        images: parsePropertyImages(prop.photos),
-                        location: prop.city || "India",
-                        price: prop.price, // PropertyCard formats this internally if we pass raw, but we can also pass formatted
-                        // Actually PropertyCard uses formatPrice prop. 
-                        // Let's pass raw price and let PropertyCard format it, OR match PropertyCard expectations.
-                        // PropertyCard uses: price, title, location|city|pinCode, purpose, bhk, area, bathrooms
-                        type: prop.type,
-                        purpose: prop.purpose || "Sale",
-                        bhk: prop.bhk,
-                        area: prop.area,
-                        bathrooms: prop.bathrooms,
-                        postedBy: "Agent", // Placeholder or fetch
-                        postedDate: "Recently"
-                    };
-                });
-                setFeaturedProperties(transformed);
-            } catch (err) {
-                console.error("Error fetching properties:", err);
-                setError("Failed to load featured properties.");
+                // Fetch Featured
+                const { data: featured } = await propertyApi.get("/featured");
+                setFeaturedProperties(featured);
+
+                // Fetch Recent (if logged in)
+                if (user?.id) {
+                    try {
+                        const { data: recent } = await analyticsApi.get(`/recent?userId=${user.id}`);
+                        setRecentProperties(recent || []);
+                    } catch (err) {
+                        console.error("Failed to fetch recent views", err);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching properties:", error);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchProperties();
-    }, [navigate]);
+    }, [user?.id]);
 
     const features = [
         { icon: "🏠", title: "Post Property", description: "List your property for free", cta: "Post Now", onClick: () => navigate("/post-property") },
@@ -173,8 +166,24 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* Recently Viewed Section (Only if logged in and data exists) */}
+            {recentProperties.length > 0 && (
+                <section className="featured-section recently-viewed" style={{ backgroundColor: 'var(--bg-secondary)', paddingTop: '40px' }}>
+                    <div className="section-header">
+                        <h2>Recently Viewed</h2>
+                        <p>Properties you checked out lately</p>
+                    </div>
+                    <div className="property-grid">
+                        {recentProperties.map((property) => (
+                            <PropertyCard key={property.id} property={property} formatPrice={formatPrice} />
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* Featured Section */}
             <section className="featured-section">
-                <div className="featured-header">
+                <div className="section-header">
                     <div>
                         <h2>Featured Properties</h2>
                         <p>Handpicked properties based on your preferences</p>

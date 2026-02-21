@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../styles/Map.css";
-import { analyticsApi } from "../api/api";
+import "../styles/Map.css";
+import { analyticsApi, propertyApi } from "../api/api";
 
 /* --- Helper to fix the "Blank Map" resize issue --- */
 function RecenterMap({ coords }) {
@@ -30,141 +31,15 @@ const cities = [
     { name: "Bangalore", coords: [12.9716, 77.5946], zoom: 11, geoFile: "bangalore.geojson" }
 ];
 
-// Color scales per mode — each mode gets its own distinct palette
-const COLOR_SCALES = {
-    price: {
-        // Price per sqft: green (cheap) → red (expensive)
-        getColor: (val) => {
-            if (val === null || val === undefined) return "#6b7280"; // grey = no data
-            if (val > 15000) return "#7f1d1d";
-            if (val > 12000) return "#991b1b";
-            if (val > 10000) return "#b91c1c";
-            if (val > 8000) return "#dc2626";
-            if (val > 6000) return "#f97316";
-            if (val > 5000) return "#fb923c";
-            if (val > 4000) return "#fbbf24";
-            if (val > 3000) return "#facc15";
-            if (val > 2000) return "#a3e635";
-            if (val > 1000) return "#4ade80";
-            return "#22c55e";
-        },
-        legend: [
-            { color: "#22c55e", label: "<1K/sqft" },
-            { color: "#facc15", label: "3K-5K" },
-            { color: "#f97316", label: "6K-8K" },
-            { color: "#b91c1c", label: ">10K" },
-            { color: "#6b7280", label: "No data" },
-        ],
-        title: "💰 Price per sq.ft (₹)"
-    },
-    inventory: {
-        // Inventory: blue shades — more listings = deeper blue
-        getColor: (val) => {
-            if (val === null || val === undefined) return "#6b7280";
-            if (val >= 80) return "#1e3a8a";
-            if (val >= 60) return "#1d4ed8";
-            if (val >= 40) return "#3b82f6";
-            if (val >= 20) return "#93c5fd";
-            return "#dbeafe";
-        },
-        legend: [
-            { color: "#dbeafe", label: "Low (0-20)" },
-            { color: "#3b82f6", label: "Med (40-60)" },
-            { color: "#1e3a8a", label: "High (80+)" },
-            { color: "#6b7280", label: "No data" },
-        ],
-        title: "📦 Inventory Level"
-    },
-    market_activity: {
-        // Market activity: purple shades
-        getColor: (val) => {
-            if (val === null || val === undefined) return "#6b7280";
-            if (val >= 80) return "#4c1d95";
-            if (val >= 60) return "#7c3aed";
-            if (val >= 40) return "#a78bfa";
-            if (val >= 20) return "#c4b5fd";
-            return "#ede9fe";
-        },
-        legend: [
-            { color: "#ede9fe", label: "Low" },
-            { color: "#a78bfa", label: "Medium" },
-            { color: "#4c1d95", label: "High" },
-            { color: "#6b7280", label: "No data" },
-        ],
-        title: "📊 Market Activity"
-    },
-    buyer_opportunity: {
-        // Buyer opportunity: teal/cyan — high = good deal
-        getColor: (val) => {
-            if (val === null || val === undefined) return "#6b7280";
-            if (val >= 80) return "#0e7490";
-            if (val >= 60) return "#06b6d4";
-            if (val >= 40) return "#67e8f9";
-            if (val >= 20) return "#a5f3fc";
-            return "#e0f7fa";
-        },
-        legend: [
-            { color: "#e0f7fa", label: "Low" },
-            { color: "#06b6d4", label: "Medium" },
-            { color: "#0e7490", label: "High" },
-            { color: "#6b7280", label: "No data" },
-        ],
-        title: "🏠 Buyer Opportunity"
-    },
-    demand: {
-        // Demand: orange shades — high demand = deep orange
-        getColor: (val) => {
-            if (val === null || val === undefined) return "#6b7280";
-            if (val >= 80) return "#92400e";
-            if (val >= 60) return "#d97706";
-            if (val >= 40) return "#fbbf24";
-            if (val >= 20) return "#fde68a";
-            return "#fef9c3";
-        },
-        legend: [
-            { color: "#fef9c3", label: "Low" },
-            { color: "#fbbf24", label: "Medium" },
-            { color: "#92400e", label: "High" },
-            { color: "#6b7280", label: "No data" },
-        ],
-        title: "📈 Demand (Agent)"
-    },
-    liquidity: {
-        // Liquidity: green shades
-        getColor: (val) => {
-            if (val === null || val === undefined) return "#6b7280";
-            if (val >= 80) return "#14532d";
-            if (val >= 60) return "#16a34a";
-            if (val >= 40) return "#4ade80";
-            if (val >= 20) return "#bbf7d0";
-            return "#f0fdf4";
-        },
-        legend: [
-            { color: "#f0fdf4", label: "Low" },
-            { color: "#4ade80", label: "Medium" },
-            { color: "#14532d", label: "High" },
-            { color: "#6b7280", label: "No data" },
-        ],
-        title: "💧 Liquidity (Agent)"
-    },
-    saturation: {
-        // Saturation: red shades — high saturation = bad for agents
-        getColor: (val) => {
-            if (val === null || val === undefined) return "#6b7280";
-            if (val >= 80) return "#7f1d1d";
-            if (val >= 60) return "#dc2626";
-            if (val >= 40) return "#f87171";
-            if (val >= 20) return "#fecaca";
-            return "#fff1f2";
-        },
-        legend: [
-            { color: "#fff1f2", label: "Low" },
-            { color: "#f87171", label: "Medium" },
-            { color: "#7f1d1d", label: "High (Saturated)" },
-            { color: "#6b7280", label: "No data" },
-        ],
-        title: "🔴 Market Saturation"
-    }
+// Dynamic color palettes per mode
+const DYNAMIC_PALETTES = {
+    price: { title: "💰 Price per sq.ft (₹)", colors: ["#22c55e", "#facc15", "#fb923c", "#dc2626", "#7f1d1d"] },
+    inventory: { title: "📦 Inventory Level", colors: ["#dbeafe", "#93c5fd", "#3b82f6", "#1d4ed8", "#1e3a8a"] },
+    market_activity: { title: "📊 Market Activity", colors: ["#ede9fe", "#c4b5fd", "#a78bfa", "#7c3aed", "#4c1d95"] },
+    buyer_opportunity: { title: "🏠 Buyer Opportunity", colors: ["#e0f7fa", "#a5f3fc", "#67e8f9", "#06b6d4", "#0e7490"] },
+    demand: { title: "📈 Demand (Agent)", colors: ["#fef9c3", "#fde68a", "#fbbf24", "#d97706", "#92400e"] },
+    liquidity: { title: "💧 Liquidity Score", colors: ["#f0fdf4", "#bbf7d0", "#4ade80", "#16a34a", "#14532d"] },
+    saturation: { title: "🔴 Market Saturation", colors: ["#fff1f2", "#fecaca", "#f87171", "#dc2626", "#7f1d1d"] }
 };
 
 /* ======================== USER-FACING SCORE DESCRIPTIONS ======================== */
@@ -237,12 +112,56 @@ function MapModal({ isOpen, onClose }) {
     const [loading, setLoading] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
 
+    // Mini Property Panel State
+    const [selectedPincode, setSelectedPincode] = useState(null);
+    const [miniProperties, setMiniProperties] = useState([]);
+    const [loadingMini, setLoadingMini] = useState(false);
+
     // Filters
     const [selectedCity, setSelectedCity] = useState("Ahmedabad");
+    const [selectedType, setSelectedType] = useState("All");
     const [heatmapMode, setHeatmapMode] = useState("price");
 
+    // Property Types
+    const propertyTypes = [
+        "All", "Apartment", "Villa", "House", "Penthouse", "Studio", "Plot", "Commercial"
+    ];
+
+    // Clear mini-panel when city changes
+    useEffect(() => {
+        setSelectedPincode(null);
+    }, [selectedCity]);
+
     const currentCity = useMemo(() => cities.find(c => c.name === selectedCity) || cities[0], [selectedCity]);
-    const colorScale = COLOR_SCALES[heatmapMode] || COLOR_SCALES.price;
+    const palette = DYNAMIC_PALETTES[heatmapMode] || DYNAMIC_PALETTES.price;
+
+    // Dynamic Bins for heatmap
+    const [dynamicBins, setDynamicBins] = useState(null);
+
+    useEffect(() => {
+        if (!heatmapData || Object.keys(heatmapData).length === 0) {
+            setDynamicBins(null);
+            return;
+        }
+
+        const values = [];
+        Object.values(heatmapData).forEach(data => {
+            if (data.activeListings > 10) {
+                let val = heatmapMode === 'price' ? data.medianPrice : data.score;
+                if (val != null) values.push(val);
+            }
+        });
+
+        if (values.length === 0) {
+            setDynamicBins(null);
+            return;
+        }
+
+        values.sort((a, b) => a - b);
+        const getP = (p) => values[Math.max(0, Math.floor((p / 100) * (values.length - 1)))];
+
+        setDynamicBins([getP(20), getP(40), getP(60), getP(80)]);
+    }, [heatmapData, heatmapMode]);
 
     // Available modes based on user role
     const modes = [
@@ -279,7 +198,7 @@ function MapModal({ isOpen, onClose }) {
 
         // ✅ Use analyticsApi (axios) for consistent CORS handling
         const fetchHeatmap = analyticsApi.get(`/heatmap/${encodeURIComponent(selectedCity)}`, {
-            params: { mode: heatmapMode }
+            params: { mode: heatmapMode, type: selectedType }
         })
             .then(res => {
                 const json = res.data;
@@ -296,7 +215,7 @@ function MapModal({ isOpen, onClose }) {
             .catch(err => console.error("Heatmap fetch error:", err));
 
         Promise.all([fetchGeo, fetchHeatmap]).finally(() => setLoading(false));
-    }, [isOpen, selectedCity, heatmapMode]);
+    }, [isOpen, selectedCity, heatmapMode, selectedType]);
 
     const getColor = (feature) => {
         const geoPincode = String(
@@ -308,20 +227,43 @@ function MapModal({ isOpen, onClose }) {
 
         const data = heatmapData[geoPincode];
 
-        // No data for this pincode → grey
-        if (!data) return "#6b7280";
-
-        let val = null;
-        if (heatmapMode === 'price') {
-            val = data.medianPrice ?? null;
-        } else {
-            val = data.score ?? null;
+        // 1. Handle No Data (0 listings)
+        if (!data || data.activeListings === 0 || data.activeListings == null) {
+            return "#ffffff"; // White for 0 properties
         }
 
-        // Score of 0 is valid but treat null/undefined as no-data
+        // 2. Handle Low Data Threshold (1-10 listings) -> Grey for ALL modes
+        if (data.activeListings > 0 && data.activeListings <= 10) {
+            return "#9ca3af";
+        }
+
+        // 3. Score-based coloring for >10 listings
+        let val = heatmapMode === 'price' ? (data.medianPrice ?? null) : (data.score ?? null);
         if (val === null || val === undefined) return "#6b7280";
 
-        return colorScale.getColor(val);
+        if (!dynamicBins) return palette.colors[2];
+
+        const [p20, p40, p60, p80] = dynamicBins;
+        if (val <= p20) return palette.colors[0];
+        if (val <= p40) return palette.colors[1];
+        if (val <= p60) return palette.colors[2];
+        if (val <= p80) return palette.colors[3];
+        return palette.colors[4];
+    };
+
+    // Fetch top 5 properties for mini-panel (sorted by mode)
+    const fetchMiniProperties = async (pincode) => {
+        if (!pincode) return;
+        setLoadingMini(true);
+        setSelectedPincode(pincode);
+        try {
+            const res = await propertyApi.get(`/top?pincode=${pincode}&mode=${heatmapMode}`);
+            setMiniProperties(res.data);
+        } catch (err) {
+            console.error("Failed to fetch mini properties", err);
+        } finally {
+            setLoadingMini(false);
+        }
     };
 
     const defaultStyle = (feature) => {
@@ -379,10 +321,10 @@ function MapModal({ isOpen, onClose }) {
             mouseout: (e) => {
                 e.target.setStyle(defaultStyle(feature));
             },
-            click: () => {
+            click: (e) => {
+                L.DomEvent.stopPropagation(e); // Prevent map container click
                 if (geoPincode) {
-                    onClose();
-                    navigate(`/properties?pincode=${geoPincode}`);
+                    fetchMiniProperties(geoPincode);
                 }
             },
         });
@@ -418,6 +360,19 @@ function MapModal({ isOpen, onClose }) {
                     >
                         {modes.map((mode) => (
                             <option key={mode.value} value={mode.value}>{mode.label}</option>
+                        ))}
+                    </select>
+
+                    <div className="filter-divider-vertical"></div>
+
+                    <select
+                        className="type-dropdown"
+                        value={selectedType}
+                        onChange={(e) => setSelectedType(e.target.value)}
+                        style={{ minWidth: '120px' }}
+                    >
+                        {propertyTypes.map((type) => (
+                            <option key={type} value={type}>{type}</option>
                         ))}
                     </select>
 
@@ -461,16 +416,85 @@ function MapModal({ isOpen, onClose }) {
                     </div>
                 )}
 
+                {/* Mini Property Panel (Right Side) */}
+                {selectedPincode && (
+                    <div className="mini-property-panel">
+                        <div className="mini-panel-header">
+                            <h3 className="mini-panel-title">Properties in {selectedPincode}</h3>
+                            <button className="mini-panel-close" onClick={() => setSelectedPincode(null)}>✕</button>
+                        </div>
+
+                        {loadingMini ? (
+                            <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>Loading...</div>
+                        ) : (
+                            <div className="mini-property-list">
+                                {miniProperties.length > 0 ? (
+                                    miniProperties.map(p => (
+                                        <div key={p.id} className="mini-property-card" onClick={() => {
+                                            onClose();
+                                            navigate(`/property/${p.id}`);
+                                        }}>
+                                            {/* Decode Base64 image if possible, or use placeholder */}
+                                            <img
+                                                src={p.photos ? `data:image/jpeg;base64,${p.photos.split(',')[0]}` : "https://via.placeholder.com/80"}
+                                                alt="Property"
+                                                className="mini-card-img"
+                                                onError={(e) => e.target.src = "https://via.placeholder.com/80"}
+                                            />
+                                            <div className="mini-card-info">
+                                                <div className="mini-card-price">₹{p.price.toLocaleString('en-IN')}</div>
+                                                <div className="mini-card-title">{p.title}</div>
+                                                <div className="mini-card-type">{p.type} • {p.bhk} BHK</div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="no-properties-msg">No properties found in this area.</div>
+                                )}
+                                <button className="view-all-btn" onClick={() => {
+                                    onClose();
+                                    navigate(`/properties?pincode=${selectedPincode}`);
+                                }}>
+                                    View All in this Area ➝
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Legend */}
+
                 {/* Legend */}
                 <div className="map-legend">
-                    <div className="legend-title">{colorScale.title}</div>
+                    <div className="legend-title">{palette.title}</div>
                     <div className="legend-items">
-                        {colorScale.legend.map((item, i) => (
-                            <div key={i} className="legend-item">
-                                <span className="legend-color" style={{ background: item.color }}></span>
-                                <span>{item.label}</span>
+                        <div className="legend-item">
+                            <span className="legend-color" style={{ background: "#ffffff", border: "1px solid #ddd" }}></span>
+                            <span>0 properties</span>
+                        </div>
+                        <div className="legend-item">
+                            <span className="legend-color" style={{ background: "#9ca3af" }}></span>
+                            <span>1-10 properties</span>
+                        </div>
+                        {dynamicBins ? (
+                            [
+                                { color: palette.colors[0], label: `< ${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[0] / 1000) + 'K' : Math.round(dynamicBins[0])}` },
+                                { color: palette.colors[1], label: `${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[0] / 1000) + 'K' : Math.round(dynamicBins[0])}-${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[1] / 1000) + 'K' : Math.round(dynamicBins[1])}` },
+                                { color: palette.colors[2], label: `${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[1] / 1000) + 'K' : Math.round(dynamicBins[1])}-${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[2] / 1000) + 'K' : Math.round(dynamicBins[2])}` },
+                                { color: palette.colors[3], label: `${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[2] / 1000) + 'K' : Math.round(dynamicBins[2])}-${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[3] / 1000) + 'K' : Math.round(dynamicBins[3])}` },
+                                { color: palette.colors[4], label: `> ${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[3] / 1000) + 'K' : Math.round(dynamicBins[3])}` }
+                            ].map((item, i) => (
+                                <div key={i} className="legend-item">
+                                    <span className="legend-color" style={{ background: item.color }}></span>
+                                    <span>{item.label}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="legend-item">
+                                <span className="legend-color" style={{ background: "#6b7280" }}></span>
+                                <span>No data</span>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
 

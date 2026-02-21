@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/PropertyDetail.css";
@@ -7,118 +7,124 @@ import {
   FiMapPin,
   FiHome,
   FiMaximize,
+  FiCalendar,
   FiUser,
   FiPhone,
   FiMail,
   FiHeart,
-  FiShare2,
   FiCheck,
   FiChevronLeft,
   FiChevronRight,
-  FiMessageSquare,
-  FiSend,
-  FiMaximize2
+  FiEye
 } from "react-icons/fi";
-import { propertyApi, favoritesApi, chatApi, agentsApi } from "../api/api";
-import { parsePropertyImages } from "../utils/imageUtils";
+import { propertyApi, favoritesApi, userApi, chatApi, slotsApi, appointmentApi, BASE_URL, IMAGE_URL } from "../api/api";
 import { formatPrice } from "../utils/priceUtils";
+import { parsePropertyImages } from "../utils/imageUtils";
+
 
 function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
-  const [miniMessages, setMiniMessages] = useState([]);
-  const [miniText, setMiniText] = useState("");
-  const [isHoveringCarousel, setIsHoveringCarousel] = useState(false);
-  const [activeTab, setActiveTab] = useState("description");
-  const miniChatBodyRef = useRef(null);
 
-  // Scroll bottom chat to bottom
-  useEffect(() => {
-    const chatBody = document.querySelector('.chat-bar-body');
-    if (chatBody) {
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }
-  }, [miniMessages]);
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
 
+  const [showSlots, setShowSlots] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+
+  /* ================= FETCH PROPERTY ================= */
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const { data } = await propertyApi.get(`/${id}`);
+        const resp = await propertyApi.get(`/${id}?userId=${user?.id || ""}&role=${user?.role || ""}`);
+        const data = resp.data;
 
-        // Fetch real agent profile (image + property count) from /api/agents/{agentId}
-        let agentProfile = null;
-        if (data.agentId) {
-          try {
-            const { data: agentData } = await agentsApi.get(`/${data.agentId}`);
-            agentProfile = agentData;
-          } catch (e) {
-            console.log("Could not fetch agent profile:", e.message);
-          }
-        }
-
-        // Transform property to handle defaults
         const transformedProperty = {
           id: data.id,
           title: data.title,
+          purpose: data.purpose,
           description:
             data.description ||
-            `Beautiful ${data.bhk} BHK ${data.type} available for sale. This property offers ${data.area} sq.ft of living space.`,
-          type: data.type,
-          purpose: "Sale",
-          price: data.price,
+            `Beautiful ${data.bhk} BHK ${data.type}. This property offers ${data.area} sq.ft.`,
+          // Convert price from rupees to lakhs
+          priceRaw: data.price,
+          price: Math.round(data.price / 100000),
           pricePerSqft: data.area ? Math.round(data.price / data.area) : 0,
           area: data.area,
           bhk: data.bhk,
-          bathrooms: data.bathrooms || data.bhk,
-          balconies: Math.max(1, data.bhk - 1),
-          floor: data.floor || "Ground Floor",
-          facing: data.facing || "East",
-          furnishing: data.furnishing || "Semi-Furnished",
-          age: data.age || "Ready to Move",
-          city: data.city || "India",
-          location: data.location || "Prime Location",
-          address: data.address || "Contact agent for address details",
-          images: parsePropertyImages(data.photos).length > 0
-            ? parsePropertyImages(data.photos)
+          age: "Ready to Move",
+          address: data.pinCode || "Prime Location",
+          images: parsePropertyImages(data.photos || data.images).length > 0
+            ? parsePropertyImages(data.photos || data.images).map(p =>
+              p.startsWith("data:") || p.startsWith("http")
+                ? p
+                : `${IMAGE_URL}${encodeURIComponent(p)}`
+            )
             : ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200"],
-          amenities: data.amenities
-            ? data.amenities.split(',').map(a => a.trim()).filter(a => a.length > 0)
-            : [],
-          isVerified: data.isVerified ?? true,
-          isRERA: data.isRERA ?? false,
-          reraId: data.reraId || "",
+
+
+          amenities: [
+            "Parking",
+            "Security",
+            "Power Backup",
+            "Lift",
+            "Water Supply"
+          ],
+          agentId: data.agentId, // ✅ FIX
           agent: {
-            name: agentProfile?.name || data.agentName || "Agent",
-            company: agentProfile?.company || data.agentCompany || "Real Estate Agent",
-            phone: agentProfile?.phone || data.agentPhone || "+91 98765 43210",
-            email: agentProfile?.email || data.agentEmail || "agent@realestate.com",
-            // ✅ Use real profile picture from /api/agents/{id}
-            image:
-              agentProfile?.profilePicture ||
-              data.agentImage ||
-              "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200",
-            rating: agentProfile?.rating ?? data.agentRating ?? 4.5,
-            reviews: agentProfile?.reviews ?? data.agentReviews ?? Math.floor(Math.random() * 50) + 10,
-            // ✅ Use real property count from /api/agents/{id}
-            propertiesListed: agentProfile?.propertiesListed ?? 0,
+            name: data.agentName || "Agent",
+            email: data.agentEmail || "agent@email.com"
           },
-          agentId: data.agentId,
-          postedDate: data.postedDate || "Recently",
-          views: data.views ?? Math.floor(Math.random() * 500) + 100,
-          enquiries: data.enquiries ?? Math.floor(Math.random() * 20) + 5,
+          views: data.views || 0
         };
 
-        setProperty(transformedProperty);
-      } catch (error) {
-        console.error("Error fetching property:", error.message);
+        // Create initial property data
+        let propertyData = { ...transformedProperty };
+
+        // Attempt to fetch latest agent info if agentId exists
+        if (data.agentId) {
+          try {
+            const agentRes = await userApi.get(`/${data.agentId}`);
+            propertyData.agent = {
+              name: agentRes.data.name || data.agentName,
+              email: agentRes.data.email || data.agentEmail,
+              profilePicture: agentRes.data.profilePicture
+            };
+          } catch (e) {
+            console.error("Agent detail fetch failed:", e);
+          }
+        }
+
+        setProperty(propertyData);
+
+        // Record view (don't wait for response)
+        propertyApi.post(`/${id}/view`).catch(e => console.error("View tracking failed:", e));
+
+        // Check if saved
+        if (user) {
+          try {
+            const res = await favoritesApi.get("/check", {
+              params: { userId: user.id, propertyId: data.id }
+            });
+            setIsSaved(res.data.isFavorite);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Property fetch failed:", err);
         setProperty(null);
-      } finally {
         setLoading(false);
       }
     };
@@ -126,122 +132,208 @@ function PropertyDetail() {
     fetchProperty();
   }, [id]);
 
-  // Check saved status
+  /* ================= HANDLE AUTO-CHAT ================= */
   useEffect(() => {
-    if (user?.id && id) {
-      favoritesApi.get(`/check?userId=${user.id}&propertyId=${id}`)
-        .then(res => setIsSaved(res.data.isFavorite))
-        .catch(err => console.error(err));
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("chat") === "true") {
+      setShowChat(true);
     }
-  }, [user?.id, id]);
+  }, []);
 
-  // Auto-scroll images every 3.5 seconds, pause on hover
+  /* ================= FETCH CHAT HISTORY ================= */
   useEffect(() => {
-    if (!property || property.images.length <= 1 || isHoveringCarousel) {
-      return;
-    }
+    if (!showChat) return;
+    if (!user) return;
+    if (!property?.id) return;
+    if (!property?.agentId) return;
 
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) =>
-        prev === property.images.length - 1 ? 0 : prev + 1
-      );
-    }, 3500); // 3.5 seconds
+    const fetchChats = async () => {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/chat/conversation?propertyId=${property.id}&buyerId=${user.id}&agentId=${property.agentId}`
+        );
 
-    return () => clearInterval(interval);
-  }, [property, isHoveringCarousel]);
+        if (!res.ok) return;
 
-  // Mini-Chat Logic
-  useEffect(() => {
-    if (user && property && user.role !== "AGENT") {
-      const fetchMessages = async () => {
-        try {
-          const res = await chatApi.get("/conversation", {
-            params: {
-              propertyId: property.id,
-              buyerId: user.id,
-              agentId: property.agentId
-            }
-          });
-          if (Array.isArray(res.data)) {
-            setMiniMessages(res.data);
-          } else {
-            console.error("Chat response is not an array:", res.data);
-            setMiniMessages([]);
-          }
-        } catch (err) {
-          console.error("Mini-chat fetch error:", err);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setChatMessages(data);
+        } else {
+          setChatMessages([]);
         }
-      };
 
-      fetchMessages();
-      const interval = setInterval(fetchMessages, 10000); // Sync with 10s refresh
-      return () => clearInterval(interval);
-    }
-  }, [user, property]);
+        // Mark AGENT messages as SEEN
+        await fetch(`${BASE_URL}/chat/seen`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            propertyId: property.id,
+            buyerId: user.id,
+            agentId: property.agentId,
+            userRole: "BUYER"
+          })
+        });
 
-  const sendMiniMessage = async () => {
-    if (!miniText.trim()) return;
-    try {
-      const res = await chatApi.post("/send", {
-        propertyId: property.id,
-        buyerId: user.id,
-        agentId: property.agentId,
-        sender: "BUYER",
-        message: miniText
-      });
-      setMiniMessages(prev => [...prev, res.data]);
-      setMiniText("");
-    } catch (err) {
-      console.error("Send error:", err);
-    }
-  };
+      } catch (err) {
+        console.error("Chat fetch failed", err);
+      }
+    };
 
-  useEffect(() => {
-    if (miniChatBodyRef.current) {
-      miniChatBodyRef.current.scrollTop = miniChatBodyRef.current.scrollHeight;
-    }
-  }, [miniMessages]);
+    fetchChats();
+  }, [showChat, property, user]);
 
-  const toggleFavorite = async () => {
+  /* ================= HANDLE SLOTS ================= */
+  const handleShowSlots = async () => {
     if (!user) {
-      alert("Please login to save properties");
-      navigate("/login");
+      alert("Please login first to book an appointment");
       return;
     }
-    try {
-      if (isSaved) {
-        await favoritesApi.delete(`/remove?userId=${user.id}&propertyId=${id}`);
-        setIsSaved(false);
-      } else {
-        await favoritesApi.post(`/add?userId=${user.id}&propertyId=${id}`, {});
-        setIsSaved(true);
-      }
-    } catch (error) {
-      if (error.response && error.response.status === 400) {
-        alert(error.response.data);
-      } else {
-        alert("Failed to update favorite");
+    if (user.role !== "BUYER") {
+      alert("Only buyers can book appointments");
+      return;
+    }
+
+    setShowSlots(!showSlots);
+    if (!showSlots) {
+      try {
+        const res = await slotsApi.get(`/property/${property.id}`);
+        setAvailableSlots(res.data);
+      } catch (e) {
+        console.error("Failed to fetch slots", e);
       }
     }
   };
 
+  const bookSlot = async (slotId) => {
+    try {
+      await appointmentApi.post("", {
+        slotId: slotId,
+        buyerId: user.id
+      });
+      alert("Appointment booked successfully! The agent will be notified.");
+      setShowSlots(false);
+    } catch (e) {
+      alert(e.response?.data || "Failed to book slot");
+    }
+  };
+
+  /* ================= HELPERS ================= */
   const nextImage = () =>
-    setCurrentImageIndex((prev) =>
-      prev === property.images.length - 1 ? 0 : prev + 1
+    setCurrentImageIndex(i =>
+      i === property.images.length - 1 ? 0 : i + 1
     );
 
   const prevImage = () =>
-    setCurrentImageIndex((prev) =>
-      prev === 0 ? property.images.length - 1 : prev - 1
+    setCurrentImageIndex(i =>
+      i === 0 ? property.images.length - 1 : i - 1
     );
 
+  const toggleSave = async (e) => {
+    e?.stopPropagation();
+    if (!user) return alert("Please login to save property");
+
+    try {
+      if (isSaved) {
+        await favoritesApi.delete("/remove", {
+          params: { userId: user.id, propertyId: property.id }
+        });
+        setIsSaved(false);
+      } else {
+        await favoritesApi.post("/add", null, {
+          params: { userId: user.id, propertyId: property.id }
+        });
+        setIsSaved(true);
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      if (err.response?.data) {
+        alert(err.response.data);
+      } else {
+        alert("Failed to update favorites");
+      }
+    }
+  };
+
+  /* ================= SEND MESSAGE ================= */
+  const sendMessage = async () => {
+    if (!user) {
+      alert("Please login first to chat");
+      return;
+    }
+
+    if (user.role !== "BUYER") {
+      alert("Only buyers can chat with agents");
+      return;
+    }
+
+    if (!property?.id || !property?.agentId) {
+      alert("Chat not ready. Please refresh page.");
+      return;
+    }
+
+    if (!chatMessage.trim()) return;
+
+    const payload = {
+      propertyId: property.id,
+      buyerId: user.id,
+      agentId: property.agentId,
+      sender: "BUYER",
+      message: chatMessage
+    };
+
+    try {
+      const res = await fetch(`${BASE_URL}/chat/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error("Send failed");
+
+      const savedMsg = await res.json();
+      setChatMessages(prev => [...prev, savedMsg]);
+      setChatMessage("");
+    } catch (err) {
+      console.error(err);
+      alert("Message not sent");
+    }
+  };
+
+  const fetchChatHistory = async () => {
+    if (!user || user.role !== "BUYER") return;
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/chat/conversation?propertyId=${property.id}&buyerId=${user.id}&agentId=${property.agentId}`
+      );
+
+      const data = await res.json();
+      setChatMessages(data);
+    } catch (err) {
+      console.error("Failed to load chat history", err);
+    }
+  };
+
+
+
+  /* ================= HELPERS ================= */
+  const formatTime = (time) => {
+    if (!time) return "";
+    const date = new Date(time);
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  /* ================= UI STATES ================= */
   if (loading) {
     return (
       <div className="property-detail-page">
         <Navbar />
         <div className="loading-state">
           <div className="loader"></div>
-          <p>Loading property details...</p>
+          <p>Fetching property details...</p>
         </div>
       </div>
     );
@@ -253,15 +345,16 @@ function PropertyDetail() {
         <Navbar />
         <div className="not-found">
           <h2>Property Not Found</h2>
-          <button onClick={() => navigate("/properties")}>
-            Browse Properties
+          <p>The property you are looking for might have been removed or is unavailable.</p>
+          <button className="action-btn primary" onClick={() => navigate("/properties")} style={{ marginTop: "20px" }}>
+            Back to Properties
           </button>
         </div>
-        <Footer />
       </div>
     );
   }
 
+  /* ================= MAIN UI ================= */
   return (
     <div className="property-detail-page">
       <Navbar />
@@ -269,33 +362,28 @@ function PropertyDetail() {
       <div className="property-detail-container">
         {/* Breadcrumb */}
         <div className="breadcrumb">
-          <span onClick={() => navigate("/")}>Home</span> /{" "}
-          <span onClick={() => navigate("/properties")}>Properties</span> /{" "}
-          <span className="current" style={{ color: '#e2e8f0' }}>{property.title}</span>
+          <span onClick={() => navigate("/")}>Home</span>
+          <span>/</span>
+          <span onClick={() => navigate("/properties")}>Properties</span>
+          <span>/</span>
+          <span className="current">{property.title}</span>
         </div>
 
-        {/* Image Gallery / Carousel Section */}
+        {/* Image Gallery */}
         <div className="property-gallery-container">
-          <div
-            className="main-carousel"
-            onMouseEnter={() => setIsHoveringCarousel(true)}
-            onMouseLeave={() => setIsHoveringCarousel(false)}
-          >
-            <div
-              className="carousel-track"
-              style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
-            >
+          <div className="main-carousel">
+            <div className="carousel-track" style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}>
               {property.images.map((img, idx) => (
                 <div key={idx} className="carousel-slide">
-                  <img src={img} alt={`${property.title} - View ${idx + 1}`} />
+                  <img src={img} alt={`${property.title} view ${idx + 1}`} />
                 </div>
               ))}
             </div>
 
-            <button className="carousel-control prev" onClick={prevImage}>
+            <button className="carousel-control prev" onClick={prevImage} aria-label="Previous image">
               <FiChevronLeft />
             </button>
-            <button className="carousel-control next" onClick={nextImage}>
+            <button className="carousel-control next" onClick={nextImage} aria-label="Next image">
               <FiChevronRight />
             </button>
 
@@ -304,8 +392,12 @@ function PropertyDetail() {
             </div>
 
             <div className="carousel-badges">
-              {property.isVerified && <span className="premium-badge verified">Verified</span>}
-              <span className="premium-badge type">{property.type}</span>
+              {property.purpose === "Sold" ? (
+                <span className="premium-badge type" style={{ background: '#ef4444' }}>SOLD</span>
+              ) : (
+                <span className="premium-badge verified">Verified</span>
+              )}
+              <span className="premium-badge type">{property.bhk} BHK</span>
             </div>
           </div>
 
@@ -313,7 +405,7 @@ function PropertyDetail() {
             {property.images.map((img, idx) => (
               <div
                 key={idx}
-                className={`thumb-item ${idx === currentImageIndex ? 'active' : ''}`}
+                className={`thumb-item ${currentImageIndex === idx ? "active" : ""}`}
                 onClick={() => setCurrentImageIndex(idx)}
               >
                 <img src={img} alt={`Thumbnail ${idx + 1}`} />
@@ -322,253 +414,219 @@ function PropertyDetail() {
           </div>
         </div>
 
-        {/* Content */}
         <div className="property-content">
           <div className="main-content">
-            {/* Title & Price */}
+            {/* Header */}
             <div className="property-header">
-              <div className="title-section">
+              <div>
                 <div className="badges">
-                  {property.isVerified && <span className="badge verified">✓ Verified</span>}
-                  {property.isRERA && <span className="badge rera">RERA</span>}
-                  <span className="badge type">{property.purpose}</span>
+                  {/* Badge logic removed from here as it is moved into the carousel area per UI design */}
                 </div>
                 <h1>{property.title}</h1>
                 <p className="location">
                   <FiMapPin /> {property.address}
                 </p>
               </div>
+
               <div className="price-section">
-                <h2 className="price">{formatPrice(property.price)}</h2>
-                <p className="price-per-sqft">
-                  ₹{property.pricePerSqft.toLocaleString("en-IN")}/sq.ft
-                </p>
+                <div className="price">
+                  {formatPrice(property.priceRaw)}
+                </div>
+                <div className="price-per-sqft">
+                  ₹{property.pricePerSqft}/sq.ft
+                </div>
               </div>
             </div>
 
             {/* Quick Info */}
             <div className="quick-info">
-              <div className="info-item">
-                <FiHome /> <span>{property.bhk} BHK</span>
-              </div>
-              <div className="info-item">
-                <FiMaximize /> <span>{property.area} sq.ft</span>
-              </div>
-              <div className="info-item">🚿 <span>{property.bathrooms} Baths</span></div>
-              <div className="info-item">🏢 <span>{property.floor}</span></div>
-              <div className="info-item">🧭 <span>{property.facing} Facing</span></div>
+              <div className="info-item"><FiHome /> {property.bhk} BHK</div>
+              <div className="info-item"><FiMaximize /> {property.area} sq.ft</div>
+              <div className="info-item"><FiCalendar /> {property.age}</div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="action-buttons">
               <button
                 className={`action-btn ${isSaved ? "saved" : ""}`}
-                onClick={toggleFavorite}
-                style={{
-                  color: isSaved ? "#ef4444" : "inherit",
-                  borderColor: isSaved ? "#ef4444" : "#e2e8f0"
+                onClick={toggleSave}
+              >
+                <FiHeart /> {isSaved ? "Saved" : "Save"}
+              </button>
+
+              <button
+                className="action-btn primary"
+                onClick={() => document.querySelector(".sidebar")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                <FiPhone /> Contact Agent
+              </button>
+
+              <button
+                className="action-btn"
+                onClick={() => {
+                  if (!user) {
+                    alert("Please login first to chat with agent");
+                    return;
+                  }
+
+                  if (user.role !== "BUYER") {
+                    alert("Only buyers can chat with agents");
+                    return;
+                  }
+
+                  if (!property?.agentId) {
+                    alert("Agent not available");
+                    return;
+                  }
+
+                  setShowChat(true);
+                  // fetchChatHistory();
+
                 }}
               >
-                <FiHeart fill={isSaved ? "#ef4444" : "rgba(255, 255, 255, 0.2)"} stroke="white" strokeWidth={2.5} /> {isSaved ? "Saved" : "Save"}
-              </button>
-              <button className="action-btn share" onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                alert("Link copied to clipboard!");
-              }}>
-                <FiShare2 /> Share
+                💬 Chat with Agent
               </button>
 
-              {user?.role !== "AGENT" && (
-                <button
-                  className={`action-btn chat ${activeTab === "chat" ? "active" : ""}`}
-                  onClick={() => {
-                    if (!user) {
-                      alert("Please login to chat");
-                      navigate("/login");
-                    } else {
-                      setActiveTab("chat");
-                      document.querySelector('.tabbed-section')?.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                >
-                  <FiMessageSquare /> Chat
-                </button>
-              )}
+              <button
+                className="action-btn"
+                onClick={handleShowSlots}
+                style={{ background: showSlots ? 'var(--primary-color)' : '', color: showSlots ? 'white' : '' }}
+              >
+                📅 Book Appointment
+              </button>
+
             </div>
 
-            {/* Tabbed Content Section */}
-            <div className="section tabbed-section">
-              <div className="tabs-header">
-                <button
-                  className={`tab-btn ${activeTab === "description" ? "active" : ""}`}
-                  onClick={() => setActiveTab("description")}
-                >
-                  Description
-                </button>
-                {user?.role !== "AGENT" && (
-                  <button
-                    className={`tab-btn ${activeTab === "chat" ? "active" : ""}`}
-                    onClick={() => {
-                      if (!user) {
-                        alert("Please login to chat");
-                        navigate("/login");
-                      } else {
-                        setActiveTab("chat");
-                      }
-                    }}
-                  >
-                    Chat with Agent
-                  </button>
-                )}
-              </div>
-
-              <div className="tab-content">
-                {activeTab === "description" ? (
-                  <div className="description-content">
-                    <p>{property.description}</p>
-                  </div>
+            {/* SLOTS BOX */}
+            {showSlots && user?.role === "BUYER" && (
+              <div className="slots-box animate-in" style={{ marginTop: '20px', padding: '20px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                <h3>Available Time Slots</h3>
+                {availableSlots.length === 0 ? (
+                  <p style={{ color: "var(--text-secondary)", marginTop: "10px" }}>No available slots found for this property.</p>
                 ) : (
-                  <div className="embedded-chat-container">
-                    <div className="chat-area-header">
-                      <h4>Chatting with {property.agent.name}</h4>
-                      <Link
-                        to={`/buyer/chat/${property.id}/${property.agentId}`}
-                        className="full-chat-link"
-                        title="Open Dedicated Chat Page"
-                      >
-                        <FiMaximize2 /> Open Full Chat
-                      </Link>
-                    </div>
-                    <div className="chat-area-body" ref={miniChatBodyRef}>
-                      {miniMessages.length === 0 ? (
-                        <div className="empty-chat-state">
-                          <FiMessageSquare />
-                          <p>Start a conversation about this property.</p>
+                  <div className="slots-grid" style={{ display: 'grid', gap: '10px', marginTop: '15px' }}>
+                    {availableSlots.map(slot => (
+                      <div key={slot.id} className="slot-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px' }}>
+                        <div>
+                          <strong>{slot.slotDate}</strong> at {slot.slotTime}
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Duration: {slot.durationMinutes} mins</div>
                         </div>
-                      ) : (
-                        miniMessages.map((msg, idx) => (
-                          <div key={idx} className={`chat-bubble ${msg.sender === "BUYER" ? "me" : "them"}`}>
-                            {msg.message}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <div className="chat-area-input">
-                      <input
-                        type="text"
-                        placeholder="Type your message..."
-                        value={miniText}
-                        onChange={(e) => setMiniText(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && sendMiniMessage()}
-                      />
-                      <button onClick={sendMiniMessage} disabled={!miniText.trim()} title="Send Message">
-                        <FiSend size={20} />
-                      </button>
-                    </div>
+                        <button className="action-btn primary" onClick={() => bookSlot(slot.id)}>Book</button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
-            </div>
+            )}
 
-            {/* Property Details */}
-            <div className="section">
-              <h3>Property Details</h3>
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="label">Property Type</span>
-                  <span className="value">{property.type}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Bedrooms</span>
-                  <span className="value">{property.bhk}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Bathrooms</span>
-                  <span className="value">{property.bathrooms}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Balconies</span>
-                  <span className="value">{property.balconies}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Area</span>
-                  <span className="value">{property.area} sq.ft</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Floor</span>
-                  <span className="value">{property.floor}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Facing</span>
-                  <span className="value">{property.facing}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Furnishing</span>
-                  <span className="value">{property.furnishing}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Age</span>
-                  <span className="value">{property.age}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Amenities - Only show if amenities exist */}
-            {property.amenities && property.amenities.length > 0 && (
-              <div className="section">
-                <h3>Amenities</h3>
-                <div className="amenities-grid">
-                  {property.amenities.map((amenity, idx) => (
-                    <div key={idx} className="amenity-item">
-                      <FiCheck /> {amenity}
+            {/* CHAT BOX */}
+            {showChat && user?.role === "BUYER" && (
+              <div className="chat-box-compact animate-in">
+                <div className="chat-header">
+                  <div className="chat-id">
+                    <div className="chat-avatar-small">
+                      <FiUser />
                     </div>
-                  ))}
+                    <div>
+                      <h4>Chat with {property.agent.name}</h4>
+                      <p className="meta">Regarding: {property.title}</p>
+                    </div>
+                  </div>
+                  <button className="close-chat-btn" onClick={() => setShowChat(false)}>
+                    <FiCheck style={{ transform: 'rotate(45deg)', fontSize: '1.2rem' }} />
+                  </button>
+                </div>
+
+                <div className="chat-messages">
+                  {!Array.isArray(chatMessages) || chatMessages.length === 0 ? (
+                    <p className="chat-empty">Start the conversation by sending a message below.</p>
+                  ) : (
+                    chatMessages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`chat-message ${msg.sender === "BUYER" ? "buyer" : "agent"}`}
+                      >
+                        <div className="msg-text">{msg.message}</div>
+                        <div className="msg-meta">
+                          <small className="time">{formatTime(msg.createdAt)}</small>
+                          {msg.sender === "BUYER" && (
+                            <span className={`status ${msg.seen ? "seen" : ""}`}>
+                              {msg.seen ? "✓✓" : "✓"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="chat-input">
+                  <input
+                    type="text"
+                    placeholder="Type your message..."
+                    value={chatMessage}
+                    onChange={e => setChatMessage(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && sendMessage()}
+                  />
+                  <button onClick={sendMessage}>Send</button>
                 </div>
               </div>
             )}
+
+            {/* Description */}
+            <div className="section">
+              <h3>Description</h3>
+              <p className="description">{property.description}</p>
+            </div>
+
+            {/* Amenities */}
+            <div className="section">
+              <h3>Amenities</h3>
+              <div className="amenities-grid">
+                {property.amenities.map((a, i) => (
+                  <div key={i} className="amenity-item">
+                    <FiCheck /> {a}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}
           <div className="sidebar">
             <div className="agent-card">
-              <Link to={`/agent/${property.agentId}`} className="agent-header-link">
-                <div className="agent-header">
-                  <div className="agent-avatar">
-                    <img src={property.agent.image} alt={property.agent.name}
-                      onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200" }} />
-                  </div>
-                  <div>
-                    <h4>{property.agent.name}</h4>
-                    <p>{property.agent.company}</p>
-                    <div className="agent-rating">
-                      ⭐ {property.agent.rating} ({property.agent.reviews} reviews)
-                    </div>
-                  </div>
-                </div>
-              </Link>
-              <div className="agent-stats">
-                <div className="stat">
-                  <span className="value">{property.agent.propertiesListed}</span>
-                  <span className="label">Properties</span>
+              <div className="agent-header">
+                <div className="agent-avatar"><FiUser /></div>
+                <div>
+                  <h4>{property.agent.name}</h4>
+                  <p>{property.agent.email}</p>
                 </div>
               </div>
+
               <div className="agent-actions">
-                <a href={`tel:${property.agent.phone}`} className="contact-btn phone">
-                  <FiPhone /> Call
-                </a>
                 <a href={`mailto:${property.agent.email}`} className="contact-btn email">
                   <FiMail /> Email
                 </a>
+                <a href="tel:+919999999999" className="contact-btn phone">
+                  <FiPhone /> Call
+                </a>
+              </div>
+            </div>
+
+            <div className="property-stats">
+              <div className="stat-item">
+                <FiEye /> {property.views} Views
+              </div>
+              <div className="stat-item">
+                <FiCalendar /> Posted Recently
               </div>
             </div>
           </div>
         </div>
       </div>
 
-
-
       <Footer />
-    </div >
+    </div>
   );
 }
 

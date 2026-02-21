@@ -28,8 +28,9 @@
 }
 
 .breadcrumb .current {
-  color: #1e293b;
+  color: #FFFFFF;
   cursor: default;
+  font-weight: 600;
 }
 
 /* Image Gallery / Carousel Section */

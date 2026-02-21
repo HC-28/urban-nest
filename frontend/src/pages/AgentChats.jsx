@@ -1,172 +1,149 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { chatApi, propertyApi } from "../api/api";
+import { chatApi, propertyApi, userApi, IMAGE_URL } from "../api/api";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/AgentChats.css";
 
-// Fallback image
 import fallbackImg from "../assets/delhi.jpg";
+import profileImg from "../assets/profile.png";
 
 export default function AgentChats() {
     const navigate = useNavigate();
     const [chats, setChats] = useState([]);
     const [propertyMap, setPropertyMap] = useState({});
+    const [userMap, setUserMap] = useState({});
     const [loading, setLoading] = useState(true);
 
     const user = JSON.parse(localStorage.getItem("user"));
     const agentId = user?.id;
 
     useEffect(() => {
-        if (!agentId) {
-            navigate("/login");
-            return;
-        }
+        if (!agentId) return;
 
-        chatApi.get(`/agent/${agentId}`)
-            .then(res => {
-                setChats(res.data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Error fetching chats:", err);
-                setLoading(false);
-            });
-    }, [agentId, navigate]);
+        chatApi.get(`/agent/${agentId}`).then(res => {
+            setChats(res.data);
+            setLoading(false);
+        }).catch(() => setLoading(false));
+    }, [agentId]);
 
-    // Fetch property details for each unique property
+    // fetch details for properties and buyers
     useEffect(() => {
         const uniquePropertyIds = [...new Set(chats.map(c => c.propertyId))];
+        const uniqueBuyerIds = [...new Set(chats.map(c => c.buyerId))];
 
         uniquePropertyIds.forEach(pid => {
             if (!propertyMap[pid]) {
-                propertyApi.get(`/${pid}`)
-                    .then(res => {
-                        setPropertyMap(prev => ({
-                            ...prev,
-                            [pid]: res.data
-                        }));
-                    })
-                    .catch(err => console.error(`Error fetching property ${pid}:`, err));
+                propertyApi.get(`/${pid}`).then(res => {
+                    setPropertyMap(prev => ({ ...prev, [pid]: res.data }));
+                }).catch(e => console.error(e));
             }
         });
-    }, [chats, propertyMap]);
 
-    // Group messages by property
+        uniqueBuyerIds.forEach(bid => {
+            if (!userMap[bid]) {
+                userApi.get(`/${bid}`).then(res => {
+                    setUserMap(prev => ({ ...prev, [bid]: res.data }));
+                }).catch(e => console.error(e));
+            }
+        });
+    }, [chats]);
+
+    // Group by Property AND Buyer for unique conversations
     const grouped = chats.reduce((acc, msg) => {
-        acc[msg.propertyId] = acc[msg.propertyId] || [];
-        acc[msg.propertyId].push(msg);
+        const key = `${msg.propertyId}_${msg.buyerId}`;
+        acc[key] = acc[key] || [];
+        acc[key].push(msg);
         return acc;
     }, {});
 
-    const getPropertyImage = (photos) => {
-        if (photos) {
-            if (Array.isArray(photos)) return photos[0];
-            if (typeof photos === "string") return photos.split(",")[0];
+    const sortedGroups = Object.keys(grouped).sort((a, b) => {
+        const dateA = new Date(grouped[a].slice(-1)[0].createdAt);
+        const dateB = new Date(grouped[b].slice(-1)[0].createdAt);
+        return dateB - dateA;
+    });
+
+    const getProfileImage = (u) => {
+        if (u?.profilePicture) {
+            return `${IMAGE_URL}${u.profilePicture}`;
         }
-        return fallbackImg;
+        return profileImg;
     };
-
-    const formatTime = (timestamp) => {
-        if (!timestamp) return "";
-        const date = new Date(timestamp);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
-
-        if (diffMins < 1) return "Just now";
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays < 7) return `${diffDays}d ago`;
-        return date.toLocaleDateString();
-    };
-
-    if (loading) {
-        return (
-            <div className="agent-chats-page">
-                <Navbar />
-                <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>Loading your conversations...</p>
-                </div>
-                <Footer />
-            </div>
-        );
-    }
 
     return (
-        <div className="agent-chats-page">
+        <div className="properties-page">
             <Navbar />
+            <div className="chat-inbox">
+                <h2>💬 Buyer Inquiries</h2>
 
-            <div className="chats-container">
-                <div className="chats-header">
-                    <h1>💬 Messages</h1>
-                    <p>
-                        Manage your {Object.keys(grouped).length} property conversation
-                        {Object.keys(grouped).length !== 1 ? "s" : ""}
-                    </p>
-                </div>
-
-                {Object.keys(grouped).length === 0 ? (
-                    <div className="empty-state">
-                        <div className="empty-icon">✉️</div>
-                        <h3>No Messages Yet</h3>
-                        <p>Buyer inquiries will appear here as soon as they message you.</p>
+                {loading ? (
+                    <div className="loading-state">
+                        <div className="loader"></div>
+                        <p>Loading inquiries...</p>
+                    </div>
+                ) : sortedGroups.length === 0 ? (
+                    <div className="no-chats">
+                        <p>No buyers have contacted you regarding your properties yet.</p>
+                        <button
+                            className="browse-btn"
+                            onClick={() => navigate("/post-property")}
+                        >
+                            Post More Properties
+                        </button>
                     </div>
                 ) : (
-                    <div className="chats-list">
-                        {Object.keys(grouped).map(pid => {
-                            const messages = grouped[pid];
-                            const lastMsg = messages[messages.length - 1];
-                            const property = propertyMap[pid];
+                    <div className="chat-list">
+                        {sortedGroups.map(key => {
+                            const lastMsg = grouped[key].slice(-1)[0];
+                            const property = propertyMap[lastMsg.propertyId];
+                            const buyer = userMap[lastMsg.buyerId];
 
                             return (
                                 <div
-                                    key={pid}
+                                    key={key}
                                     className="chat-card"
                                     onClick={() =>
-                                        navigate(`/agent/chat/${pid}/${lastMsg.buyerId}`)
+                                        navigate(`/agent/chat/${lastMsg.propertyId}/${lastMsg.buyerId}`)
                                     }
                                 >
-                                    <div className="chat-property-img">
-                                        <img
-                                            src={getPropertyImage(property?.photos)}
-                                            alt="property"
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = fallbackImg;
-                                            }}
-                                        />
+                                    <img
+                                        src={getProfileImage(buyer)}
+                                        alt="buyer"
+                                        className="property-thumb"
+                                        style={{ borderRadius: '50%' }}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = profileImg;
+                                        }}
+                                    />
+
+                                    <div className="chat-info">
+                                        <div className="chat-info-header">
+                                            <h4>{buyer?.name || "Interested Buyer"}</h4>
+                                            <span className="chat-date">
+                                                {new Date(lastMsg.createdAt).toLocaleDateString(undefined, {
+                                                    month: 'short',
+                                                    day: 'numeric'
+                                                })}
+                                            </span>
+                                        </div>
+                                        <div className="meta">
+                                            <span className="agent-label">Regarding:</span>
+                                            {property?.title || `Property #${lastMsg.propertyId}`}
+                                        </div>
+                                        <p className="last-msg">
+                                            {lastMsg.sender === "AGENT" ? "You: " : ""}{lastMsg.message}
+                                        </p>
                                     </div>
-
-                                    <div className="chat-details">
-                                        <div className="chat-top">
-                                            <h3 className="property-title">
-                                                {property?.title || `Property #${pid}`}
-                                            </h3>
-                                            <span className="chat-time">{formatTime(lastMsg.createdAt)}</span>
-                                        </div>
-
-                                        <div className="chat-location">
-                                            📍 {property?.city || "Unknown City"}
-                                        </div>
-
-                                        <div className="chat-bottom">
-                                            <p className="last-message">
-                                                {lastMsg.sender === "AGENT" ? "You: " : "Buyer: "}
-                                                {lastMsg.message}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    {lastMsg.seen === false && lastMsg.sender === "BUYER" && (
+                                        <span className="unread-badge">New message</span>
+                                    )}
                                 </div>
                             );
                         })}
                     </div>
                 )}
             </div>
-
             <Footer />
         </div>
     );

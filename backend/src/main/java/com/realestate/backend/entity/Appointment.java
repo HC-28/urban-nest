@@ -46,6 +46,28 @@ public class Appointment {
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
+    // --- Sale Confirmation Fields ---
+
+    // The agent_slots.id that was booked
+    @Column(name = "slot_id")
+    private Long slotId;
+
+    // 5 days after the appointment date — buyer must confirm by then
+    @Column(name = "confirmation_deadline")
+    private java.time.LocalDateTime confirmationDeadline;
+
+    // null = not yet answered, YES = bought, NO = did not buy
+    @Column(name = "buyer_confirmed", length = 10)
+    private String buyerConfirmed;
+
+    // null = not yet answered, YES = confirms sale, NO = denies
+    @Column(name = "agent_confirmed", length = 10)
+    private String agentConfirmed;
+
+    // Set when both confirm YES
+    @Column(name = "sold_at")
+    private java.time.LocalDateTime soldAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -178,5 +200,45 @@ public class Appointment {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getSlotId() {
+        return slotId;
+    }
+
+    public void setSlotId(Long slotId) {
+        this.slotId = slotId;
+    }
+
+    public java.time.LocalDateTime getConfirmationDeadline() {
+        return confirmationDeadline;
+    }
+
+    public void setConfirmationDeadline(java.time.LocalDateTime confirmationDeadline) {
+        this.confirmationDeadline = confirmationDeadline;
+    }
+
+    public String getBuyerConfirmed() {
+        return buyerConfirmed;
+    }
+
+    public void setBuyerConfirmed(String buyerConfirmed) {
+        this.buyerConfirmed = buyerConfirmed;
+    }
+
+    public String getAgentConfirmed() {
+        return agentConfirmed;
+    }
+
+    public void setAgentConfirmed(String agentConfirmed) {
+        this.agentConfirmed = agentConfirmed;
+    }
+
+    public java.time.LocalDateTime getSoldAt() {
+        return soldAt;
+    }
+
+    public void setSoldAt(java.time.LocalDateTime soldAt) {
+        this.soldAt = soldAt;
     }
 }

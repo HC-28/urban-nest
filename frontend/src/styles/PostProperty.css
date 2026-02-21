@@ -53,10 +53,7 @@
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 16px;
-  background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-color);
   letter-spacing: -1px;
 }
 
@@ -74,11 +71,10 @@
   justify-content: center;
   margin-bottom: 50px;
   padding: 30px;
-  background: rgba(30, 41, 59, 0.4);
-  backdrop-filter: blur(20px);
+  background: var(--bg-card);
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
 }
 
 .step {
@@ -108,7 +104,7 @@
 
 .step.active .step-number {
   background: var(--primary-gradient);
-  color: white;
+  color: var(--text-on-primary);
   border-color: transparent;
   box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
   transform: scale(1.1);
@@ -152,12 +148,11 @@
 
 /* Form Card */
 .property-form {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(20px);
+  background: var(--bg-card);
   border-radius: 24px;
   padding: 50px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-light);
   animation: slideUp 0.6s ease-out;
 }
 
@@ -176,7 +171,7 @@
 /* Form Styling */
 .form-step h2 {
   font-size: 1.8rem;
-  color: white;
+  color: var(--text-primary);
   margin-bottom: 32px;
   font-weight: 700;
   display: flex;
@@ -202,10 +197,10 @@
 .form-group textarea {
   width: 100%;
   padding: 14px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-light);
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.6);
-  color: white;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   font-size: 1rem;
   transition: all 0.3s ease;
   font-family: inherit;
@@ -257,7 +252,7 @@
 .amenity-chip.selected {
   background: var(--primary-gradient);
   border-color: transparent;
-  color: white;
+  color: var(--text-on-primary);
   box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
 }
 
@@ -375,14 +370,14 @@
 }
 
 .nav-btn.prev:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
-  border-color: rgba(255, 255, 255, 0.2);
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  border-color: #3B82F6 !important;
 }
 
 .nav-btn.next {
   background: var(--primary-gradient) !important;
-  color: white !important;
+  color: var(--text-on-primary) !important;
   margin-left: auto;
   box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
 }

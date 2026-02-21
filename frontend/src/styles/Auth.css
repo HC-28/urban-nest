@@ -13,9 +13,8 @@
 .auth-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.85);
-  /* Dark blue overlay */
-  backdrop-filter: blur(8px);
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(12px);
 }
 
 .auth-card {
@@ -25,10 +24,10 @@
   max-width: 420px;
   padding: 40px;
   border-radius: 24px;
-  background: rgba(30, 41, 59, 0.6) !important;
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(30px);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-xl);
   animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -42,6 +41,7 @@
   margin-bottom: 16px;
   background: var(--primary-gradient);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
   filter: drop-shadow(0 4px 6px rgba(245, 158, 11, 0.3));
@@ -49,12 +49,12 @@
 
 .auth-header h2 {
   font-size: 2rem;
-  color: white;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .auth-header p {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
@@ -71,18 +71,18 @@
 }
 
 .form-group label {
-  color: #cbd5e1;
+  color: var(--text-primary);
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-left: 4px;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
   padding: 12px 16px;
   border-radius: 12px;
   transition: all 0.2s ease;
@@ -91,8 +91,8 @@
 .form-group input:focus,
 .form-group select:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
-  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+  background: var(--bg-secondary);
 }
 
 .auth-btn {
@@ -100,6 +100,7 @@
   width: 100%;
   padding: 14px;
   font-size: 1rem;
+  color: var(--text-on-primary) !important;
 }
 
 .auth-footer {
@@ -132,4 +133,20 @@
   margin-bottom: 20px;
   text-align: center;
   font-size: 0.9rem;
+}
+
+.auth-pending-approval {
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #D4AF37;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  padding: 14px 16px;
+}
+
+.auth-pending-approval strong {
+  font-size: 0.95rem;
+  color: #f0c040;
 }

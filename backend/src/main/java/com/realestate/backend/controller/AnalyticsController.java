@@ -31,14 +31,15 @@ public class AnalyticsController {
     public ResponseEntity<?> getHeatmapData(
             @PathVariable String city,
             @RequestParam(required = false, defaultValue = "price") String mode,
-            @RequestParam(required = false) String userType) {
+            @RequestParam(required = false) String userType,
+            @RequestParam(required = false) String type) {
         try {
             // Set default mode based on user type if not specified
             if (mode.equals("price") && userType != null) {
                 mode = userType.equalsIgnoreCase("agent") ? "demand" : "price";
             }
 
-            List<Map<String, Object>> heatmapData = analyticsService.getHeatmapData(city, mode);
+            List<Map<String, Object>> heatmapData = analyticsService.getHeatmapData(city, mode, type);
 
             return ResponseEntity.ok(Map.of(
                     "city", city,
@@ -75,13 +76,34 @@ public class AnalyticsController {
      * Increments view count when a user views a property
      */
     @PostMapping("/track/view/{propertyId}")
-    public ResponseEntity<?> trackView(@PathVariable Long propertyId) {
+    public ResponseEntity<?> trackView(
+            @PathVariable Long propertyId,
+            @RequestParam(required = false) Long userId) {
         try {
-            analyticsService.trackView(propertyId);
+            if (userId != null) {
+                analyticsService.trackView(propertyId, userId);
+            } else {
+                analyticsService.trackView(propertyId);
+            }
             return ResponseEntity.ok(Map.of("message", "View tracked"));
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error tracking view: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * GET RECENTLY VIEWED PROPERTIES
+     * Returns top 5 recently viewed properties for a user
+     */
+    @GetMapping("/recent")
+    public ResponseEntity<?> getRecentlyViewed(@RequestParam Long userId) {
+        try {
+            List<?> properties = analyticsService.getRecentlyViewedProperties(userId);
+            return ResponseEntity.ok(properties);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching recent views: " + ex.getMessage());
         }
     }
 

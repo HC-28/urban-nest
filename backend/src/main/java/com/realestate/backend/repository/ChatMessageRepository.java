@@ -18,4 +18,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     // Fetch all chats for a buyer (buyer's chat history)
     List<ChatMessage> findByBuyerIdOrderByCreatedAtDesc(Long buyerId);
+
+    // Fetch all chats for a property to notify all interested parties
+    List<ChatMessage> findByPropertyId(Long propertyId);
 }

@@ -2,65 +2,62 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap");
 
 :root {
-  /* ===== PRIMARY COLORS - Warm Orange ===== */
-  --primary-color: #E07A38;
-  --primary-dark: #C46528;
-  --primary-light: #F09050;
-  --primary-gradient: linear-gradient(135deg, #F09050 0%, #E07A38 50%, #C46528 100%);
-  --primary-glow: 0 0 30px rgba(224, 122, 56, 0.4);
+  /* ===== PRIMARY COLORS - Crisp White for contrast ===== */
+  --primary-color: #FFFFFF;
+  --primary-dark: #E2E8F0;
+  --primary-light: #F8FAFC;
+  --primary-gradient: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 100%);
+  --primary-glow: 0 0 30px rgba(255, 255, 255, 0.2);
 
-  /* ===== SECONDARY COLORS - Deep Royal Blue ===== */
-  --secondary-color: #1E40AF;
-  --secondary-dark: #1E3A8A;
-  --secondary-light: #3B82F6;
-  --secondary-gradient: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+  /* ===== SECONDARY COLORS - Light Slate ===== */
+  --secondary-color: #3B82F6;
+  /* Bright vibrant blue for accents */
+  --secondary-dark: #2563EB;
+  --secondary-light: #60A5FA;
+  --secondary-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
 
-  /* ===== ACCENT COLORS - Deep Orange ===== */
-  --accent-color: #E07A38;
-  --accent-dark: #C46528;
-  --accent-light: #F09050;
+  /* ===== ACCENT COLORS - Crisp White ===== */
+  --accent-color: #FFFFFF;
+  --accent-dark: #E2E8F0;
+  --accent-light: #F8FAFC;
 
-  /* ===== BACKGROUNDS - Consistent Dark Blue ===== */
-  --bg-primary: #0F172A;
-  /* Main background */
-  --bg-secondary: #1E293B;
-  /* Sections */
-  --bg-card: rgba(15, 23, 42, 0.85);
-  /* Glassmorphic card background */
-  --bg-tertiary: #1E293B;
-  --bg-dark: #020617;
-  /* Navbar/Footer */
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --bg-glass-strong: rgba(255, 255, 255, 0.07);
+  /* ===== BACKGROUNDS - Deep Navy (Dark Mode) ===== */
+  --bg-primary: #0A192F;
+  --bg-secondary: #112240;
+  --bg-card: rgba(17, 34, 64, 0.9);
+  --bg-tertiary: #233554;
+  --bg-dark: #020C1B;
+  --bg-glass: rgba(10, 25, 47, 0.6);
+  --bg-glass-strong: rgba(10, 25, 47, 0.8);
 
-  /* ===== TEXT COLORS ===== */
-  --text-primary: #F1F5F9;
+  /* ===== TEXT COLORS - Inverted for Dark Mode ===== */
+  --text-primary: #FFFFFF;
   --text-secondary: #CBD5E1;
-  --text-muted: #64748B;
+  --text-muted: #94A3B8;
   --text-dark: #0F172A;
-  --text-on-primary: #FFFFFF;
+  --text-on-primary: #0A192F;
+  /* Very dark blue/slate for high contrast on white/primary buttons */
 
   /* ===== UTILITY COLORS ===== */
-  --success-color: #10B981;
-  --warning-color: #F59E0B;
-  --error-color: #EF4444;
-  --info-color: #3B82F6;
+  --success-color: #059669;
+  --warning-color: #D97706;
+  --error-color: #DC2626;
+  --info-color: #38BDF8;
 
-  /* ===== SHADOWS - Enhanced ===== */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
-  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.7);
-  --shadow-cyan-glow: 0 0 30px rgba(212, 160, 6, 0.35);
-  --shadow-amber-glow: 0 0 30px rgba(212, 160, 6, 0.35);
-  --shadow-blue-glow: 0 0 30px rgba(30, 64, 175, 0.3);
+  /* ===== SHADOWS - Dark Mode Shadows ===== */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.6);
+  --shadow-amber-glow: 0 0 30px rgba(255, 255, 255, 0.15);
+  --shadow-blue-glow: 0 0 30px rgba(148, 163, 184, 0.15);
 
-  /* ===== BORDER COLORS ===== */
+  /* ===== BORDER COLORS - Subtler for Dark Mode ===== */
   --border-light: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.13);
+  --border-medium: rgba(255, 255, 255, 0.12);
   --border-dark: rgba(255, 255, 255, 0.04);
-  --border-amber: rgba(212, 160, 6, 0.3);
-  --border-cyan: rgba(212, 160, 6, 0.3);
+  --border-amber: rgba(255, 255, 255, 0.2);
+  --border-cyan: rgba(148, 163, 184, 0.2);
 
   /* ===== BORDER RADIUS - Distinctive ===== */
   --radius-sm: 8px;
@@ -171,18 +168,23 @@ button {
   border: none;
   padding: 0.75em 1.5em;
   font-size: 1em;
-  font-weight: 600;
+  font-weight: 700;
+  /* Bolder text for better legibility */
   font-family: inherit;
   background: var(--primary-gradient);
-  color: white;
+  color: var(--text-on-primary) !important;
+  /* Force dark text explicitly on primary buttons global */
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(212, 160, 6, 0.25);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
 }
 
 button:hover {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  /* Switches to white text when button turns dark blue */
   transform: translateY(-2px);
-  box-shadow: var(--shadow-cyan-glow);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
 }
 
 button:active {
@@ -206,7 +208,7 @@ textarea {
   border-radius: var(--radius-md);
   padding: 12px 16px;
   transition: all 0.2s ease;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   backdrop-filter: blur(10px);
 }
@@ -221,8 +223,19 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(212, 160, 6, 0.2);
-  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  background: var(--bg-secondary);
+}
+
+/* Chrome Autofill styles override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #112240 inset !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: #FFFFFF;
 }
 
 /* ===== UTILITY CLASSES ===== */
@@ -244,7 +257,7 @@ textarea:focus {
 /* Gradient Borders */
 .gradient-border {
   position: relative;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
 }
 
@@ -269,7 +282,7 @@ textarea:focus {
 
 /* Animated Gradient Background */
 .animated-gradient {
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
+  background: linear-gradient(135deg, #0A192F 0%, #112240 50%, #0A192F 100%);
   background-size: 200% 200%;
   animation: gradientShift 15s ease infinite;
 }

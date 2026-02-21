@@ -82,13 +82,16 @@
     opacity: 1;
 }
 
-.chat-property-img img {
-    width: 80px;
-    height: 80px;
-    border-radius: 12px;
-    object-fit: cover;
+.chat-avatar-wrapper {
     flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .chat-details {

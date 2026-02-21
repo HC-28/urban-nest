@@ -22,15 +22,27 @@ function Login() {
     setError(null);
     try {
       const res = await authApi.post("/login", formData);
-      localStorage.setItem("user", JSON.stringify(res.data));
+      const loggedInUser = res.data;
+      localStorage.setItem("user", JSON.stringify(loggedInUser));
       window.dispatchEvent(new Event("storage"));
-      navigate("/");
+
+      // Redirect based on role — admin is silently sent to admin dashboard
+      if (loggedInUser.role === "ADMIN") {
+        navigate("/admin");
+      } else if (loggedInUser.role === "AGENT") {
+        navigate("/dashboard");
+      } else {
+        navigate("/");
+      }
+
     } catch (err) {
       setError(err.response?.data || "Login failed");
     } finally {
       setLoading(false);
     }
   };
+
+  const isPendingApproval = error?.includes?.("pending admin approval");
 
   return (
     <div className="auth-page" style={{ backgroundImage: `url(${heroBg})` }}>
@@ -44,7 +56,22 @@ function Login() {
           <p>Login to access your personalized dashboard</p>
         </div>
 
-        {error && <div className="auth-error">{error}</div>}
+        {error && (
+          <div className={`auth-error ${isPendingApproval ? 'auth-pending-approval' : ''}`}>
+            {isPendingApproval ? (
+              <>
+                <span style={{ fontSize: '1.3rem' }}>⏳</span>
+                <div>
+                  <strong>Account Pending Approval</strong>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.9 }}>
+                    Your agent account is awaiting verification by an admin. You will be able to log in once approved.
+                  </p>
+                </div>
+              </>
+            ) : error}
+          </div>
+        )}
+
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">

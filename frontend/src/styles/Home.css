@@ -1,19 +1,17 @@
 /* ============ Home Page - Unique Design ============ */
 .home-page {
   overflow-x: hidden;
-  background: #0F172A !important;
-  /* Hardcoded Dark Blue */
+  background: var(--bg-primary);
   min-height: 100vh;
 }
 
 /* Featured Property Card - Dark Theme */
 /* Featured Property Card - Dark Theme */
 .featured-card {
-  background: rgba(30, 41, 59, 0.7) !important;
-  /* Lighter dark blue for better contrast */
+  background: var(--bg-card);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
   border-radius: 20px;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -63,11 +61,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
-  color: var(--primary-light) !important;
-  background: var(--primary-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--secondary-color);
 }
 
 .featured-card .area-badge {
@@ -83,8 +77,7 @@
 .featured-card .property-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #f8fafc !important;
-  /* High contrast white */
+  color: var(--text-primary);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -157,7 +150,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+  background: radial-gradient(circle at 50% 50%, var(--bg-secondary) 0%, var(--bg-primary) 100%);
 }
 
 /* Animated Background Elements */
@@ -168,7 +161,7 @@
   left: -10%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(202, 160, 102, 0.1) 0%, transparent 70%);
   border-radius: 50%;
   filter: blur(60px);
   animation: float 20s ease-in-out infinite;
@@ -192,8 +185,7 @@
 .hero-overlay {
   position: absolute;
   inset: 0;
-  /* Strong Dark Blue Gradient Overlay */
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.8) 100%);
+  background: linear-gradient(135deg, rgba(10, 25, 47, 0.85) 0%, rgba(17, 34, 64, 0.75) 100%);
   opacity: 1;
   z-index: 0;
 }
@@ -227,11 +219,8 @@
   font-weight: 800;
   line-height: 1.1;
   margin-bottom: 24px;
-  background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   letter-spacing: -2px;
   opacity: 0;
   animation: fadeIn 1s ease-out forwards;
@@ -256,14 +245,13 @@
 
 /* Glassmorphism Search Box */
 .hero-search {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-light);
   border-radius: 24px;
   padding: 32px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 900px;
   opacity: 0;
@@ -298,26 +286,27 @@
 .tab {
   font-family: "Outfit", sans-serif;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 40px;
   padding: 10px 24px;
-  background: transparent;
+  background: transparent !important;
   border: none;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  color: #94A3B8;
+  color: rgba(255, 255, 255, 0.7) !important;
   position: relative;
   z-index: 1;
 }
 
 .tab:hover {
-  color: white;
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #FFFFFF !important;
 }
 
 .tab.active {
-  background: var(--primary-gradient);
-  color: #ffffff;
-  box-shadow: 0 4px 15px rgba(212, 160, 6, 0.4);
+  background: #FFFFFF !important;
+  color: var(--text-on-primary) !important;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
 }
 
 /* Search Controls */
@@ -359,7 +348,7 @@
   left: 20px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94A3B8;
+  color: rgba(255, 255, 255, 0.7);
   pointer-events: none;
 }
 
@@ -378,7 +367,7 @@
 
 .search-btn {
   background: var(--primary-gradient);
-  color: white;
+  color: var(--text-on-primary) !important;
   border: none;
   padding: 16px 36px;
   border-radius: 16px;
@@ -542,14 +531,16 @@
 .explore-btn:hover {
   background: var(--primary-gradient);
   border-color: transparent;
-  color: white;
+  color: var(--text-on-primary);
   gap: 12px;
   box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
 }
 
 .feature-box:hover .explore-btn {
+  background: var(--primary-gradient);
+  border-color: transparent;
   gap: 12px;
-  color: var(--primary-light);
+  color: var(--text-on-primary);
 }
 
 /* ================= FEATURED PROPERTIES ================= */
@@ -781,7 +772,7 @@
 
 .cta-btn.primary {
   background: var(--primary-gradient);
-  color: white;
+  color: var(--text-on-primary);
   border: none;
   box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
 }

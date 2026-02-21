@@ -1,10 +1,13 @@
 package com.realestate.backend.service;
 
+import com.realestate.backend.entity.AppUser;
 import com.realestate.backend.entity.PincodeScore;
 import com.realestate.backend.entity.Property;
+import com.realestate.backend.entity.PropertyView;
 import com.realestate.backend.repository.FavoriteRepository;
 import com.realestate.backend.repository.PincodeScoreRepository;
 import com.realestate.backend.repository.PropertyRepository;
+import com.realestate.backend.repository.PropertyViewRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -305,13 +308,74 @@ public class AnalyticsService {
     /**
      * Track a property view
      */
+    @Autowired
+    private PropertyViewRepository propertyViewRepository;
+
+    @Autowired
+    private com.realestate.backend.repository.UserRepository userRepository;
+
+    // ... existing initialization ...
+
+    /**
+     * Track a property view (Unique per user)
+     */
+    @Transactional
+    public void trackView(Long propertyId, Long userId) {
+        if (propertyId == null)
+            return;
+        propertyRepository.findById(propertyId).ifPresent(property -> {
+            boolean isUniqueView = true;
+
+            if (userId != null) {
+                // Logged-in user: Check if they viewed it before
+                Optional<AppUser> userOpt = userRepository.findById(userId);
+                if (userOpt.isPresent()) {
+                    AppUser user = userOpt.get();
+                    Optional<PropertyView> existingView = propertyViewRepository.findByUserAndProperty(user, property);
+
+                    if (existingView.isPresent()) {
+                        // Update timestamp, do NOT increment public view count
+                        PropertyView view = existingView.get();
+                        view.setViewedAt(LocalDateTime.now());
+                        propertyViewRepository.save(view);
+                        isUniqueView = false;
+                    } else {
+                        // New view for this user
+                        PropertyView newView = new PropertyView(user, property);
+                        propertyViewRepository.save(newView);
+                    }
+                }
+            }
+
+            // Increment public view count only if it's a unique view (or guest)
+            // Note: For guests (userId=null), we always increment (simple cookie-based
+            // tracking is out of scope)
+            if (isUniqueView) {
+                property.setViews(property.getViews() + 1);
+                property.setLastViewedAt(LocalDateTime.now());
+                propertyRepository.save(property);
+            }
+        });
+    }
+
+    /**
+     * Track a property view (Legacy/Guest method)
+     */
     @Transactional
     public void trackView(Long propertyId) {
-        propertyRepository.findById(propertyId).ifPresent(property -> {
-            property.setViews(property.getViews() + 1);
-            property.setLastViewedAt(LocalDateTime.now());
-            propertyRepository.save(property);
-        });
+        trackView(propertyId, null);
+    }
+
+    /**
+     * Get recently viewed properties for a user
+     */
+    public List<Property> getRecentlyViewedProperties(Long userId) {
+        if (userId == null)
+            return Collections.emptyList();
+        return userRepository.findById(userId).map(user -> propertyViewRepository.findByUserOrderByViewedAtDesc(
+                user, org.springframework.data.domain.PageRequest.of(0, 5)).stream()
+                .map(PropertyView::getProperty)
+                .collect(Collectors.toList())).orElse(Collections.emptyList());
     }
 
     /**
@@ -319,6 +383,8 @@ public class AnalyticsService {
      */
     @Transactional
     public void trackInquiry(Long propertyId) {
+        if (propertyId == null)
+            return;
         propertyRepository.findById(propertyId).ifPresent(property -> {
             property.setInquiries(property.getInquiries() + 1);
             propertyRepository.save(property);
@@ -365,5 +431,82 @@ public class AnalyticsService {
             case "conversion" -> score.getConversionScore();
             default -> score.getPriceScore(); // Default to price
         };
+    }
+
+    /**
+     * Get heatmap data for a city, optionally filtered by property type
+     */
+    public List<Map<String, Object>> getHeatmapData(String city, String mode, String type) {
+        if (type != null && !type.equalsIgnoreCase("All") && !type.trim().isEmpty()) {
+            return getDynamicHeatmapData(city, mode, type);
+        }
+        return getHeatmapData(city, mode);
+    }
+
+    /**
+     * Generate heatmap data dynamically for a specific property type
+     */
+    private List<Map<String, Object>> getDynamicHeatmapData(String city, String mode, String type) {
+        List<Object[]> results = propertyRepository.countActivePropertiesByPinCodeAndCityAndType(city, type);
+        List<PincodeScore> dynamicScores = new ArrayList<>();
+
+        int maxListings = 0;
+        for (Object[] row : results) {
+            Long count = (Long) row[1];
+            if (count > maxListings)
+                maxListings = count.intValue();
+        }
+        if (maxListings == 0)
+            maxListings = 1;
+
+        for (Object[] row : results) {
+            String pincode = (String) row[0];
+            Long count = (Long) row[1];
+            Double avgPrice = row[2] != null ? (Double) row[2] : 0.0;
+            Long views = row[3] != null ? (Long) row[3] : 0L;
+            Long favorites = row[4] != null ? (Long) row[4] : 0L;
+            Long inquiries = row[5] != null ? (Long) row[5] : 0L;
+
+            PincodeScore score = new PincodeScore(city, pincode);
+            score.setActiveListings(count.intValue());
+            score.setMedianPricePerSqft(avgPrice); // Use Avg as proxy for Median in dynamic view
+
+            // Inventory Score
+            score.setInventoryScore((count / (double) maxListings) * 100.0);
+
+            // Price Score (Raw, will be normalized)
+            score.setPriceScore(avgPrice);
+
+            // Demand Score (Raw Engagement per listing)
+            double engagement = views + favorites + inquiries;
+            double engagementPerListing = count > 0 ? engagement / count : 0;
+            score.setDemandScore(engagementPerListing);
+
+            // Market Activity (Use Demand as proxy since we lack liquidity/days data in
+            // aggregate)
+            score.setMarketActivityScore(engagementPerListing);
+
+            // Buyer Opportunity (Simplified: Inventory Level)
+            // We lack days-on-market stats in this view, so we rely on price/inventory
+            // Lower price + Higher inventory = Better opportunity?
+            // Let's use a simple inverted price * inventory metric for now, or just leave
+            // as 50
+            // Actually, let's omit complex scores and fallback to Price/Inventory/Demand
+            score.setBuyerOpportunityScore(50.0);
+
+            dynamicScores.add(score);
+        }
+
+        // Apply same normalization as pre-computed scores
+        normalizeScores(dynamicScores);
+
+        return dynamicScores.stream().map(score -> {
+            Map<String, Object> data = new HashMap<>();
+            data.put("pincode", score.getPincode());
+            data.put("score", getScoreByMode(score, mode));
+            data.put("activeListings", score.getActiveListings());
+            data.put("medianPrice", score.getMedianPricePerSqft());
+            return data;
+        }).collect(Collectors.toList());
     }
 }
