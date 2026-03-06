@@ -56,7 +56,7 @@ export default function PropertyChat() {
         if (!agentId || !buyerId) return;
 
         chatApi
-            .get("/conversation", {
+            .get("/messages", {
                 params: { propertyId, buyerId, agentId }
             })
             .then(res => {
@@ -81,7 +81,7 @@ export default function PropertyChat() {
         if (!text.trim() || !agentId || !buyerId) return;
 
         try {
-            const res = await chatApi.post("/send", {
+            const res = await chatApi.post("/messages", {
                 propertyId,
                 buyerId,
                 agentId,
@@ -100,7 +100,7 @@ export default function PropertyChat() {
         if (!window.confirm("Do you want to notify the Admin for assistance?")) return;
 
         try {
-            const res = await chatApi.post("/send", {
+            const res = await chatApi.post("/messages", {
                 propertyId,
                 buyerId,
                 agentId,

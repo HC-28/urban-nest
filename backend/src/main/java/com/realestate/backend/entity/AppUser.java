@@ -30,20 +30,33 @@ public class AppUser {
     private String pincode;
 
     // Professional info for Agents
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
 
+    @Column(name = "agency_name")
     private String agencyName;
+
+    @Column(name = "experience")
     private String experience;
+
+    @Column(name = "specialties")
     private String specialties;
 
     // Admin approval for Agents (false = pending, true = approved)
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    @Column(name = "verified", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean verified = true;
 
     // Account deletion request flag
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Column(name = "deletion_requested", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean deletionRequested = false;
+
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = java.time.LocalDateTime.now();
+    }
 
     // Getters & Setters
 
@@ -165,5 +178,13 @@ public class AppUser {
 
     public void setDeletionRequested(boolean deletionRequested) {
         this.deletionRequested = deletionRequested;
+    }
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

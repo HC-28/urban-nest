@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { authApi } from "../api/api";
 import "../styles/Auth.css"; // We'll create/update this shared CSS
-import heroBg from "../assets/re-back.jpg";
+import heroBg from "../assets/hero-bg.png";
 import logo from "../assets/logo.png";
 
 function Login() {
@@ -23,6 +23,10 @@ function Login() {
     try {
       const res = await authApi.post("/login", formData);
       const loggedInUser = res.data;
+
+      // Store JWT token and user data separately
+      localStorage.setItem("token", loggedInUser.token);
+      delete loggedInUser.token; // Don't persist token in user object
       localStorage.setItem("user", JSON.stringify(loggedInUser));
       window.dispatchEvent(new Event("storage"));
 
@@ -36,7 +40,7 @@ function Login() {
       }
 
     } catch (err) {
-      setError(err.response?.data || "Login failed");
+      setError(err.response?.data?.error || err.response?.data || "Login failed");
     } finally {
       setLoading(false);
     }

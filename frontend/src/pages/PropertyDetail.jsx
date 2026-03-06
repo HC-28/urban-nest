@@ -15,12 +15,16 @@ import {
   FiCheck,
   FiChevronLeft,
   FiChevronRight,
-  FiEye
+  FiEye,
+  FiX,
+  FiShare2
 } from "react-icons/fi";
 import { propertyApi, favoritesApi, userApi, chatApi, slotsApi, appointmentApi, BASE_URL, IMAGE_URL } from "../api/api";
 import { formatPrice } from "../utils/priceUtils";
 import { parsePropertyImages } from "../utils/imageUtils";
-
+import { addToRecentlyViewed } from "../utils/recentlyViewed";
+import toast from "react-hot-toast";
+import { Helmet } from "react-helmet-async";
 
 function PropertyDetail() {
   const { id } = useParams();
@@ -29,6 +33,7 @@ function PropertyDetail() {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   const [showChat, setShowChat] = useState(false);
@@ -84,7 +89,10 @@ function PropertyDetail() {
             name: data.agentName || "Agent",
             email: data.agentEmail || "agent@email.com"
           },
-          views: data.views || 0
+          views: data.views || 0,
+          favorites: data.favorites || 0,
+          inquiries: data.inquiries || 0,
+          listedDate: data.listedDate || null
         };
 
         // Create initial property data
@@ -106,13 +114,15 @@ function PropertyDetail() {
 
         setProperty(propertyData);
 
-        // Record view (don't wait for response)
-        propertyApi.post(`/${id}/view`).catch(e => console.error("View tracking failed:", e));
+        // Track in recently viewed
+        addToRecentlyViewed(data);
+
+        // Note: view tracking is handled server-side in getPropertyById
 
         // Check if saved
         if (user) {
           try {
-            const res = await favoritesApi.get("/check", {
+            const res = await favoritesApi.get("/status", {
               params: { userId: user.id, propertyId: data.id }
             });
             setIsSaved(res.data.isFavorite);
@@ -149,29 +159,22 @@ function PropertyDetail() {
 
     const fetchChats = async () => {
       try {
-        const res = await fetch(
-          `${BASE_URL}/chat/conversation?propertyId=${property.id}&buyerId=${user.id}&agentId=${property.agentId}`
-        );
+        const res = await chatApi.get(`/messages`, {
+          params: { propertyId: property.id, buyerId: user.id, agentId: property.agentId }
+        });
 
-        if (!res.ok) return;
-
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setChatMessages(data);
+        if (Array.isArray(res.data)) {
+          setChatMessages(res.data);
         } else {
           setChatMessages([]);
         }
 
         // Mark AGENT messages as SEEN
-        await fetch(`${BASE_URL}/chat/seen`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            propertyId: property.id,
-            buyerId: user.id,
-            agentId: property.agentId,
-            userRole: "BUYER"
-          })
+        await chatApi.post(`/seen`, {
+          propertyId: property.id,
+          buyerId: user.id,
+          agentId: property.agentId,
+          userRole: "BUYER"
         });
 
       } catch (err) {
@@ -210,10 +213,10 @@ function PropertyDetail() {
         slotId: slotId,
         buyerId: user.id
       });
-      alert("Appointment booked successfully! The agent will be notified.");
+      toast.success("Appointment booked successfully! The agent will be notified.");
       setShowSlots(false);
     } catch (e) {
-      alert(e.response?.data || "Failed to book slot");
+      toast.error(e.response?.data || "Failed to book slot");
     }
   };
 
@@ -230,16 +233,16 @@ function PropertyDetail() {
 
   const toggleSave = async (e) => {
     e?.stopPropagation();
-    if (!user) return alert("Please login to save property");
+    if (!user) return toast.error("Please login to save property");
 
     try {
       if (isSaved) {
-        await favoritesApi.delete("/remove", {
+        await favoritesApi.delete("/", {
           params: { userId: user.id, propertyId: property.id }
         });
         setIsSaved(false);
       } else {
-        await favoritesApi.post("/add", null, {
+        await favoritesApi.post("/", null, {
           params: { userId: user.id, propertyId: property.id }
         });
         setIsSaved(true);
@@ -247,12 +250,35 @@ function PropertyDetail() {
     } catch (err) {
       console.error("Save error:", err);
       if (err.response?.data) {
-        alert(err.response.data);
+        toast.error(err.response.data);
       } else {
-        alert("Failed to update favorites");
+        toast.error("Failed to update favorites");
       }
     }
   };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: property.title,
+          text: `Check out this property: ${property.title}`,
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.error("Error sharing", err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied to clipboard!");
+      } catch (err) {
+        toast.error("Failed to copy link");
+      }
+    }
+  };
+
+
 
   /* ================= SEND MESSAGE ================= */
   const sendMessage = async () => {
@@ -282,20 +308,12 @@ function PropertyDetail() {
     };
 
     try {
-      const res = await fetch(`${BASE_URL}/chat/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) throw new Error("Send failed");
-
-      const savedMsg = await res.json();
-      setChatMessages(prev => [...prev, savedMsg]);
+      const res = await chatApi.post(`/messages`, payload);
+      setChatMessages(prev => [...prev, res.data]);
       setChatMessage("");
     } catch (err) {
       console.error(err);
-      alert("Message not sent");
+      toast.error("Message not sent");
     }
   };
 
@@ -303,12 +321,10 @@ function PropertyDetail() {
     if (!user || user.role !== "BUYER") return;
 
     try {
-      const res = await fetch(
-        `${BASE_URL}/chat/conversation?propertyId=${property.id}&buyerId=${user.id}&agentId=${property.agentId}`
-      );
-
-      const data = await res.json();
-      setChatMessages(data);
+      const res = await chatApi.get(`/messages`, {
+        params: { propertyId: property.id, buyerId: user.id, agentId: property.agentId }
+      });
+      setChatMessages(res.data);
     } catch (err) {
       console.error("Failed to load chat history", err);
     }
@@ -357,7 +373,34 @@ function PropertyDetail() {
   /* ================= MAIN UI ================= */
   return (
     <div className="property-detail-page">
+      <Helmet>
+        <title>{property ? `${property.title} | Urban Nest` : "Property Details | Urban Nest"}</title>
+        <meta name="description" content={property?.description?.substring(0, 160) || "View details for this property on Urban Nest."} />
+      </Helmet>
       <Navbar />
+
+      {/* Lightbox Modal */}
+      {showLightbox && (
+        <div className="lightbox-overlay animate-in" onClick={() => setShowLightbox(false)}>
+          <button className="lightbox-close" onClick={() => setShowLightbox(false)}>
+            <FiX />
+          </button>
+
+          <button className="lightbox-nav prev" onClick={(e) => { e.stopPropagation(); prevImage(); }}>
+            <FiChevronLeft />
+          </button>
+
+          <img src={property.images[currentImageIndex]} alt="Fullscreen view" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
+
+          <button className="lightbox-nav next" onClick={(e) => { e.stopPropagation(); nextImage(); }}>
+            <FiChevronRight />
+          </button>
+
+          <div className="lightbox-counter">
+            {currentImageIndex + 1} / {property.images.length}
+          </div>
+        </div>
+      )}
 
       <div className="property-detail-container">
         {/* Breadcrumb */}
@@ -374,7 +417,7 @@ function PropertyDetail() {
           <div className="main-carousel">
             <div className="carousel-track" style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}>
               {property.images.map((img, idx) => (
-                <div key={idx} className="carousel-slide">
+                <div key={idx} className="carousel-slide" onClick={() => setShowLightbox(true)} style={{ cursor: "zoom-in" }}>
                   <img src={img} alt={`${property.title} view ${idx + 1}`} />
                 </div>
               ))}
@@ -445,6 +488,37 @@ function PropertyDetail() {
               <div className="info-item"><FiCalendar /> {property.age}</div>
             </div>
 
+            {/* Property Stats Bar */}
+            <div className="property-stats-bar">
+              <div className="stat-item">
+                <FiEye className="stat-icon" />
+                <span className="stat-value">{property.views}</span>
+                <span className="stat-label">Views</span>
+              </div>
+              <div className="stat-divider" />
+              <div className="stat-item">
+                <FiHeart className="stat-icon" />
+                <span className="stat-value">{property.favorites}</span>
+                <span className="stat-label">Favorites</span>
+              </div>
+              <div className="stat-divider" />
+              <div className="stat-item">
+                <FiMail className="stat-icon" />
+                <span className="stat-value">{property.inquiries}</span>
+                <span className="stat-label">Inquiries</span>
+              </div>
+              {property.listedDate && (
+                <>
+                  <div className="stat-divider" />
+                  <div className="stat-item">
+                    <FiCalendar className="stat-icon" />
+                    <span className="stat-value">{new Date(property.listedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    <span className="stat-label">Listed</span>
+                  </div>
+                </>
+              )}
+            </div>
+
             {/* Actions */}
             <div className="action-buttons">
               <button
@@ -452,6 +526,13 @@ function PropertyDetail() {
                 onClick={toggleSave}
               >
                 <FiHeart /> {isSaved ? "Saved" : "Save"}
+              </button>
+
+              <button
+                className="action-btn"
+                onClick={handleShare}
+              >
+                <FiShare2 /> Share
               </button>
 
               <button
@@ -465,17 +546,17 @@ function PropertyDetail() {
                 className="action-btn"
                 onClick={() => {
                   if (!user) {
-                    alert("Please login first to chat with agent");
+                    toast.error("Please login first to chat with agent");
                     return;
                   }
 
                   if (user.role !== "BUYER") {
-                    alert("Only buyers can chat with agents");
+                    toast.error("Only buyers can chat with agents");
                     return;
                   }
 
                   if (!property?.agentId) {
-                    alert("Agent not available");
+                    toast.error("Agent not available");
                     return;
                   }
 
@@ -497,25 +578,65 @@ function PropertyDetail() {
 
             </div>
 
-            {/* SLOTS BOX */}
+            {/* SLOTS BOX — Date-grouped Time Picker */}
             {showSlots && user?.role === "BUYER" && (
-              <div className="slots-box animate-in" style={{ marginTop: '20px', padding: '20px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-                <h3>Available Time Slots</h3>
+              <div className="slots-section animate-in">
+                <div className="slots-header">
+                  <h3><FiCalendar style={{ marginRight: '8px' }} /> Schedule a Visit</h3>
+                  <button className="slots-close" onClick={() => setShowSlots(false)}><FiX /></button>
+                </div>
                 {availableSlots.length === 0 ? (
-                  <p style={{ color: "var(--text-secondary)", marginTop: "10px" }}>No available slots found for this property.</p>
-                ) : (
-                  <div className="slots-grid" style={{ display: 'grid', gap: '10px', marginTop: '15px' }}>
-                    {availableSlots.map(slot => (
-                      <div key={slot.id} className="slot-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px' }}>
-                        <div>
-                          <strong>{slot.slotDate}</strong> at {slot.slotTime}
-                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Duration: {slot.durationMinutes} mins</div>
-                        </div>
-                        <button className="action-btn primary" onClick={() => bookSlot(slot.id)}>Book</button>
-                      </div>
-                    ))}
+                  <div className="slots-empty">
+                    <FiCalendar size={32} style={{ color: '#64748b', marginBottom: '8px' }} />
+                    <p>No available time slots for this property yet.</p>
+                    <p style={{ fontSize: '13px', color: '#64748b' }}>The agent hasn't added viewing slots. Try contacting them via chat.</p>
                   </div>
-                )}
+                ) : (() => {
+                  // Group slots by date
+                  const grouped = {};
+                  availableSlots.forEach(s => {
+                    if (!grouped[s.slotDate]) grouped[s.slotDate] = [];
+                    grouped[s.slotDate].push(s);
+                  });
+                  const dates = Object.keys(grouped).sort();
+                  return (
+                    <div className="slots-calendar">
+                      <div className="slots-dates-row">
+                        {dates.map(date => {
+                          const d = new Date(date + 'T00:00:00');
+                          const dayName = d.toLocaleDateString('en-IN', { weekday: 'short' });
+                          const dayNum = d.getDate();
+                          const month = d.toLocaleDateString('en-IN', { month: 'short' });
+                          return (
+                            <div key={date} className="date-column">
+                              <div className="date-label">
+                                <span className="day-name">{dayName}</span>
+                                <span className="day-num">{dayNum}</span>
+                                <span className="day-month">{month}</span>
+                              </div>
+                              <div className="time-pills">
+                                {grouped[date].sort((a, b) => a.slotTime.localeCompare(b.slotTime)).map(slot => (
+                                  <button
+                                    key={slot.id}
+                                    className="time-pill"
+                                    onClick={() => {
+                                      if (window.confirm(`Book appointment on ${date} at ${slot.slotTime} (${slot.durationMinutes} min)?`)) {
+                                        bookSlot(slot.id);
+                                      }
+                                    }}
+                                  >
+                                    <span className="pill-time">{slot.slotTime.substring(0, 5)}</span>
+                                    <span className="pill-duration">{slot.durationMinutes}m</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 

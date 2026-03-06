@@ -45,6 +45,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     onClose();
     window.location.href = '/';
   };
@@ -69,7 +70,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
     setIsLoading(true);
     setError("");
     try {
-      await userApi.put("/update-name", { email: user.email, name: newName.trim() });
+      await userApi.put("/me/profile", { name: newName.trim() });
       const updatedUser = { ...user, name: newName.trim() };
       localStorage.setItem("user", JSON.stringify(updatedUser));
       if (onUserUpdate) onUserUpdate(updatedUser);
@@ -104,8 +105,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
       setIsUploadingPicture(true);
       setError(""); // Clear any previous errors
       try {
-        await userApi.put("/update-profile-picture", {
-          email: user.email,
+        await userApi.patch("/me/avatar", {
           profilePicture: base64Image
         });
         const updatedUser = { ...user, profilePicture: base64Image };
@@ -139,18 +139,19 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
       <div className="drawer-backdrop" onClick={onClose}></div>
       <div className="drawer">
         <div className="drawer-header">
-          <div style={{ position: 'relative', display: 'inline-block' }}>
+          <div className="avatar-wrapper" style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
             <img
               src={previewImage || user.profilePicture || "/src/assets/profile.png"}
               alt="Profile"
               className="drawer-avatar"
-              style={{ opacity: isUploadingPicture ? 0.5 : 1 }}
+              style={{ opacity: isUploadingPicture ? 0.5 : 1, margin: 0 }}
               onError={(e) => { e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e2e8f0' width='100' height='100'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='14' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EUser%3C/text%3E%3C/svg%3E"; }}
             />
             <label htmlFor="profile-picture-input" className="camera-icon-label" style={{
-              position: 'absolute', bottom: '0', right: '0', background: '#2563eb',
+              position: 'absolute', bottom: '2px', right: '2px', background: '#2563eb',
               color: 'white', borderRadius: '50%', width: '28px', height: '28px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              border: '2px solid var(--bg-tertiary)', boxShadow: '0 2px 5px rgba(0,0,0,0.3)'
             }}>
               📷
             </label>
@@ -186,9 +187,10 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
         </div>
 
         <div className="drawer-menu">
-          {!isOnDashboard && <button onClick={() => { navigate("/dashboard"); onClose(); }}>Dashboard</button>}
+          {!isOnDashboard && user.role !== "ADMIN" && <button onClick={() => { navigate("/dashboard"); onClose(); }}>Dashboard</button>}
+          {location.pathname !== "/admin" && user.role === "ADMIN" && <button onClick={() => { navigate("/admin"); onClose(); }}>Admin Area</button>}
           <button onClick={() => { navigate("/profile"); onClose(); }}>My Profile</button>
-          <button onClick={() => { navigate("/favorites"); onClose(); }}>Favourites</button>
+          {user.role !== "ADMIN" && <button onClick={() => { navigate("/favorites"); onClose(); }}>Favourites</button>}
         </div>
 
         <div className="drawer-content">
@@ -205,7 +207,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
                         onClick={(e) => {
                           e.stopPropagation();
                           handleUnfav(p.id);
-                          favoritesApi.delete(`/remove?userId=${user.id}&propertyId=${p.id}`);
+                          favoritesApi.delete(`/?userId=${user.id}&propertyId=${p.id}`);
                         }}
                         style={{
                           position: 'absolute',

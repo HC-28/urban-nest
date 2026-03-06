@@ -74,7 +74,7 @@ export default function AppointmentActionPanel({
     const handleBuyerConfirm = async (answer) => {
         if (!appointment) return;
         try {
-            await appointmentApi.put(`/${appointment.id}/buyer-confirm`, { answer });
+            await appointmentApi.put(`/${appointment.id}/buyer-confirmation`, { answer });
             alert(answer === "YES" ? "Confirmed! Waiting for Agent to verify." : "Purchase denied.");
             fetchAppointmentStatus();
         } catch (e) {
@@ -85,12 +85,12 @@ export default function AppointmentActionPanel({
     const handleAgentConfirm = async (answer) => {
         if (!appointment) return;
         try {
-            await appointmentApi.put(`/${appointment.id}/agent-confirm`, { answer });
+            await appointmentApi.put(`/${appointment.id}/agent-confirmation`, { answer });
             alert(answer === "YES" ? "Sale Confirmed! Property marked as SOLD." : "Sale denied.");
 
             // If yes, trigger a broadcast chat message
             if (answer === "YES") {
-                await chatApi.post("/send", {
+                await chatApi.post("/messages", {
                     propertyId,
                     buyerId,
                     agentId,
@@ -172,7 +172,7 @@ export default function AppointmentActionPanel({
                             try {
                                 // Direct update using repo isn't here, normally ScheduledTask does this or Agent clicks "Showed Property"
                                 // We simulate passing it to verifying state
-                                await fetch(`/api/appointments/${appointment.id}/simulate-visit`, { method: 'POST' });
+                                await appointmentApi.post(`/${appointment.id}/visit`);
                                 fetchAppointmentStatus();
                             } catch (e) { }
                         }}

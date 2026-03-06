@@ -1,0 +1,152 @@
+/* =========================================
+   SKELETON LOADERS
+   ========================================= */
+
+@keyframes shimmer {
+    0% {
+        background-position: -400px 0;
+    }
+
+    100% {
+        background-position: 400px 0;
+    }
+}
+
+.skeleton-card,
+.skeleton-agent-card {
+    background: var(--bg-card, rgba(30, 41, 59, 0.5));
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Base shimmer effect for all skeleton sub-elements */
+.skeleton-img,
+.skeleton-line,
+.skeleton-box,
+.skeleton-avatar,
+.skeleton-btn {
+    background: rgba(255, 255, 255, 0.05);
+    background-image: linear-gradient(90deg,
+            rgba(255, 255, 255, 0) 0,
+            rgba(255, 255, 255, 0.05) 20%,
+            rgba(255, 255, 255, 0.08) 60%,
+            rgba(255, 255, 255, 0));
+    background-size: 800px 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 4px;
+}
+
+/* Property Skeleton */
+.skeleton-img {
+    height: 260px;
+    width: 100%;
+    border-radius: 0;
+}
+
+.skeleton-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.skeleton-line {
+    height: 16px;
+    width: 100%;
+}
+
+.skeleton-line.title {
+    height: 24px;
+    width: 80%;
+    margin-bottom: 4px;
+}
+
+.skeleton-line.location {
+    width: 60%;
+    margin-bottom: 8px;
+}
+
+.skeleton-line.short {
+    width: 40%;
+}
+
+.skeleton-line.center {
+    margin: 0 auto;
+}
+
+.skeleton-features {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: auto;
+}
+
+.skeleton-box {
+    height: 20px;
+    width: 25%;
+}
+
+.skeleton-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.skeleton-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.skeleton-avatar.lg {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 16px;
+}
+
+/* Agent Skeleton */
+.skeleton-agent-card {
+    padding: 24px;
+}
+
+.skeleton-agent-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.skeleton-agent-header .title {
+    height: 20px;
+    width: 60%;
+    margin-bottom: 8px;
+}
+
+.skeleton-agent-header .subtitle {
+    height: 14px;
+    width: 40%;
+}
+
+.skeleton-agent-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.skeleton-agent-footer {
+    margin-top: auto;
+}
+
+.skeleton-btn {
+    height: 40px;
+    width: 100%;
+    border-radius: 8px;
+}

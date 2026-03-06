@@ -55,7 +55,7 @@ export default function BuyerChat() {
 
         // Fetch conversation
         chatApi
-            .get("/conversation", {
+            .get("/messages", {
                 params: { propertyId, buyerId, agentId }
             })
             .then(res => {
@@ -73,7 +73,7 @@ export default function BuyerChat() {
         if (!text.trim()) return;
 
         try {
-            const res = await chatApi.post("/send", {
+            const res = await chatApi.post("/messages", {
                 propertyId,
                 buyerId,
                 agentId,

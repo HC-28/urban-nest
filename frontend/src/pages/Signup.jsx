@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/Auth.css";
-import heroBg from "../assets/re-back.jpg";
-import { userApi } from "../api/api";
+import heroBg from "../assets/hero-bg.png";
+import { authApi } from "../api/api";
 
 function Signup() {
   const navigate = useNavigate();
@@ -60,19 +60,31 @@ function Signup() {
     setLoading(true);
 
     try {
-      const res = await userApi.post("/signup", user);
+      const res = await authApi.post("/register", user);
 
-      const loginRes = await userApi.post("/login", {
+      const loginRes = await authApi.post("/login", {
         email: user.email,
         password: user.password,
       });
 
-      localStorage.setItem("user", JSON.stringify(loginRes.data));
-      navigate("/dashboard");
+      // Store JWT token and user data separately
+      localStorage.setItem("token", loginRes.data.token);
+      const userData = { ...loginRes.data };
+      delete userData.token;
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // Route by role — matching Login.jsx behavior
+      if (userData.role === "ADMIN") {
+        navigate("/admin");
+      } else if (userData.role === "AGENT") {
+        navigate("/dashboard");
+      } else {
+        navigate("/");
+      }
 
     } catch (err) {
       console.error("Signup error:", err);
-      setError(err.response?.data?.message || "Signup failed. Please try again.");
+      setError(err.response?.data?.error || err.response?.data?.message || "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }

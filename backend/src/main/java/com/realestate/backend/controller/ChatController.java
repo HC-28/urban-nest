@@ -9,16 +9,18 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Chat messaging between buyers and agents.
+ */
 @RestController
 @RequestMapping("/api/chat")
-@CrossOrigin(origins = "http://localhost:5173")
 public class ChatController {
 
     @Autowired
     private ChatMessageRepository chatRepo;
 
-    // ✅ SEND MESSAGE
-    @PostMapping("/send")
+    /** POST /api/chat/messages — Send a message */
+    @PostMapping("/messages")
     public ResponseEntity<?> sendMessage(@RequestBody ChatMessage message) {
 
         if (message.getMessage() == null || message.getMessage().trim().isEmpty()) {
@@ -40,8 +42,11 @@ public class ChatController {
         return ResponseEntity.ok(saved);
     }
 
-    // ✅ FETCH CONVERSATION (Private - requires all 3 IDs)
-    @GetMapping("/conversation")
+    /**
+     * GET /api/chat/messages — Fetch conversation (requires propertyId, buyerId,
+     * agentId)
+     */
+    @GetMapping("/messages")
     public List<ChatMessage> getConversation(
             @RequestParam Long propertyId,
             @RequestParam Long buyerId,
@@ -50,17 +55,15 @@ public class ChatController {
                 propertyId, buyerId, agentId);
     }
 
-    // ✅ AGENT INBOX (All chats for specific agent only)
+    /** GET /api/chat/agent/{agentId} — Agent inbox */
     @GetMapping("/agent/{agentId}")
     public List<ChatMessage> getChatsForAgent(@PathVariable Long agentId) {
-        System.out.println("Fetching chats for agentId = " + agentId);
         return chatRepo.findByAgentIdOrderByCreatedAtDesc(agentId);
     }
 
-    // ✅ BUYER INBOX (All chats for specific buyer only)
+    /** GET /api/chat/buyer/{buyerId} — Buyer inbox */
     @GetMapping("/buyer/{buyerId}")
     public List<ChatMessage> getChatsForBuyer(@PathVariable Long buyerId) {
-        System.out.println("Fetching chats for buyerId = " + buyerId);
         return chatRepo.findByBuyerIdOrderByCreatedAtDesc(buyerId);
     }
 }

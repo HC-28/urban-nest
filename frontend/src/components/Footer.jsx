@@ -36,12 +36,9 @@ function Footer() {
           <div className="footer-section">
             <h4>Popular Cities</h4>
             <ul>
-              <li><Link to="/properties?city=mumbai">Mumbai</Link></li>
-              <li><Link to="/properties?city=delhi">Delhi NCR</Link></li>
-              <li><Link to="/properties?city=bangalore">Bangalore</Link></li>
-              <li><Link to="/properties?city=hyderabad">Hyderabad</Link></li>
-              <li><Link to="/properties?city=pune">Pune</Link></li>
-              <li><Link to="/properties?city=chennai">Chennai</Link></li>
+              <li><Link to="/properties?city=Ahmedabad">Ahmedabad</Link></li>
+              <li><Link to="/properties?city=Mumbai">Mumbai</Link></li>
+              <li><Link to="/properties?city=Bangalore">Bangalore</Link></li>
             </ul>
           </div>
 
@@ -50,7 +47,6 @@ function Footer() {
             <h4>Company</h4>
             <ul>
               <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/careers">Careers</Link></li>
               <li><Link to="/contact">Contact Us</Link></li>
               <li><Link to="/terms">Terms of Service</Link></li>
               <li><Link to="/privacy">Privacy Policy</Link></li>
@@ -81,9 +77,9 @@ function Footer() {
         <div className="footer-inner">
           <p>© {new Date().getFullYear()} Urban-Nest. All rights reserved.</p>
           <div className="footer-links">
-            <Link to="/sitemap">Sitemap</Link>
-            <Link to="/help">Help</Link>
-            <Link to="/feedback">Feedback</Link>
+            <Link to="/about">About</Link>
+            <Link to="/contact">Contact</Link>
+            <Link to="/terms">Terms</Link>
           </div>
         </div>
       </div>

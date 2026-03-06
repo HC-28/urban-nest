@@ -141,6 +141,28 @@ public class EmailService {
     }
 
     /**
+     * Sent to a buyer when they register on the platform.
+     */
+    public void sendBuyerWelcomeEmail(String toEmail, String name) {
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(FROM);
+            msg.setTo(toEmail);
+            msg.setSubject("[" + APP_NAME + "] Welcome to " + APP_NAME + "!");
+            msg.setText(
+                    "Hi " + name + ",\n\n" +
+                            "Welcome to " + APP_NAME + "! We are thrilled to have you here.\n\n" +
+                            "You can now explore thousands of properties, add them to your favorites, chat directly with agents, and book property tours.\n\n"
+                            +
+                            "Start your journey today: " + APP_NAME + " Portal\n\n" +
+                            "Best regards,\n" + APP_NAME + " Team");
+            mailSender.send(msg);
+        } catch (Exception e) {
+            System.err.println("⚠️ [EmailService] Failed to send buyer welcome email: " + e.getMessage());
+        }
+    }
+
+    /**
      * Sent to an agent when their account is rejected/deleted by admin.
      */
     public void sendAgentRejectionEmail(String toEmail, String name) {
@@ -160,6 +182,30 @@ public class EmailService {
             mailSender.send(msg);
         } catch (Exception e) {
             System.err.println("⚠️ [EmailService] Failed to send agent rejection email: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Sent to the admin when a user submits a query via the Contact Us page.
+     */
+    public void sendContactQueryEmail(String name, String email, String subject, String message) {
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(FROM);
+            msg.setTo(FROM); // Send to admin themselves
+            msg.setReplyTo(email);
+            msg.setSubject("[" + APP_NAME + " Contact Form] " + subject);
+            msg.setText(
+                    "New message from " + APP_NAME + " Contact Us Form:\n\n" +
+                            "Name: " + name + "\n" +
+                            "Email: " + email + "\n" +
+                            "Subject: " + subject + "\n\n" +
+                            "Message:\n" + message + "\n\n" +
+                            "---\n" +
+                            "To reply to the user, simply click 'Reply' in your email client.");
+            mailSender.send(msg);
+        } catch (Exception e) {
+            System.err.println("⚠️ [EmailService] Failed to send contact query email: " + e.getMessage());
         }
     }
 }

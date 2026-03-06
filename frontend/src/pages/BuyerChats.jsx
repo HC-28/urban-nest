@@ -76,10 +76,12 @@ export default function BuyerChats() {
     });
 
     return (
-        <div className="properties-page">
+        <div className="agent-chats-page">
             <Navbar />
-            <div className="chat-inbox">
-                <h2>💬 My Conversations</h2>
+            <div className="chats-container">
+                <div className="chats-header">
+                    <h2>💬 My Conversations</h2>
+                </div>
 
                 {loading ? (
                     <div className="loading-state">

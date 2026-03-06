@@ -84,6 +84,23 @@ public class Property {
     @Column(name = "sold_at")
     private java.time.LocalDateTime soldAt;
 
+    private String launchDate;
+    private String possessionStarts;
+
+    // Professional Listing Fields
+    @Column(name = "rera_id")
+    private String reraId;
+
+    @Column(name = "video_link", columnDefinition = "TEXT")
+    private String videoLink;
+
+    // Geolocation for map pins
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     // Default Constructor
     public Property() {
     }
@@ -368,5 +385,53 @@ public class Property {
 
     public void setSoldAt(java.time.LocalDateTime soldAt) {
         this.soldAt = soldAt;
+    }
+
+    public String getLaunchDate() {
+        return launchDate;
+    }
+
+    public void setLaunchDate(String launchDate) {
+        this.launchDate = launchDate;
+    }
+
+    public String getPossessionStarts() {
+        return possessionStarts;
+    }
+
+    public void setPossessionStarts(String possessionStarts) {
+        this.possessionStarts = possessionStarts;
+    }
+
+    public String getReraId() {
+        return reraId;
+    }
+
+    public void setReraId(String reraId) {
+        this.reraId = reraId;
+    }
+
+    public String getVideoLink() {
+        return videoLink;
+    }
+
+    public void setVideoLink(String videoLink) {
+        this.videoLink = videoLink;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 }

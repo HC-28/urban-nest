@@ -1,7 +1,9 @@
 /* ============ Footer - Unique Design ============ */
 .site-footer {
-  background: var(--bg-dark); /* Darker background for contrast */
-  color: #CBD5E1; /* Lighter text */
+  background: rgba(10, 25, 47, 0.98);
+  /* Solid deep navy to cap the bottom of the page */
+  color: #CBD5E1;
+  /* Lighter text */
   padding: 80px 0 30px;
   font-family: 'Inter', sans-serif;
   position: relative;
@@ -17,7 +19,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(245, 158, 11, 0.5) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.5) 50%, transparent 100%);
 }
 
 .footer-inner {
@@ -69,10 +71,10 @@
 }
 
 .social-link:hover {
-  background: var(--primary-color);
+  background: #2563eb;
   color: white;
   transform: translateY(-5px) rotate(5deg);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
   border-color: transparent;
 }
 
@@ -93,7 +95,7 @@
   left: 0;
   width: 40px;
   height: 3px;
-  background: var(--primary-color);
+  background: #3b82f6;
   border-radius: 2px;
 }
 

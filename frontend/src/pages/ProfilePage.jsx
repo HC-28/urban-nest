@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { userApi, propertyApi, favoritesApi } from "../api/api";
+import toast from "react-hot-toast";
 import { FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import "../styles/Profile.css";
 import {
@@ -91,15 +92,14 @@ function ProfilePage() {
 
         setChangingPassword(true);
         try {
-            await userApi.put("/change-password", {
-                email: user.email,
+            await userApi.put("/me/password", {
                 currentPassword: passwordData.currentPassword,
                 newPassword: passwordData.newPassword,
             });
             setPasswordMessage({ type: "success", text: "Password changed successfully!" });
             setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
         } catch (err) {
-            const msg = err.response?.data || "Failed to change password";
+            const msg = err.response?.data?.error || err.response?.data || "Failed to change password";
             setPasswordMessage({ type: "error", text: typeof msg === 'string' ? msg : "Failed to change password" });
         } finally {
             setChangingPassword(false);
@@ -126,9 +126,8 @@ function ProfilePage() {
         setMessage({ type: "", text: "" });
 
         try {
-            const response = await userApi.put("/update-profile", {
+            const response = await userApi.put("/me/profile", {
                 ...formData,
-                email: user.email,
                 role: user.role,
             });
 
@@ -146,7 +145,23 @@ function ProfilePage() {
 
     const handleLogout = () => {
         localStorage.removeItem("user");
+        localStorage.removeItem("token");
         window.location.href = "/";
+    };
+
+    const handleDeleteRequest = async () => {
+        const reason = window.prompt("Please tell us why you want to delete your account (optional):");
+        if (reason === null) return; // cancelled
+        if (!window.confirm("Are you sure you want to request account deletion? An admin will review your request.")) return;
+        try {
+            await userApi.patch(`/${user.id}`, { deletionRequested: true });
+            const updated = { ...user, deletionRequested: true };
+            localStorage.setItem("user", JSON.stringify(updated));
+            setUser(updated);
+            toast.success("Account deletion requested. An admin will process it shortly.");
+        } catch {
+            toast.error("Failed to submit deletion request. Please try again.");
+        }
     };
 
     if (!user) return null;
@@ -469,8 +484,30 @@ function ProfilePage() {
                                 {/* Danger Zone */}
                                 <div style={{ padding: '24px', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '12px', background: 'rgba(239,68,68,0.08)' }}>
                                     <h3 style={{ color: '#F87171', marginBottom: '8px' }}>Danger Zone</h3>
-                                    <p style={{ color: '#FCA5A5', fontSize: '0.9rem', marginBottom: '15px' }}>Once you delete your account, there is no going back. Please be certain.</p>
-                                    <button disabled style={{ padding: '8px 16px', background: '#991B1B', color: '#FCA5A5', border: 'none', borderRadius: '6px', cursor: 'not-allowed' }}>Delete Account</button>
+                                    {user.deletionRequested ? (
+                                        <>
+                                            <p style={{ color: '#FCA5A5', fontSize: '0.9rem', marginBottom: '15px' }}>
+                                                ⚠️ Your account deletion has been requested and is pending admin review.
+                                            </p>
+                                            <button disabled style={{ padding: '10px 20px', background: '#991B1B', color: '#FCA5A5', border: 'none', borderRadius: '8px', cursor: 'not-allowed', opacity: 0.6 }}>
+                                                Deletion Requested
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p style={{ color: '#FCA5A5', fontSize: '0.9rem', marginBottom: '15px' }}>
+                                                Once your account is deleted, all your data will be archived. You can sign up again with the same email.
+                                            </p>
+                                            <button
+                                                onClick={handleDeleteRequest}
+                                                style={{ padding: '10px 20px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, transition: 'background 0.2s' }}
+                                                onMouseEnter={(e) => e.target.style.background = '#b91c1c'}
+                                                onMouseLeave={(e) => e.target.style.background = '#dc2626'}
+                                            >
+                                                Request Account Deletion
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>

@@ -3,7 +3,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 100;
+  z-index: 9998;
   backdrop-filter: blur(2px);
 }
 
@@ -17,7 +17,7 @@
   background: var(--bg-tertiary);
   /* Forest Green Background */
   color: var(--text-light);
-  z-index: 101;
+  z-index: 9999;
   padding: 24px;
   display: flex;
   flex-direction: column;

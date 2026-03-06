@@ -15,9 +15,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Agent listings and profiles.
+ */
 @RestController
 @RequestMapping("/api/agents")
-@CrossOrigin(origins = "${app.frontend-url}", allowCredentials = "true")
 public class AgentController {
 
     @Autowired
@@ -26,36 +28,26 @@ public class AgentController {
     @Autowired
     private PropertyRepository propertyRepository;
 
-    /**
-     * GET /api/agents/
-     * Fetch all users with role "AGENT" and enrich with property statistics
-     */
+    /** GET /api/agents/ — List all agents with property statistics */
     @GetMapping("/")
     public ResponseEntity<?> getAllAgents() {
         try {
-            // Find all users with role "AGENT"
             List<AppUser> agents = userRepository.findAll().stream()
                     .filter(user -> "AGENT".equalsIgnoreCase(user.getRole()))
                     .toList();
 
-            // Enrich each agent with property statistics
             List<Map<String, Object>> enrichedAgents = new ArrayList<>();
 
             for (AppUser agent : agents) {
                 Map<String, Object> agentData = new HashMap<>();
 
-                // Basic agent info
                 agentData.put("id", agent.getId());
                 agentData.put("name", agent.getName());
                 agentData.put("email", agent.getEmail());
-                agentData.put("image", agent.getProfilePicture() != null ? agent.getProfilePicture() : null);
+                agentData.put("image", agent.getProfilePicture());
 
-                // Fetch agent's properties
-                List<Property> agentProperties = propertyRepository.findAll().stream()
-                        .filter(prop -> agent.getId().equals(prop.getAgentId()))
-                        .toList();
+                List<Property> agentProperties = propertyRepository.findByAgentId(agent.getId());
 
-                // Calculate statistics
                 long propertiesListed = agentProperties.size();
                 long propertiesSold = agentProperties.stream()
                         .filter(prop -> !prop.isActive())
@@ -64,15 +56,14 @@ public class AgentController {
                 agentData.put("propertiesListed", propertiesListed);
                 agentData.put("propertiesSold", propertiesSold);
 
-                // Use actual database values where available
-                agentData.put("company", agent.getName() != null ? agent.getName() : "Real Estate Agent");
-                agentData.put("city", agent.getCity() != null ? agent.getCity() : "India");
-                agentData.put("specialization", "Residential & Commercial");
-                agentData.put("rating", 4.5);
-                agentData.put("reviews", (int) (Math.random() * 50) + 10);
-                agentData.put("experience", propertiesListed > 10 ? "5+ years" : "2+ years");
-                agentData.put("phone", agent.getPhone() != null ? agent.getPhone() : "Contact via email");
-                agentData.put("isVerified", true);
+                // Use actual DB values instead of hardcoded fakes
+                agentData.put("company", agent.getAgencyName() != null ? agent.getAgencyName() : null);
+                agentData.put("city", agent.getCity() != null ? agent.getCity() : null);
+                agentData.put("specialization", agent.getSpecialties() != null ? agent.getSpecialties() : null);
+                agentData.put("experience", agent.getExperience() != null ? agent.getExperience() : null);
+                agentData.put("phone", agent.getPhone() != null ? agent.getPhone() : null);
+                agentData.put("bio", agent.getBio());
+                agentData.put("isVerified", agent.isVerified());
 
                 enrichedAgents.add(agentData);
             }
@@ -81,28 +72,23 @@ public class AgentController {
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error fetching agents: " + ex.getMessage());
+                    .body(Map.of("error", "Error fetching agents: " + ex.getMessage()));
         }
     }
 
-    /**
-     * GET /api/agents/{id}
-     * Fetch single agent profile with featured listings first
-     */
+    /** GET /api/agents/{id} — Single agent profile with featured listings first */
     @GetMapping("/{id}")
     public ResponseEntity<?> getAgentProfile(@PathVariable Long id) {
         try {
-            // Find agent by ID
             AppUser agent = userRepository.findById(id).orElse(null);
 
             if (agent == null || !"AGENT".equalsIgnoreCase(agent.getRole())) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Agent not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Agent not found"));
             }
 
-            // Fetch agent's properties
             List<Property> allProperties = propertyRepository.findByAgentId(id);
 
-            // Separate featured and non-featured properties
             List<Property> featuredProperties = allProperties.stream()
                     .filter(Property::isFeatured)
                     .toList();
@@ -111,31 +97,27 @@ public class AgentController {
                     .filter(p -> !p.isFeatured())
                     .toList();
 
-            // Calculate statistics
             long propertiesListed = allProperties.size();
             long propertiesSold = allProperties.stream()
                     .filter(prop -> !prop.isActive())
                     .count();
 
-            // Build response
             Map<String, Object> response = new HashMap<>();
 
-            // Agent info
             response.put("id", agent.getId());
             response.put("name", agent.getName());
             response.put("email", agent.getEmail());
             response.put("phone", agent.getPhone());
             response.put("city", agent.getCity());
             response.put("profilePicture", agent.getProfilePicture());
+            response.put("bio", agent.getBio());
+            response.put("agencyName", agent.getAgencyName());
+            response.put("specialties", agent.getSpecialties());
 
-            // Statistics
             response.put("propertiesListed", propertiesListed);
             response.put("propertiesSold", propertiesSold);
-            response.put("rating", 4.5);
-            response.put("reviews", (int) (Math.random() * 50) + 10);
-            response.put("experience", propertiesListed > 10 ? "5+ years" : "2+ years");
+            response.put("experience", agent.getExperience());
 
-            // Properties (featured first)
             response.put("featuredProperties", featuredProperties);
             response.put("otherProperties", otherProperties);
 
@@ -143,7 +125,7 @@ public class AgentController {
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error fetching agent profile: " + ex.getMessage());
+                    .body(Map.of("error", "Error fetching agent profile: " + ex.getMessage()));
         }
     }
 }

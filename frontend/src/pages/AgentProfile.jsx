@@ -5,6 +5,8 @@ import Footer from "../components/Footer";
 import PropertyCard from "../components/PropertyCard";
 import { agentsApi } from "../api/api";
 import { FiMail, FiPhone, FiMapPin, FiStar, FiHome } from "react-icons/fi";
+import CountUp from 'react-countup';
+import { Helmet } from "react-helmet-async";
 import "../styles/AgentProfile.css";
 
 function AgentProfile() {
@@ -34,8 +36,9 @@ function AgentProfile() {
         return (
             <div className="agent-profile-page">
                 <Navbar />
-                <div className="loading-container">
-                    <p>Loading agent profile...</p>
+                <div className="loading-state" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="loader" style={{ width: '40px', height: '40px', border: '3px solid rgba(59,130,246,0.3)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                    <p style={{ marginTop: '15px', color: '#94a3b8' }}>Loading agent profile...</p>
                 </div>
                 <Footer />
             </div>
@@ -57,7 +60,19 @@ function AgentProfile() {
 
     return (
         <div className="agent-profile-page">
+            <Helmet>
+                <title>{agent?.name ? `${agent.name} - Real Estate Agent | Urban Nest` : "Agent Profile"}</title>
+                <meta name="description" content={`View ${agent?.name}'s profile and listed properties on Urban Nest.`} />
+            </Helmet>
             <Navbar />
+
+            <div className="breadcrumb" style={{ padding: '20px 5%', background: 'transparent' }}>
+                <span onClick={() => navigate("/")} style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>Home</span>
+                <span style={{ margin: '0 10px', color: 'var(--text-secondary)' }}>/</span>
+                <span onClick={() => navigate("/agents")} style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>Agents</span>
+                <span style={{ margin: '0 10px', color: 'var(--text-secondary)' }}>/</span>
+                <span className="current" style={{ color: '#3b82f6', fontWeight: '600' }}>{agent.name}</span>
+            </div>
 
             {/* Agent Header Section */}
             <div className="agent-profile-header">
@@ -75,17 +90,23 @@ function AgentProfile() {
                                 <FiMapPin /> {agent.city || "India"}
                             </p>
                             <div className="agent-rating">
-                                <FiStar className="star-icon" />
-                                <span>{agent.rating || 4.5}</span>
-                                <span className="reviews">({agent.reviews || 0} reviews)</span>
+                                {agent.reviews > 0 ? (
+                                    <>
+                                        <FiStar className="star-icon" />
+                                        <span>{agent.rating}</span>
+                                        <span className="reviews">({agent.reviews} reviews)</span>
+                                    </>
+                                ) : (
+                                    <span className="reviews" style={{ fontSize: '0.9rem' }}>⭐ New Agent — No reviews yet</span>
+                                )}
                             </div>
                             <div className="agent-stats-row">
                                 <div className="stat-item">
-                                    <span className="stat-value">{agent.propertiesListed || 0}</span>
+                                    <span className="stat-value"><CountUp end={agent.propertiesListed || 0} duration={2} /></span>
                                     <span className="stat-label">Listed</span>
                                 </div>
                                 <div className="stat-item">
-                                    <span className="stat-value">{agent.propertiesSold || 0}</span>
+                                    <span className="stat-value"><CountUp end={agent.propertiesSold || 0} duration={2} /></span>
                                     <span className="stat-label">Sold</span>
                                 </div>
                                 <div className="stat-item">

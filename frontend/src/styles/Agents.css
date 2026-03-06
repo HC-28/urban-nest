@@ -1,34 +1,29 @@
 /* ============ Agents Page - Unique Design ============ */
 .agents-page {
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: transparent;
   padding-top: 80px;
 }
 
 /* Hero Section */
 .agents-hero {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8)),
-    url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+  background: linear-gradient(135deg, rgba(10, 25, 47, 0.5), rgba(17, 34, 64, 0.4)),
+    url('../assets/hero-bg.png');
   background-size: cover;
   background-position: center;
-  padding: 100px 20px 80px;
+  padding: 80px 20px 60px;
   text-align: center;
   color: white;
   position: relative;
   overflow: hidden;
-  margin-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .agents-hero::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at center, transparent 0%, var(--bg-primary) 100%);
-  opacity: 0.8;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(10, 25, 47, 0.25) 100%);
 }
 
 .agents-hero-content {
@@ -39,20 +34,18 @@
 }
 
 .agents-hero h1 {
-  font-size: 3.5rem;
+  font-size: 3rem;
   font-weight: 800;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin-bottom: 14px;
+  color: #FFFFFF;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
 }
 
 .agents-hero p {
-  font-size: 1.2rem;
-  color: #94A3B8;
+  font-size: 1.15rem;
+  color: rgba(255, 255, 255, 0.8);
   max-width: 600px;
-  margin: 0 auto 40px;
+  margin: 0 auto;
 }
 
 /* Search Bar */
@@ -132,9 +125,9 @@
 
 /* Agent Card - Premium Dark Design */
 .agent-card {
-  background: rgba(30, 41, 59, 0.4);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -157,8 +150,8 @@
 
 .agent-card:hover {
   transform: translateY(-8px);
-  background: rgba(30, 41, 59, 0.6);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(59, 130, 246, 0.2);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
@@ -351,22 +344,36 @@
 .agents-filters .search-box {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 8px 16px;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1.5px solid rgba(59, 130, 246, 0.15);
+  border-radius: 14px;
+  padding: 12px 18px;
   margin-bottom: 16px;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.agents-filters .search-box:focus-within {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+}
+
+.agents-filters .search-box .search-icon {
+  color: #3b82f6;
+  margin-left: 0;
 }
 
 .agents-filters .search-box input {
   flex: 1;
   background: transparent;
   border: none;
-  color: white;
-  font-size: 1rem;
+  color: #e2e8f0;
+  font-size: 15px;
+  font-weight: 500;
   outline: none;
-  padding: 8px 0;
+  padding: 6px 0;
+  font-family: 'Inter', sans-serif;
 }
 
 .agents-filters .search-box input::placeholder {
@@ -380,27 +387,30 @@
 }
 
 .city-btn {
-  padding: 8px 18px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(30, 41, 59, 0.5);
-  color: #CBD5E1;
-  font-size: 0.85rem;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(59, 130, 246, 0.12);
+  background: rgba(15, 23, 42, 0.4);
+  color: #94a3b8;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
+  font-family: 'Inter', sans-serif;
 }
 
 .city-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #bfdbfe;
+  transform: translateY(-1px);
 }
 
 .city-btn.active {
-  background: var(--primary-gradient);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: white;
   border-color: transparent;
-  box-shadow: 0 4px 12px rgba(224, 122, 56, 0.3);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
 /* Results count */

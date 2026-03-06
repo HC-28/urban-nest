@@ -32,7 +32,7 @@ export default function BuyerPropertyChat() {
     // ---------------- FETCH DATA ----------------
     const fetchMessages = () => {
         chatApi
-            .get("/conversation", {
+            .get("/messages", {
                 params: { propertyId, buyerId, agentId }
             })
             .then(res => {
@@ -53,7 +53,7 @@ export default function BuyerPropertyChat() {
 
         // Fetch conversation & stop loading
         chatApi
-            .get("/conversation", {
+            .get("/messages", {
                 params: { propertyId, buyerId, agentId }
             })
             .then(res => {
@@ -74,7 +74,7 @@ export default function BuyerPropertyChat() {
         if (!text.trim()) return;
 
         try {
-            const res = await chatApi.post("/send", {
+            const res = await chatApi.post("/messages", {
                 propertyId,
                 buyerId,
                 agentId,

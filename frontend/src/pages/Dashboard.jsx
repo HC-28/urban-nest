@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { propertyApi } from "../api/api.js";
 import { getFirstImage } from "../utils/imageUtils";
+import { PropertySkeleton } from "../components/SkeletonLoaders";
 import "../styles/Dashboard.css";
 import {
   FiEdit2,
@@ -33,6 +34,11 @@ function Dashboard() {
       return null;
     }
   });
+
+  // Admin users should always see the admin dashboard
+  if (user?.role?.toUpperCase() === "ADMIN") {
+    return <Navigate to="/admin" replace />;
+  }
 
   const [activeTab, setActiveTab] = useState("properties");
   const [appointments, setAppointments] = useState([]);
@@ -209,7 +215,7 @@ function Dashboard() {
     const action = answer === "YES" ? "confirm" : "deny";
     if (!window.confirm(`Are you sure you want to ${action} this sale?`)) return;
     try {
-      await appointmentApi.put(`/${apptId}/agent-confirm`, { answer });
+      await appointmentApi.put(`/${apptId}/agent-confirmation`, { answer });
       alert(answer === "YES" ? "Sale confirmed! Property marked as SOLD." : "Sale denied.");
       fetchAgentAppointments();
       fetchMyProperties();
@@ -220,7 +226,7 @@ function Dashboard() {
 
   const handleBuyerConfirmation = async (apptId, answer) => {
     try {
-      await appointmentApi.put(`/${apptId}/buyer-confirm`, { answer });
+      await appointmentApi.put(`/${apptId}/buyer-confirmation`, { answer });
       alert(answer === "YES" ? "Interest confirmed. Agent notified." : "Response recorded.");
       fetchBuyerAppointments();
     } catch (err) {
@@ -359,7 +365,11 @@ function Dashboard() {
                   </div>
 
                   {loading ? (
-                    <div className="loading-state"><p>Loading properties...</p></div>
+                    <div className="properties-grid" style={{
+                      display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px', marginTop: '20px'
+                    }}>
+                      {[1, 2, 3].map(n => <PropertySkeleton key={n} />)}
+                    </div>
                   ) : myProperties.length === 0 ? (
                     <div className="empty-state">
                       <FiHome size={48} />

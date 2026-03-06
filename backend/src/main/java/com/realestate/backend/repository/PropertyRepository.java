@@ -56,10 +56,10 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
         List<Property> findByPurpose(String purpose);
 
         // Find properties by city and active status (for analytics)
-        List<Property> findByCityAndIsActive(String city, boolean isActive);
+        List<Property> findByCityAndIsActiveTrueAndIsSoldFalse(String city);
 
         // Case-insensitive version for analytics (handles "Ahmedabad" vs "ahmedabad")
-        List<Property> findByCityIgnoreCaseAndIsActive(String city, boolean isActive);
+        List<Property> findByCityIgnoreCaseAndIsActiveTrueAndIsSoldFalse(String city);
 
         // Get all distinct cities that have active properties
         @Query("SELECT DISTINCT p.city FROM Property p WHERE p.isActive = true AND p.isSold = false AND p.city IS NOT NULL AND p.city != ''")

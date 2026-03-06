@@ -17,18 +17,13 @@ import java.util.Map;
  * Buyers choose from these slots when booking appointments.
  */
 @RestController
-@CrossOrigin(origins = "*")
 @RequestMapping("/api/slots")
 public class AgentSlotController {
 
     @Autowired
     private AgentSlotRepository agentSlotRepository;
 
-    /**
-     * Agent creates a new availability slot for a property.
-     * Body: { agentId, propertyId, slotDate (YYYY-MM-DD), slotTime (HH:mm),
-     * durationMinutes? }
-     */
+    /** POST /api/slots — Agent creates a new availability slot */
     @PostMapping
     public ResponseEntity<?> createSlot(@RequestBody Map<String, Object> body) {
         try {
@@ -45,14 +40,11 @@ public class AgentSlotController {
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error creating slot: " + ex.getMessage());
+                    .body(Map.of("error", "Error creating slot: " + ex.getMessage()));
         }
     }
 
-    /**
-     * Get all available (unbooked) slots for a property, from today onwards.
-     * Used by buyers to pick a slot.
-     */
+    /** GET /api/slots/property/{propertyId} — Available slots for a property */
     @GetMapping("/property/{propertyId}")
     public ResponseEntity<?> getAvailableSlotsForProperty(@PathVariable Long propertyId) {
         try {
@@ -61,14 +53,11 @@ public class AgentSlotController {
             return ResponseEntity.ok(slots);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error fetching slots: " + ex.getMessage());
+                    .body(Map.of("error", "Error fetching slots: " + ex.getMessage()));
         }
     }
 
-    /**
-     * Get all slots (booked + available) for an agent.
-     * Used by agent to manage their own availability.
-     */
+    /** GET /api/slots/agent/{agentId} — All slots for an agent */
     @GetMapping("/agent/{agentId}")
     public ResponseEntity<?> getAgentSlots(@PathVariable Long agentId) {
         try {
@@ -76,26 +65,26 @@ public class AgentSlotController {
             return ResponseEntity.ok(slots);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error fetching slots: " + ex.getMessage());
+                    .body(Map.of("error", "Error fetching slots: " + ex.getMessage()));
         }
     }
 
-    /**
-     * Agent deletes a slot (only if it hasn't been booked yet).
-     */
+    /** DELETE /api/slots/{slotId} — Delete unbooked slot */
     @DeleteMapping("/{slotId}")
     public ResponseEntity<?> deleteSlot(@PathVariable Long slotId) {
         try {
             AgentSlot slot = agentSlotRepository.findById(slotId).orElse(null);
             if (slot == null)
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Slot not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Slot not found"));
             if (slot.isBooked())
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cannot delete a booked slot");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Cannot delete a booked slot"));
             agentSlotRepository.delete(slot);
-            return ResponseEntity.ok("Slot deleted");
+            return ResponseEntity.ok(Map.of("message", "Slot deleted"));
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error deleting slot: " + ex.getMessage());
+                    .body(Map.of("error", "Error deleting slot: " + ex.getMessage()));
         }
     }
 }

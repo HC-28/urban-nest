@@ -2,7 +2,7 @@
 .post-property-page {
   position: relative;
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: transparent;
   padding-top: 80px;
   overflow: hidden;
 }
@@ -364,20 +364,20 @@
 }
 
 .nav-btn.prev {
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: #94A3B8 !important;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94A3B8;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-btn.prev:hover {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  border-color: #3B82F6 !important;
+  background: #3B82F6;
+  color: #FFFFFF;
+  border-color: #3B82F6;
 }
 
 .nav-btn.next {
-  background: var(--primary-gradient) !important;
-  color: var(--text-on-primary) !important;
+  background: var(--primary-gradient);
+  color: var(--text-on-primary);
   margin-left: auto;
   box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
 }
@@ -388,8 +388,8 @@
 }
 
 .nav-btn.submit {
-  background: #10B981 !important;
-  color: white !important;
+  background: #10B981;
+  color: white;
   margin-left: auto;
   box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
 }
@@ -397,7 +397,7 @@
 .nav-btn.submit:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
-  background: #059669 !important;
+  background: #059669;
 }
 
 .nav-btn.submit:disabled {

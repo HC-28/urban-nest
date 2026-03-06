@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { propertyApi, chatApi, userApi, appointmentApi } from "../api/api.js";
+import { adminApi, chatApi } from "../api/api.js";
 import { formatPrice } from "../utils/priceUtils";
 import "../styles/AdminDashboard.css";
 import {
     FiHome, FiMessageCircle, FiUsers, FiEdit, FiTrash2,
     FiEye, FiEyeOff, FiSend, FiCheckCircle, FiXCircle,
-    FiTrendingUp, FiDollarSign, FiActivity, FiPieChart, FiX
+    FiTrendingUp, FiDollarSign, FiActivity, FiPieChart, FiX,
+    FiCalendar, FiSearch, FiFilter, FiAlertTriangle, FiClock, FiUser, FiLock
 } from "react-icons/fi";
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -22,16 +23,20 @@ const IMAGE_URL = import.meta.env.VITE_API_URL
 function AdminDashboard() {
     const user = JSON.parse(localStorage.getItem("user") || "null");
 
-    const [activeTab, setActiveTab] = useState("properties");
+    const [activeTab, setActiveTab] = useState("overview");
     const [properties, setProperties] = useState([]);
     const [chats, setChats] = useState([]);
     const [users, setUsers] = useState([]);
+    const [deletedUsers, setDeletedUsers] = useState([]);
+    const [appointments, setAppointments] = useState([]);
     const [soldDeals, setSoldDeals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingProperty, setEditingProperty] = useState(null);
     const [selectedChat, setSelectedChat] = useState(null);
     const [chatMessages, setChatMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
+    const [propertySearch, setPropertySearch] = useState("");
+    const [propertyFilter, setPropertyFilter] = useState({ city: "", status: "", type: "" });
     const [stats, setStats] = useState({
         totalProperties: 0,
         totalChats: 0,
@@ -52,18 +57,23 @@ function AdminDashboard() {
         try {
             setLoading(true);
 
-            const propsRes = await propertyApi.get("/admin/all");
+            const propsRes = await adminApi.get("/properties");
             const allProperties = propsRes.data;
             setProperties(allProperties);
 
-            const chatsRes = await chatApi.get("/admin/all").catch(() => ({ data: [] }));
+            const chatsRes = await adminApi.get("/chats").catch(() => ({ data: [] }));
             setChats(chatsRes.data);
 
-            const usersRes = await userApi.get("/admin/all");
+            const usersRes = await adminApi.get("/users");
             setUsers(usersRes.data);
 
-            const soldRes = await appointmentApi.get("/finalized").catch(() => ({ data: [] }));
-            const rawDeals = soldRes.data || [];
+            const allApptsRes = await adminApi.get("/appointments").catch(() => ({ data: [] }));
+            setAppointments(allApptsRes.data || []);
+            const rawDeals = (allApptsRes.data || []).filter(a => a.status === 'sold');
+
+            // Fetch deleted users archive
+            const deletedRes = await adminApi.get("/users/deleted").catch(() => ({ data: [] }));
+            setDeletedUsers(deletedRes.data || []);
 
             const existingDeals = rawDeals.map(deal => {
                 const prop = allProperties.find(p => p.id === deal.propertyId);
@@ -149,7 +159,7 @@ function AdminDashboard() {
 
     const handleSaveProperty = async () => {
         try {
-            await propertyApi.put(`/admin/update/${editingProperty.id}`, editingProperty);
+            await adminApi.put(`/properties/${editingProperty.id}`, editingProperty);
             setEditingProperty(null);
             fetchAllData();
         } catch (error) {
@@ -160,14 +170,14 @@ function AdminDashboard() {
     const handleDeleteProperty = async (propertyId) => {
         if (!window.confirm("Delete this property permanently?")) return;
         try {
-            await propertyApi.delete(`/admin/delete/${propertyId}`);
+            await adminApi.delete(`/properties/${propertyId}`);
             fetchAllData();
         } catch { alert("Failed to delete property"); }
     };
 
     const togglePropertyListing = async (property) => {
         try {
-            await propertyApi.put(`/admin/toggle/${property.id}`);
+            await adminApi.patch(`/properties/${property.id}`, { listingStatus: !property.active });
             fetchAllData();
         } catch { alert("Failed to toggle listing status"); }
     };
@@ -218,17 +228,18 @@ function AdminDashboard() {
         } catch { alert("Failed to resolve chat"); }
     };
 
-    const handleDeleteUser = async (userId) => {
-        if (!window.confirm("Delete this user permanently?")) return;
+    const handleDeleteUser = async (userId, reason = "ADMIN_ACTION") => {
+        if (!window.confirm("Archive and delete this user? Their data will be stored in the deleted users archive.")) return;
         try {
-            await userApi.delete(`/admin/delete/${userId}`);
+            await adminApi.delete(`/users/${userId}`, { params: { reason, adminId: user.id } });
+            alert("User archived and deleted successfully.");
             fetchAllData();
         } catch { alert("Failed to delete user"); }
     };
 
     const handleVerifyUser = async (u) => {
         try {
-            await userApi.put(`/admin/verify/${u.id}`);
+            await adminApi.patch(`/users/${u.id}`, { verified: !u.verified });
             fetchAllData();
         } catch { alert("Failed to update verification status"); }
     };
@@ -236,7 +247,7 @@ function AdminDashboard() {
     const handleRejectDeletion = async (userId) => {
         if (!window.confirm("Reject this deletion request?")) return;
         try {
-            await userApi.put(`/admin/reject-deletion/${userId}`);
+            await adminApi.patch(`/users/${userId}`, { deletionRequested: false });
             fetchAllData();
         } catch { alert("Failed to reject deletion request"); }
     };
@@ -249,7 +260,7 @@ function AdminDashboard() {
         if (!window.confirm(confirmMsg)) return;
 
         try {
-            await userApi.put(`/admin/update-role/${userId}`, { role: newRole });
+            await adminApi.patch(`/users/${userId}`, { role: newRole });
             fetchAllData();
         } catch { alert("Failed to update user role"); }
     };
@@ -350,9 +361,11 @@ function AdminDashboard() {
                 {/* Tabs */}
                 <div className="admin-tabs">
                     {[
+                        { id: "overview", icon: <FiActivity />, label: "Overview" },
                         { id: "properties", icon: <FiHome />, label: "Properties" },
                         { id: "chats", icon: <FiMessageCircle />, label: "Chats" },
                         { id: "users", icon: <FiUsers />, label: "Users" },
+                        { id: "appointments", icon: <FiCalendar />, label: "Appointments" },
                         { id: "sold", icon: <FiTrendingUp />, label: "Sold" },
                         { id: "analysis", icon: <FiPieChart />, label: "Analysis" },
                     ].map(tab => (
@@ -375,10 +388,136 @@ function AdminDashboard() {
                         </div>
                     ) : (
                         <>
+                            {/* Overview Tab */}
+                            {activeTab === "overview" && (
+                                <div className="overview-tab">
+                                    <h2>Dashboard Overview</h2>
+
+                                    {/* Pending Actions */}
+                                    <div className="pending-actions">
+                                        {users.filter(u => u.role === 'AGENT' && !u.verified).length > 0 && (
+                                            <div className="pending-card warning" onClick={() => setActiveTab('users')}>
+                                                <FiAlertTriangle size={24} />
+                                                <div>
+                                                    <h4>{users.filter(u => u.role === 'AGENT' && !u.verified).length} Pending Agent Approvals</h4>
+                                                    <p>Agents waiting for verification</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {users.filter(u => u.deletionRequested).length > 0 && (
+                                            <div className="pending-card danger" onClick={() => setActiveTab('users')}>
+                                                <FiTrash2 size={24} />
+                                                <div>
+                                                    <h4>{users.filter(u => u.deletionRequested).length} Deletion Requests</h4>
+                                                    <p>Users requesting account deletion</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {(() => {
+                                            const assistanceCount = Object.values(chats.reduce((acc, c) => {
+                                                const key = `${c.propertyId}-${c.buyerId}-${c.agentId}`;
+                                                if (!acc[key]) acc[key] = { req: 0, res: 0 };
+                                                if (c.message?.includes('ADMIN ASSISTANCE REQUESTED')) acc[key].req = Math.max(acc[key].req, new Date(c.createdAt).getTime());
+                                                if (c.message?.includes('marked as resolved')) acc[key].res = Math.max(acc[key].res, new Date(c.createdAt).getTime());
+                                                return acc;
+                                            }, {})).filter(v => v.req > v.res).length;
+                                            return assistanceCount > 0 && (
+                                                <div className="pending-card info" onClick={() => setActiveTab('chats')}>
+                                                    <FiMessageCircle size={24} />
+                                                    <div>
+                                                        <h4>{assistanceCount} Chats Need Attention</h4>
+                                                        <p>Admin assistance requested</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                        {users.filter(u => u.deletionRequested).length === 0 &&
+                                            users.filter(u => u.role === 'AGENT' && !u.verified).length === 0 && (
+                                                <div className="pending-card success">
+                                                    <FiCheckCircle size={24} />
+                                                    <div>
+                                                        <h4>All Clear!</h4>
+                                                        <p>No pending actions require attention</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                    </div>
+
+                                    {/* Platform Stats Grid */}
+                                    <div className="overview-stats-grid">
+                                        <div className="o-stat"><FiUsers size={20} /><div><h4>{users.filter(u => u.role === 'BUYER').length}</h4><p>Buyers</p></div></div>
+                                        <div className="o-stat"><FiUser size={20} /><div><h4>{users.filter(u => u.role === 'AGENT').length}</h4><p>Agents</p></div></div>
+                                        <div className="o-stat"><FiHome size={20} /><div><h4>{stats.activeListings}</h4><p>Active Listings</p></div></div>
+                                        <div className="o-stat"><FiCalendar size={20} /><div><h4>{appointments.filter(a => a.status === 'booked').length}</h4><p>Upcoming Visits</p></div></div>
+                                        <div className="o-stat"><FiTrash2 size={20} /><div><h4>{deletedUsers.length}</h4><p>Archived Users</p></div></div>
+                                        <div className="o-stat"><FiTrendingUp size={20} /><div><h4>{soldDeals.length}</h4><p>Deals Closed</p></div></div>
+                                    </div>
+
+                                    {/* Recent Activity */}
+                                    <div className="overview-sections">
+                                        <div className="overview-section">
+                                            <h3>🏠 Recent Listings</h3>
+                                            {properties.slice(0, 5).map(p => (
+                                                <div key={p.id} className="activity-item">
+                                                    <span className="activity-title">{p.title}</span>
+                                                    <span className="activity-meta">{p.location} · {formatPrice(p.price)}</span>
+                                                </div>
+                                            ))}
+                                            {properties.length === 0 && <p className="empty-note">No properties yet</p>}
+                                        </div>
+                                        <div className="overview-section">
+                                            <h3>👤 Recent Signups</h3>
+                                            {users.slice(-5).reverse().map(u => (
+                                                <div key={u.id} className="activity-item">
+                                                    <span className="activity-title">{u.name}</span>
+                                                    <span className={`role-badge ${u.role?.toLowerCase()}`}>{u.role}</span>
+                                                </div>
+                                            ))}
+                                            {users.length === 0 && <p className="empty-note">No users yet</p>}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Properties Tab */}
                             {activeTab === "properties" && (
                                 <div className="properties-table">
                                     <h2>All Properties ({properties.length})</h2>
+
+                                    {/* Search & Filter Bar */}
+                                    <div className="property-filters">
+                                        <div className="search-box">
+                                            <FiSearch />
+                                            <input
+                                                type="text"
+                                                placeholder="Search by title, location, or agent..."
+                                                value={propertySearch}
+                                                onChange={(e) => setPropertySearch(e.target.value)}
+                                            />
+                                        </div>
+                                        <select value={propertyFilter.status} onChange={(e) => setPropertyFilter({ ...propertyFilter, status: e.target.value })}>
+                                            <option value="">All Status</option>
+                                            <option value="listed">Listed</option>
+                                            <option value="unlisted">Unlisted</option>
+                                            <option value="sold">Sold</option>
+                                        </select>
+                                        <select value={propertyFilter.type} onChange={(e) => setPropertyFilter({ ...propertyFilter, type: e.target.value })}>
+                                            <option value="">All Types</option>
+                                            <option value="Apartment">Apartment</option>
+                                            <option value="Villa">Villa</option>
+                                            <option value="House">House</option>
+                                            <option value="Penthouse">Penthouse</option>
+                                            <option value="Studio">Studio</option>
+                                            <option value="Plot">Plot</option>
+                                            <option value="Commercial">Commercial</option>
+                                        </select>
+                                        <select value={propertyFilter.city} onChange={(e) => setPropertyFilter({ ...propertyFilter, city: e.target.value })}>
+                                            <option value="">All Cities</option>
+                                            {[...new Set(properties.map(p => p.city).filter(Boolean))].sort().map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <div className="table-wrapper">
                                         <table>
                                             <thead>
@@ -395,41 +534,54 @@ function AdminDashboard() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {properties.map((prop) => (
-                                                    <tr key={prop.id}>
-                                                        <td>{prop.id}</td>
-                                                        <td>{prop.title}</td>
-                                                        <td>{prop.type}</td>
-                                                        <td>{formatPrice(prop.price)}</td>
-                                                        <td>{prop.location}</td>
-                                                        <td>{prop.agentName}</td>
-                                                        <td>
-                                                            <span className={`status-badge ${prop.status === 'SOLD' ? 'sold' : (prop.active ? 'active' : 'inactive')}`}>
-                                                                {prop.status === 'SOLD' ? 'Sold' : (prop.active ? 'Listed' : 'Unlisted')}
-                                                            </span>
-                                                        </td>
-                                                        <td>{prop.views || 0}</td>
-                                                        <td className="action-btns">
-                                                            <button
-                                                                onClick={() => setEditingProperty(prop)}
-                                                                disabled={prop.status === 'SOLD'}
-                                                                title="Edit"
-                                                            >
-                                                                <FiEdit />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => togglePropertyListing(prop)}
-                                                                disabled={prop.status === 'SOLD'}
-                                                                title="Toggle Listing"
-                                                            >
-                                                                {prop.active ? <FiEyeOff /> : <FiEye />}
-                                                            </button>
-                                                            <button onClick={() => handleDeleteProperty(prop.id)} className="delete-btn" title="Delete">
-                                                                <FiTrash2 />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {(() => {
+                                                    const q = propertySearch.toLowerCase();
+                                                    return properties.filter(prop => {
+                                                        if (q && !prop.title?.toLowerCase().includes(q) && !prop.location?.toLowerCase().includes(q) && !prop.agentName?.toLowerCase().includes(q)) return false;
+                                                        if (propertyFilter.status) {
+                                                            if (propertyFilter.status === 'sold' && prop.status !== 'SOLD') return false;
+                                                            if (propertyFilter.status === 'listed' && (prop.status === 'SOLD' || !prop.active)) return false;
+                                                            if (propertyFilter.status === 'unlisted' && (prop.status === 'SOLD' || prop.active)) return false;
+                                                        }
+                                                        if (propertyFilter.type && prop.type !== propertyFilter.type) return false;
+                                                        if (propertyFilter.city && prop.city !== propertyFilter.city) return false;
+                                                        return true;
+                                                    }).map((prop) => (
+                                                        <tr key={prop.id}>
+                                                            <td>{prop.id}</td>
+                                                            <td>{prop.title}</td>
+                                                            <td>{prop.type}</td>
+                                                            <td>{formatPrice(prop.price)}</td>
+                                                            <td>{prop.location}</td>
+                                                            <td>{prop.agentName}</td>
+                                                            <td>
+                                                                <span className={`status-badge ${prop.status === 'SOLD' ? 'sold' : (prop.active ? 'active' : 'inactive')}`}>
+                                                                    {prop.status === 'SOLD' ? 'Sold' : (prop.active ? 'Listed' : 'Unlisted')}
+                                                                </span>
+                                                            </td>
+                                                            <td>{prop.views || 0}</td>
+                                                            <td className="action-btns">
+                                                                <button
+                                                                    onClick={() => setEditingProperty(prop)}
+                                                                    disabled={prop.status === 'SOLD'}
+                                                                    title="Edit"
+                                                                >
+                                                                    <FiEdit />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => togglePropertyListing(prop)}
+                                                                    disabled={prop.status === 'SOLD'}
+                                                                    title="Toggle Listing"
+                                                                >
+                                                                    {prop.active ? <FiEyeOff /> : <FiEye />}
+                                                                </button>
+                                                                <button onClick={() => handleDeleteProperty(prop.id)} className="delete-btn" title="Delete">
+                                                                    <FiTrash2 />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ));
+                                                })()}
                                             </tbody>
                                         </table>
                                     </div>
@@ -635,8 +787,86 @@ function AdminDashboard() {
                                             </table>
                                         </div>
                                     </div>
+
+                                    {/* Deleted Users Archive */}
+                                    {deletedUsers.length > 0 && (
+                                        <div className="users-section" style={{ marginTop: '40px' }}>
+                                            <h2 style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <FiTrash2 /> Deleted Users Archive ({deletedUsers.length})
+                                            </h2>
+                                            <div className="table-wrapper">
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Original ID</th><th>Name</th><th>Email</th><th>Role</th><th>Reason</th><th>Deleted At</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {deletedUsers.map(du => (
+                                                            <tr key={du.id} style={{ opacity: 0.7 }}>
+                                                                <td>{du.originalUserId}</td>
+                                                                <td>{du.name}</td>
+                                                                <td>{du.email}</td>
+                                                                <td><span className={`role-badge ${du.role?.toLowerCase()}`}>{du.role}</span></td>
+                                                                <td>
+                                                                    <span className={`status-badge ${du.deletionReason === 'USER_REQUEST' ? 'inactive' : du.deletionReason === 'POLICY_VIOLATION' ? 'sold' : 'active'}`}>
+                                                                        {du.deletionReason || 'N/A'}
+                                                                    </span>
+                                                                </td>
+                                                                <td>{du.deletedAt ? new Date(du.deletedAt).toLocaleString() : 'N/A'}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
+
+                            {/* Appointments Tab */}
+                            {activeTab === "appointments" && (
+                                <div className="appointments-table">
+                                    <h2>All Appointments ({appointments.length})</h2>
+                                    <div className="table-wrapper">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th><th>Property</th><th>Buyer</th><th>Agent</th><th>Date</th><th>Time</th><th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {appointments.length === 0 ? (
+                                                    <tr><td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>No appointments yet</td></tr>
+                                                ) : (
+                                                    appointments.map(appt => {
+                                                        const prop = properties.find(p => p.id === appt.propertyId);
+                                                        const buyer = users.find(u => u.id === appt.buyerId);
+                                                        const agent = users.find(u => u.id === appt.agentId);
+                                                        return (
+                                                            <tr key={appt.id}>
+                                                                <td>{appt.id}</td>
+                                                                <td>{prop?.title || `Property #${appt.propertyId}`}</td>
+                                                                <td>{buyer?.name || appt.buyerName || `#${appt.buyerId}`}</td>
+                                                                <td>{agent?.name || appt.agentName || `#${appt.agentId}`}</td>
+                                                                <td>{appt.date || 'N/A'}</td>
+                                                                <td>{appt.time || appt.startTime || 'N/A'}</td>
+                                                                <td>
+                                                                    <span className={`status-badge ${appt.status === 'sold' ? 'sold' : appt.status === 'booked' ? 'active' : 'inactive'}`}>
+                                                                        {appt.status || 'pending'}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Deleted Users Archive (after Users tab) */}
 
                             {/* Sold Tab */}
                             {activeTab === "sold" && (
@@ -738,6 +968,103 @@ function AdminDashboard() {
                                             <p>Choose an agent from the dropdown to see their detailed sales analysis and performance metrics.</p>
                                         </div>
                                     )}
+                                </div>
+                            )}
+
+                            {activeTab === "profile" && (
+                                <div className="admin-profile-tab" style={{ padding: '24px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)' }}>
+                                    <h2 style={{ marginBottom: '24px', color: 'var(--text-primary)' }}>Admin Profile Settings</h2>
+
+                                    <div style={{ display: 'grid', gap: '32px', gridTemplateColumns: '1fr 1fr' }}>
+                                        {/* Profile Edit */}
+                                        <div className="profile-section" style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-md)' }}>
+                                            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><FiUser /> Public Info</h3>
+                                            {profileMessage.text && (
+                                                <div className={`message ${profileMessage.type}`} style={{ padding: '10px', borderRadius: '4px', marginBottom: '16px', backgroundColor: profileMessage.type === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: profileMessage.type === 'error' ? '#ef4444' : '#22c55e' }}>
+                                                    {profileMessage.text}
+                                                </div>
+                                            )}
+                                            <form onSubmit={handleProfileUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                                <div>
+                                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Full Name</label>
+                                                    <input
+                                                        type="text"
+                                                        value={profileData.name}
+                                                        onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                                                        required
+                                                        style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Phone Number</label>
+                                                    <input
+                                                        type="text"
+                                                        value={profileData.phone}
+                                                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                                                        style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Bio / Admin Notes</label>
+                                                    <textarea
+                                                        value={profileData.bio}
+                                                        onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                                                        rows="3"
+                                                        style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }}
+                                                    />
+                                                </div>
+                                                <button type="submit" className="save-btn" disabled={savingProfile} style={{ marginTop: '8px' }}>
+                                                    {savingProfile ? "Saving..." : "Save Profile"}
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        {/* Password Change */}
+                                        <div className="password-section" style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-md)' }}>
+                                            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><FiLock /> Security</h3>
+                                            {passwordMessage.text && (
+                                                <div className={`message ${passwordMessage.type}`} style={{ padding: '10px', borderRadius: '4px', marginBottom: '16px', backgroundColor: passwordMessage.type === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: passwordMessage.type === 'error' ? '#ef4444' : '#22c55e' }}>
+                                                    {passwordMessage.text}
+                                                </div>
+                                            )}
+                                            <form onSubmit={handlePasswordUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                                <div>
+                                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Current Password</label>
+                                                    <input
+                                                        type={showCurrentPw ? "text" : "password"}
+                                                        value={passwordData.currentPassword}
+                                                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                                        required
+                                                        style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>New Password</label>
+                                                    <input
+                                                        type={showNewPw ? "text" : "password"}
+                                                        value={passwordData.newPassword}
+                                                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                                        required
+                                                        minLength="6"
+                                                        style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Confirm Password</label>
+                                                    <input
+                                                        type={showNewPw ? "text" : "password"}
+                                                        value={passwordData.confirmPassword}
+                                                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                                        required
+                                                        style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }}
+                                                    />
+                                                </div>
+                                                <button type="submit" className="save-btn" style={{ marginTop: '8px' }}>
+                                                    Update credentials
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { FiMenu, FiX, FiSearch, FiMessageSquare } from "react-icons/fi";
 import "../styles/Navbar.css";
 import ProfileDrawer from "./ProfileDrawer";
 import MapModal from "./MapModal";
@@ -9,6 +10,7 @@ import profile from "../assets/profile.png";
 function Navbar() {
     const [open, setOpen] = useState(false);
     const [mapOpen, setMapOpen] = useState(false);
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
     const navigate = useNavigate();
     const location = useLocation();
@@ -20,6 +22,8 @@ function Navbar() {
         }
         return location.pathname === path;
     };
+
+
 
     return (
         <>
@@ -35,7 +39,14 @@ function Navbar() {
                         <span className="brand-title">Urban-Nest</span>
                     </div>
 
-                    <nav className="main-nav">
+                    <button
+                        className="mobile-menu-btn"
+                        onClick={() => setMobileNavOpen(!mobileNavOpen)}
+                    >
+                        {mobileNavOpen ? <FiX /> : <FiMenu />}
+                    </button>
+
+                    <nav className={`main-nav ${mobileNavOpen ? 'mobile-open' : ''}`}>
                         <Link
                             to="/properties?purpose=Sale"
                             className={isActive("/properties", "purpose=Sale") ? "active" : ""}
@@ -64,31 +75,45 @@ function Navbar() {
                             <Link
                                 to="/favorites"
                                 className={isActive("/favorites") ? "active" : ""}
+                                onClick={() => setMobileNavOpen(false)}
                             >
                                 Favourites
                             </Link>
                         )}
-                        <button className="map-btn" onClick={() => setMapOpen(true)}>
+                        <button
+                            className="map-btn"
+                            onClick={() => {
+                                setMapOpen(true);
+                                setMobileNavOpen(false);
+                            }}
+                        >
                             🗺️ Map
                         </button>
                     </nav>
 
                     <div className="header-actions">
-                        {user && (
-                            <button
-                                className="messages-btn"
-                                onClick={() => navigate(user.role === "AGENT" ? "/agent/chats" : "/chats")}
-                                title="Messages"
-                            >
-                                💬
-                            </button>
-                        )}
+                        {/* Search Button — redirects to search page */}
+                        <button
+                            className="search-toggle-btn"
+                            onClick={() => navigate("/properties")}
+                            title="Search Properties"
+                        >
+                            <FiSearch size={20} color="#ffffff" />
+                        </button>
+
+                        <button
+                            className="messages-btn"
+                            onClick={() => navigate(user ? (user.role === "AGENT" ? "/agent/chats" : "/chats") : "/login")}
+                            title="Messages"
+                        >
+                            <FiMessageSquare size={20} color="#ffffff" />
+                        </button>
                         {user && user.role === "AGENT" && (
                             <button
                                 className="post-btn"
                                 onClick={() => navigate("/post-property")}
                             >
-                                Post Property
+                                <span className="login-btn-text">Post Property</span>
                             </button>
                         )}
                         {user && user.role === "ADMIN" && (
@@ -97,7 +122,7 @@ function Navbar() {
                                 onClick={() => navigate("/admin")}
                                 style={{ background: 'var(--primary-gradient)' }}
                             >
-                                🛡️ Admin
+                                <span className="login-btn-text">🛡️ Admin</span>
                             </button>
                         )}
 
@@ -115,7 +140,7 @@ function Navbar() {
                                     Sign up
                                 </Link>
                                 <Link to="/login" className="login-btn">
-                                    Log in
+                                    <span className="login-btn-text">Log in</span>
                                 </Link>
                             </>
                         )}

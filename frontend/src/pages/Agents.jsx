@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/Agents.css";
-import heroBg from "../assets/re-back.jpg"; // Unified Background
+import heroBg from "../assets/hero-bg.png"; // Unified Background
 import { FiSearch, FiMapPin, FiStar, FiPhone, FiMail, FiHome } from "react-icons/fi";
+import { AgentSkeleton } from "../components/SkeletonLoaders";
 import { agentsApi } from "../api/api"; // Corrected: use agentsApi
+import { Helmet } from "react-helmet-async";
 
 function Agents() {
   const navigate = useNavigate();
@@ -16,7 +18,7 @@ function Agents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
 
-  const cities = ["all", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Gurgaon", "Pune"];
+  const cities = ["all", "Mumbai", "Bangalore", "Ahmedabad", "Delhi", "Pune", "Hyderabad", "Chennai", "Kolkata", "Goa"];
 
   // Fetch agents from backend
   useEffect(() => {
@@ -50,6 +52,10 @@ function Agents() {
 
   return (
     <div className="agents-page">
+      <Helmet>
+        <title>Top Real Estate Agents | Urban Nest</title>
+        <meta name="description" content="Connect with verified, top-rated real estate agents on Urban Nest." />
+      </Helmet>
       <Navbar />
 
       <div className="agents-hero">
@@ -86,11 +92,13 @@ function Agents() {
         </div>
 
         {/* Loading / Error */}
-        {loading && <p className="loading">Loading agents...</p>}
-        {error && <p className="error">{error}</p>}
-
-        {/* Results */}
-        {!loading && !error && (
+        {loading ? (
+          <div className="agents-grid">
+            {[1, 2, 3, 4, 5, 6].map(n => <AgentSkeleton key={n} />)}
+          </div>
+        ) : error ? (
+          <p className="error">{error}</p>
+        ) : (
           <div className="agents-results">
             <p className="results-count">{filteredAgents.length} Agents Found</p>
 
@@ -104,11 +112,18 @@ function Agents() {
                     style={{ cursor: 'pointer' }}
                   >
                     <div className="agent-header">
-                      <img
-                        src={agent.image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23e2e8f0' width='150' height='150'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='16' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EAgent%3C/text%3E%3C/svg%3E"}
-                        alt={agent.name}
-                        className="agent-image"
-                      />
+                      {(() => {
+                        const initial = (agent.name || 'A').charAt(0).toUpperCase();
+                        const fallbackSvg = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><rect fill="#1e3a5f" width="150" height="150" rx="75"/><text fill="#60a5fa" font-family="Arial,sans-serif" font-size="60" font-weight="bold" x="50%" y="50%" dominant-baseline="central" text-anchor="middle">${initial}</text></svg>`)}`;
+                        return (
+                          <img
+                            src={agent.image || agent.profilePicture || fallbackSvg}
+                            alt={agent.name}
+                            className="agent-image"
+                            onError={(e) => { e.target.src = fallbackSvg; }}
+                          />
+                        );
+                      })()}
                       {agent.isVerified && <span className="verified-badge">✓ Verified</span>}
                     </div>
 

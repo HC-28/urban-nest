@@ -71,11 +71,32 @@ public class AnalyticsService {
      */
     @Transactional
     public void computeScoresForCity(String city) {
-        // Get all active properties for this city (case-insensitive)
-        List<Property> properties = propertyRepository.findByCityIgnoreCaseAndIsActive(city, true);
+        // Get all active, unsold properties for this city (case-insensitive)
+        List<Property> properties = propertyRepository.findByCityIgnoreCaseAndIsActiveTrueAndIsSoldFalse(city);
+
+        // ALWAYS load existing scores for this city to ensure we reset any that no
+        // longer
+        // have listings
+        List<PincodeScore> existingScores = pincodeScoreRepository.findByCityIgnoreCase(city);
+        Map<String, PincodeScore> existingScoresMap = existingScores.stream()
+                .collect(Collectors.toMap(PincodeScore::getPincode, s -> s));
+
+        // Reset all existing scores for this city first
+        for (PincodeScore score : existingScores) {
+            score.setActiveListings(0);
+            score.setPriceScore(0.0);
+            score.setMedianPricePerSqft(0.0);
+            score.setMarketActivityScore(0.0);
+            score.setInventoryScore(0.0);
+            score.setDemandScore(0.0);
+            score.setTotalViews(0);
+            score.setTotalFavorites(0);
+            score.setTotalInquiries(0);
+        }
 
         if (properties.isEmpty()) {
-            return; // No properties to analyze
+            pincodeScoreRepository.saveAll(existingScores);
+            return;
         }
 
         // Group properties by pincode
@@ -83,22 +104,39 @@ public class AnalyticsService {
                 .filter(p -> p.getPinCode() != null && !p.getPinCode().trim().isEmpty())
                 .collect(Collectors.groupingBy(Property::getPinCode));
 
-        // Compute scores for each pincode
-        List<PincodeScore> scores = new ArrayList<>();
+        // Compute scores for each pincode that HAS properties
+        List<PincodeScore> scoresToSave = new ArrayList<>();
 
         for (Map.Entry<String, List<Property>> entry : propertiesByPincode.entrySet()) {
             String pincode = entry.getKey();
             List<Property> pincodeProperties = entry.getValue();
 
-            PincodeScore score = computePincodeScore(city, pincode, pincodeProperties, properties);
-            scores.add(score);
+            // Reuse existing score or create new one
+            PincodeScore score = existingScoresMap.getOrDefault(pincode, new PincodeScore(city, pincode));
+
+            // Re-compute metrics (this will overwrite the reset values)
+            score = computePincodeScore(city, pincode, pincodeProperties, properties);
+            scoresToSave.add(score);
+        }
+
+        // Add back the reset scores for pincodes that NO LONGER have properties and
+        // explicitly delete them
+        List<PincodeScore> scoresToDelete = new ArrayList<>();
+        for (PincodeScore es : existingScores) {
+            if (!propertiesByPincode.containsKey(es.getPincode())) {
+                scoresToDelete.add(es);
+            }
+        }
+
+        if (!scoresToDelete.isEmpty()) {
+            pincodeScoreRepository.deleteAll(scoresToDelete);
         }
 
         // Normalize scores across all pincodes
-        normalizeScores(scores);
+        normalizeScores(scoresToSave);
 
         // Save all scores
-        pincodeScoreRepository.saveAll(scores);
+        pincodeScoreRepository.saveAll(scoresToSave);
     }
 
     /**
@@ -260,8 +298,26 @@ public class AnalyticsService {
                     if (score.getPriceScore() != null && score.getPriceScore() > 0) {
                         double logPrice = Math.log(score.getPriceScore());
                         double normalized = ((logPrice - minLog) / range) * 100.0;
+                        // Guard against NaN/Infinity
+                        if (Double.isNaN(normalized) || Double.isInfinite(normalized)) {
+                            normalized = 50.0;
+                        }
                         score.setPriceScore(normalized);
+                    } else {
+                        score.setPriceScore(50.0); // Default for missing price data
                     }
+                }
+            } else {
+                // All prices the same — set to 50
+                for (PincodeScore score : scores) {
+                    score.setPriceScore(50.0);
+                }
+            }
+        } else {
+            // No valid prices at all — set all to 50
+            for (PincodeScore score : scores) {
+                if (score.getPriceScore() == null || score.getPriceScore() <= 0) {
+                    score.setPriceScore(50.0);
                 }
             }
         }
@@ -285,6 +341,12 @@ public class AnalyticsService {
                 .collect(Collectors.toList());
 
         int n = sorted.size();
+        if (n == 0)
+            return;
+        if (n == 1) {
+            setter.accept(sorted.get(0), 100.0); // Top percentile if only one
+            return;
+        }
         for (int i = 0; i < n; i++) {
             double percentile = (i / (double) (n - 1)) * 100.0;
             setter.accept(sorted.get(i), percentile);
@@ -416,10 +478,11 @@ public class AnalyticsService {
     }
 
     /**
-     * Get the appropriate score based on mode
+     * Get the appropriate score based on mode.
+     * Returns 0.0 instead of null to prevent NaN on the frontend.
      */
     private Double getScoreByMode(PincodeScore score, String mode) {
-        return switch (mode.toLowerCase()) {
+        Double value = switch (mode.toLowerCase()) {
             case "price" -> score.getPriceScore();
             case "market_activity" -> score.getMarketActivityScore();
             case "inventory" -> score.getInventoryScore();
@@ -429,8 +492,13 @@ public class AnalyticsService {
             case "growth" -> score.getGrowthScore();
             case "saturation" -> score.getSaturationScore();
             case "conversion" -> score.getConversionScore();
-            default -> score.getPriceScore(); // Default to price
+            default -> score.getPriceScore();
         };
+        // Never return null or NaN — frontend will display these as-is
+        if (value == null || Double.isNaN(value) || Double.isInfinite(value)) {
+            return 0.0;
+        }
+        return value;
     }
 
     /**

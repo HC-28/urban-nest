@@ -1,7 +1,7 @@
 /* ============ Profile Page - Dark Theme ============ */
 .profile-page {
     min-height: 100vh;
-    background: var(--bg-primary);
+    background: transparent;
     color: var(--text-primary);
     padding-bottom: 50px;
 }
