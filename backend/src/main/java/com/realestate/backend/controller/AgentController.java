@@ -90,11 +90,15 @@ public class AgentController {
             List<Property> allProperties = propertyRepository.findByAgentId(id);
 
             List<Property> featuredProperties = allProperties.stream()
-                    .filter(Property::isFeatured)
+                    .filter(p -> p.isFeatured() && !p.isSold())
                     .toList();
 
             List<Property> otherProperties = allProperties.stream()
-                    .filter(p -> !p.isFeatured())
+                    .filter(p -> !p.isFeatured() && !p.isSold())
+                    .toList();
+
+            List<Property> soldProperties = allProperties.stream()
+                    .filter(Property::isSold)
                     .toList();
 
             long propertiesListed = allProperties.size();
@@ -120,6 +124,7 @@ public class AgentController {
 
             response.put("featuredProperties", featuredProperties);
             response.put("otherProperties", otherProperties);
+            response.put("soldProperties", soldProperties);
 
             return ResponseEntity.ok(response);
         } catch (Exception ex) {

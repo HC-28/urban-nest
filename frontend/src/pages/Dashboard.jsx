@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import { propertyApi } from "../api/api.js";
 import { getFirstImage } from "../utils/imageUtils";
 import { PropertySkeleton } from "../components/SkeletonLoaders";
+import toast from "react-hot-toast";
 import "../styles/Dashboard.css";
 import {
   FiEdit2,
@@ -51,6 +52,12 @@ function Dashboard() {
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
   const [editingProperty, setEditingProperty] = useState(null);
   const [editForm, setEditForm] = useState({});
+
+  // Sold Modal State
+  const [showSoldModal, setShowSoldModal] = useState(false);
+  const [propertyToMarkSold, setPropertyToMarkSold] = useState(null);
+  const [selectedBuyerId, setSelectedBuyerId] = useState("");
+  const [buyersForProperty, setBuyersForProperty] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -109,8 +116,8 @@ function Dashboard() {
       setSoldProperties(properties.filter(p => p.sold));
       setStats({
         total: properties.length,
-        active: properties.filter(p => p.active).length,
-        inactive: properties.filter(p => !p.active).length
+        active: properties.filter(p => p.active && !p.sold).length,
+        inactive: properties.filter(p => !p.active && !p.sold).length
       });
       setLoading(false);
     } catch (error) {
@@ -125,29 +132,29 @@ function Dashboard() {
 
     try {
       await propertyApi.delete(`/${propertyId}?agentId=${user.id}`);
-      alert("Property deleted successfully!");
+      toast.success("Property deleted successfully!");
       fetchMyProperties();
     } catch (error) {
       console.error("Error deleting property:", error);
-      alert("Failed to delete property. Please try again.");
+      toast.error("Failed to delete property. Please try again.");
     }
   };
 
   const handleToggleActive = async (property) => {
     try {
       if (property.active) {
-        // Unlist property
-        await propertyApi.put(`/${property.id}/sold?agentId=${user.id}`);
-        alert("Property unlisted successfully!");
+        // Unlist property (soft delete sets isActive to false without marking as sold)
+        await propertyApi.delete(`/${property.id}?agentId=${user.id}`);
+        toast.success("Property unlisted successfully!");
       } else {
         // Re-list property
         await propertyApi.put(`/${property.id}/relist?agentId=${user.id}`);
-        alert("Property listed successfully!");
+        toast.success("Property listed successfully!");
       }
       fetchMyProperties();
     } catch (error) {
       console.error("Error updating property:", error);
-      alert("Failed to update property. Please try again.");
+      toast.error("Failed to update property. Please try again.");
     }
   };
 
@@ -166,12 +173,12 @@ function Dashboard() {
   const handleSaveEdit = async (propertyId) => {
     try {
       await propertyApi.put(`/${propertyId}?agentId=${user.id}`, editForm);
-      alert("Property updated successfully!");
+      toast.success("Property updated successfully!");
       setEditingProperty(null);
       fetchMyProperties();
     } catch (error) {
       console.error("Error updating property:", error);
-      alert("Failed to update property. Please try again.");
+      toast.error("Failed to update property. Please try again.");
     }
   };
 
@@ -180,10 +187,49 @@ function Dashboard() {
     setEditForm({});
   };
 
+  const handleMarkSoldInit = (property) => {
+    setPropertyToMarkSold(property);
+
+    // Extract potential buyers from appointments for this exact property
+    const buyers = appointments
+      .filter(a => a.propertyId === property.id && a.buyerId)
+      .map(a => ({ id: a.buyerId, name: a.buyerName, email: a.buyerEmail }));
+
+    // Deduplicate
+    const uniqueBuyers = Array.from(new Set(buyers.map(b => b.id)))
+      .map(id => buyers.find(b => b.id === id));
+
+    setBuyersForProperty(uniqueBuyers);
+    setSelectedBuyerId("");
+    setShowSoldModal(true);
+  };
+
+  const handleConfirmMarkSold = async () => {
+    try {
+      let endpoint = `/${propertyToMarkSold.id}/sold?agentId=${user.id}`;
+      if (selectedBuyerId) {
+        endpoint += `&buyerId=${selectedBuyerId}`;
+      }
+      await propertyApi.put(endpoint);
+      toast.success("Property marked as Sold! Interested parties notified.");
+      setShowSoldModal(false);
+      setPropertyToMarkSold(null);
+      fetchMyProperties();
+    } catch (err) {
+      console.error("Error marking property as sold:", err);
+      toast.error("Failed to mark property as sold.");
+    }
+  };
+
+  const handleCancelMarkSold = () => {
+    setShowSoldModal(false);
+    setPropertyToMarkSold(null);
+  };
+
   const handleAddSlot = async (e) => {
     e.preventDefault();
     if (!newSlot.propertyId || !newSlot.date || !newSlot.time) {
-      alert("Please fill all slot details");
+      toast.error("Please fill all slot details");
       return;
     }
     try {
@@ -193,11 +239,11 @@ function Dashboard() {
         slotDate: newSlot.date,
         slotTime: newSlot.time
       });
-      alert("Availability slot added!");
+      toast.success("Availability slot added!");
       setNewSlot({ propertyId: "", date: "", time: "" });
       fetchAgentSlots();
     } catch (err) {
-      alert("Error adding slot: " + err.message);
+      toast.error("Error adding slot: " + err.message);
     }
   };
 
@@ -207,7 +253,7 @@ function Dashboard() {
       await slotsApi.delete(`/${slotId}`);
       fetchAgentSlots();
     } catch (err) {
-      alert(err.response?.data || "Error deleting slot");
+      toast.error(err.response?.data || "Error deleting slot");
     }
   };
 
@@ -216,21 +262,25 @@ function Dashboard() {
     if (!window.confirm(`Are you sure you want to ${action} this sale?`)) return;
     try {
       await appointmentApi.put(`/${apptId}/agent-confirmation`, { answer });
-      alert(answer === "YES" ? "Sale confirmed! Property marked as SOLD." : "Sale denied.");
+      if (answer === "YES") {
+        toast.success("Sale confirmed! Property marked as SOLD.");
+      } else {
+        toast.error("Sale denied.");
+      }
       fetchAgentAppointments();
       fetchMyProperties();
     } catch (err) {
-      alert("Error processing sale: " + err.message);
+      toast.error("Error processing sale: " + err.message);
     }
   };
 
   const handleBuyerConfirmation = async (apptId, answer) => {
     try {
       await appointmentApi.put(`/${apptId}/buyer-confirmation`, { answer });
-      alert(answer === "YES" ? "Interest confirmed. Agent notified." : "Response recorded.");
+      toast.success(answer === "YES" ? "Interest confirmed. Agent notified." : "Response recorded.");
       fetchBuyerAppointments();
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     }
   };
 
@@ -388,39 +438,56 @@ function Dashboard() {
                         <tbody>
                           {myProperties.map(property => (
                             <tr key={property.id} className={!property.active ? 'inactive-row' : ''}>
-                              <td>
-                                <div className="property-info">
-                                  <img
-                                    src={getFirstImage(property.photos, "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100")}
-                                    alt=""
-                                    className="property-thumb"
-                                  />
-                                  <div>
-                                    <div className="property-title">{property.title}</div>
-                                    <div className="property-meta">{property.type} • {formatPrice(property.price)}</div>
+                              {editingProperty === property.id ? (
+                                <td colSpan="3">
+                                  <div className="inline-edit-form" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '10px' }}>
+                                    <input type="text" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={{ flex: 1, padding: '8px', border: '1px solid #334155', borderRadius: '4px', background: '#1e293b', color: 'white' }} placeholder="Title" />
+                                    <input type="number" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} style={{ width: '120px', padding: '8px', border: '1px solid #334155', borderRadius: '4px', background: '#1e293b', color: 'white' }} placeholder="Price" />
+                                    <button onClick={() => handleSaveEdit(property.id)} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Save</button>
+                                    <button onClick={handleCancelEdit} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
                                   </div>
-                                </div>
-                              </td>
-                              <td>
-                                {property.sold ? (
-                                  <span className="status-badge sold">SOLD</span>
-                                ) : (
-                                  <span className={`status-badge ${property.active ? 'active' : 'inactive'}`}>
-                                    {property.active ? 'Active' : 'Unlisted'}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="actions-cell">
-                                {!property.sold && (
-                                  <>
-                                    <button className="action-icon edit" onClick={() => handleEdit(property)}><FiEdit2 /></button>
-                                    <button className="action-icon toggle" onClick={() => handleToggleActive(property)}>
-                                      {property.active ? <FiEyeOff /> : <FiEye />}
-                                    </button>
-                                    <button className="action-icon delete" onClick={() => handleDelete(property.id)}><FiTrash2 /></button>
-                                  </>
-                                )}
-                              </td>
+                                </td>
+                              ) : (
+                                <>
+                                  <td>
+                                    <div className="property-info">
+                                      <img
+                                        src={getFirstImage(property.photos, "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100")}
+                                        alt="Property"
+                                        className="property-thumb"
+                                        style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
+                                      />
+                                      <div>
+                                        <div className="property-title">{property.title}</div>
+                                        <div className="property-meta">{property.type} • {formatPrice(property.price)}</div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    {property.sold ? (
+                                      <span className="status-badge sold">SOLD</span>
+                                    ) : (
+                                      <span className={`status-badge ${property.active ? 'active' : 'inactive'}`}>
+                                        {property.active ? 'Active' : 'Unlisted'}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="actions-cell">
+                                    {!property.sold && (
+                                      <>
+                                        <button className="action-icon edit" onClick={() => handleEdit(property)}><FiEdit2 /></button>
+                                        <button className="action-icon toggle" title={property.active ? "Unlist Property" : "Relist Property"} onClick={() => handleToggleActive(property)}>
+                                          {property.active ? <FiEyeOff /> : <FiEye />}
+                                        </button>
+                                        <button className="action-icon success" title="Mark as Sold" onClick={() => handleMarkSoldInit(property)} style={{ color: '#10b981' }}>
+                                          <FiCheckCircle />
+                                        </button>
+                                        <button className="action-icon delete" onClick={() => handleDelete(property.id)}><FiTrash2 /></button>
+                                      </>
+                                    )}
+                                  </td>
+                                </>
+                              )}
                             </tr>
                           ))}
                         </tbody>
@@ -593,8 +660,9 @@ function Dashboard() {
                             <div className="property-info">
                               <img
                                 src={getFirstImage(p.photos, "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100")}
-                                alt=""
+                                alt="Property"
                                 className="property-thumb"
+                                style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
                               />
                               <div>
                                 <div className="property-title">{p.title}</div>
@@ -618,6 +686,56 @@ function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Sold Confirmation Modal */}
+      {showSoldModal && propertyToMarkSold && (
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal-content" style={{ background: '#1e293b', padding: '30px', borderRadius: '12px', width: '90%', maxWidth: '500px', border: '1px solid #334155' }}>
+            <h2 style={{ marginBottom: '15px', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <FiCheckCircle color="#10b981" /> Finalize Sale
+            </h2>
+            <p style={{ color: '#cbd5e1', marginBottom: '20px', lineHeight: '1.5' }}>
+              You are marking <strong>{propertyToMarkSold.title}</strong> as SOLD. This will cancel all pending appointments and notify interested buyers.
+            </p>
+
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{ display: 'block', color: '#94a3b8', marginBottom: '8px', fontSize: '14px' }}>Who purchased this property?</label>
+              <select
+                value={selectedBuyerId}
+                onChange={(e) => setSelectedBuyerId(e.target.value)}
+                style={{ width: '100%', padding: '12px', background: '#0f172a', border: '1px solid #334155', color: 'white', borderRadius: '8px', fontSize: '15px' }}
+              >
+                <option value="">Sold outside platform / Unknown Buyer</option>
+                {buyersForProperty.map(buyer => (
+                  <option key={buyer.id} value={buyer.id}>
+                    {buyer.name} ({buyer.email})
+                  </option>
+                ))}
+              </select>
+              {buyersForProperty.length > 0 && (
+                <p style={{ fontSize: '12px', color: '#64748b', marginTop: '8px' }}>
+                  Select the buyer to link this property directly to their user Dashboard.
+                </p>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={handleCancelMarkSold}
+                style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #475569', color: '#cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmMarkSold}
+                style={{ padding: '10px 20px', background: '#10b981', border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Confirm Sale
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

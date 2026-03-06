@@ -26,6 +26,7 @@ export default function Properties() {
     maxPrice: searchParams.get("maxPrice") || "",
     search: searchParams.get("search") || "",
     pincode: searchParams.get("pincode") || "",
+    amenities: searchParams.get("amenities") || "",
   });
 
   const [properties, setProperties] = useState([]);
@@ -47,6 +48,7 @@ export default function Properties() {
       maxPrice: params.get("maxPrice") || "",
       search: params.get("search") || "",
       pincode: params.get("pincode") || "",
+      amenities: params.get("amenities") || "",
     });
 
     if (location.state?.openFilters) {
@@ -69,6 +71,7 @@ export default function Properties() {
         if (filters.maxPrice) params.maxPrice = filters.maxPrice;
         if (filters.search) params.search = filters.search;
         if (filters.pincode) params.pincode = filters.pincode;
+        if (filters.amenities) params.amenities = filters.amenities;
 
         const res = await propertyApi.get("", { params });
         setProperties(res.data);
@@ -100,7 +103,7 @@ export default function Properties() {
   };
 
   const clearFilters = () => {
-    const empty = { city: "", type: "", purpose: "", bhk: "", minPrice: "", maxPrice: "", search: "", pincode: "" };
+    const empty = { city: "", type: "", purpose: "", bhk: "", minPrice: "", maxPrice: "", search: "", pincode: "", amenities: "" };
     setFilters(empty);
     setSearchParams({}, { replace: true });
   };
@@ -309,6 +312,38 @@ export default function Properties() {
               )}
             </div>
 
+            <div className="filter-row amenities-row" style={{ marginTop: '15px' }}>
+              <label className="filter-label" style={{ display: 'block', marginBottom: '10px' }}>Amenities</label>
+              <div className="amenities-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                {["WiFi", "Parking", "Gym", "Pool", "Security", "Power Backup", "Lift", "Balcony"].map(amenity => {
+                  const currentAmenities = filters.amenities ? filters.amenities.split(",") : [];
+                  const isActive = currentAmenities.includes(amenity);
+                  return (
+                    <label key={amenity} className={`amenity-checkbox ${isActive ? "active" : ""}`} style={{
+                      display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px',
+                      background: isActive ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${isActive ? '#3b82f6' : '#334155'}`,
+                      borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem', color: isActive ? '#60a5fa' : '#cbd5e1',
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={isActive}
+                        onChange={(e) => {
+                          const newAmens = e.target.checked
+                            ? [...currentAmenities, amenity]
+                            : currentAmenities.filter(a => a !== amenity);
+                          applyFilters({ amenities: newAmens.join(",") });
+                        }}
+                        style={{ display: 'none' }}
+                      />
+                      {amenity}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Active filter tags */}
             {hasActiveFilters && (
               <div className="active-filter-tags">
@@ -319,6 +354,12 @@ export default function Properties() {
                 {filters.minPrice && <span className="filter-tag" onClick={() => applyFilters({ minPrice: "" })}>Min ₹{Number(filters.minPrice).toLocaleString('en-IN')} ✕</span>}
                 {filters.maxPrice && <span className="filter-tag" onClick={() => applyFilters({ maxPrice: "" })}>Max ₹{Number(filters.maxPrice).toLocaleString('en-IN')} ✕</span>}
                 {filters.pincode && <span className="filter-tag" onClick={() => applyFilters({ pincode: "" })}>📌 {filters.pincode} ✕</span>}
+                {filters.amenities && filters.amenities.split(",").map(amenity => (
+                  <span key={amenity} className="filter-tag" onClick={() => {
+                    const newAmenities = filters.amenities.split(",").filter(a => a !== amenity).join(",");
+                    applyFilters({ amenities: newAmenities });
+                  }}>✨ {amenity} ✕</span>
+                ))}
               </div>
             )}
           </div>

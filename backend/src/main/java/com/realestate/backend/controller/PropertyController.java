@@ -3,6 +3,15 @@ package com.realestate.backend.controller;
 import com.realestate.backend.entity.Property;
 import com.realestate.backend.repository.PropertyRepository;
 
+import com.realestate.backend.entity.Appointment;
+import com.realestate.backend.entity.ChatMessage;
+import com.realestate.backend.entity.Favorite;
+import com.realestate.backend.repository.AppointmentRepository;
+import com.realestate.backend.repository.ChatMessageRepository;
+import com.realestate.backend.repository.FavoriteRepository;
+import com.realestate.backend.repository.AgentSlotRepository;
+import com.realestate.backend.repository.UserRepository;
+import com.realestate.backend.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -10,9 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * Public and agent-facing property endpoints.
@@ -28,6 +36,24 @@ public class PropertyController {
     @Autowired
     private PropertyRepository propertyRepository;
 
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
+
+    @Autowired
+    private FavoriteRepository favoriteRepository;
+
+    @Autowired
+    private AgentSlotRepository agentSlotRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private EmailService emailService;
+
     /** GET /api/properties — All active, unsold properties with optional filters */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional(readOnly = true)
@@ -39,7 +65,8 @@ public class PropertyController {
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) Integer bhk,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String pincode) {
+            @RequestParam(required = false) String pincode,
+            @RequestParam(required = false) List<String> amenities) {
         try {
             List<Property> properties = propertyRepository.findByIsActiveTrueAndIsSoldFalse();
 
@@ -93,6 +120,17 @@ public class PropertyController {
                             String loc = p.getLocation() != null ? p.getLocation().toLowerCase() : "";
                             String desc = p.getDescription() != null ? p.getDescription().toLowerCase() : "";
                             return title.contains(s) || loc.contains(s) || desc.contains(s);
+                        })
+                        .toList();
+            }
+            if (amenities != null && !amenities.isEmpty()) {
+                properties = properties.stream()
+                        .filter(p -> {
+                            if (p.getAmenities() == null || p.getAmenities().isBlank())
+                                return false;
+                            String propAmenities = p.getAmenities().toLowerCase();
+                            // Property must contain all requested amenities to match
+                            return amenities.stream().allMatch(a -> propAmenities.contains(a.toLowerCase()));
                         })
                         .toList();
             }
@@ -330,12 +368,61 @@ public class PropertyController {
             }
 
             property.setSold(true);
-            property.setSoldAt(java.time.LocalDateTime.now());
+            property.setSoldAt(LocalDateTime.now());
             if (buyerId != null) {
                 property.setSoldToUserId(buyerId);
             }
+            property.setActive(false);
 
             propertyRepository.save(property);
+
+            // Cancel any active appointments and free slots
+            List<String> activeStatuses = Arrays.asList("pending", "confirmed", "awaiting_buyer", "awaiting_agent");
+            List<Appointment> pendingAppointments = appointmentRepository.findByPropertyIdAndStatusIn(id,
+                    activeStatuses);
+
+            Set<String> notifyEmails = new HashSet<>();
+
+            for (Appointment appt : pendingAppointments) {
+                appt.setStatus("cancelled");
+                appointmentRepository.save(appt);
+                if (appt.getSlotId() != null) {
+                    agentSlotRepository.findById(appt.getSlotId()).ifPresent(s -> {
+                        s.setBooked(false);
+                        agentSlotRepository.save(s);
+                    });
+                }
+                if (appt.getBuyerEmail() != null) {
+                    notifyEmails.add(appt.getBuyerEmail());
+                }
+            }
+
+            // Also find all favoriters
+            List<Favorite> favorites = favoriteRepository.findByProperty_Id(id);
+            for (Favorite fav : favorites) {
+                userRepository.findById(fav.getUser().getId()).ifPresent(u -> {
+                    if (u.getEmail() != null)
+                        notifyEmails.add(u.getEmail());
+                });
+            }
+
+            // Also find all chatters
+            List<ChatMessage> chats = chatMessageRepository.findByPropertyId(id);
+            for (ChatMessage chat : chats) {
+                userRepository.findById(chat.getBuyerId()).ifPresent(u -> {
+                    if (u.getEmail() != null)
+                        notifyEmails.add(u.getEmail());
+                });
+            }
+
+            // Exclude the actual winner if a buyerId was passed
+            if (buyerId != null) {
+                userRepository.findById(buyerId).ifPresent(winner -> notifyEmails.remove(winner.getEmail()));
+            }
+
+            if (!notifyEmails.isEmpty()) {
+                emailService.sendSoldNotificationToInquirers(new ArrayList<>(notifyEmails), property.getTitle());
+            }
 
             if (property.getCity() != null) {
                 analyticsService.computeScoresForCity(property.getCity());

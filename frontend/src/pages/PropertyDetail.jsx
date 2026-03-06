@@ -92,7 +92,8 @@ function PropertyDetail() {
           views: data.views || 0,
           favorites: data.favorites || 0,
           inquiries: data.inquiries || 0,
-          listedDate: data.listedDate || null
+          listedDate: data.listedDate || null,
+          sold: data.sold || false
         };
 
         // Create initial property data
@@ -188,11 +189,11 @@ function PropertyDetail() {
   /* ================= HANDLE SLOTS ================= */
   const handleShowSlots = async () => {
     if (!user) {
-      alert("Please login first to book an appointment");
+      toast.error("Please login first to book an appointment");
       return;
     }
     if (user.role !== "BUYER") {
-      alert("Only buyers can book appointments");
+      toast.error("Only buyers can book appointments");
       return;
     }
 
@@ -283,17 +284,17 @@ function PropertyDetail() {
   /* ================= SEND MESSAGE ================= */
   const sendMessage = async () => {
     if (!user) {
-      alert("Please login first to chat");
+      toast.error("Please login first to chat");
       return;
     }
 
     if (user.role !== "BUYER") {
-      alert("Only buyers can chat with agents");
+      toast.error("Only buyers can chat with agents");
       return;
     }
 
     if (!property?.id || !property?.agentId) {
-      alert("Chat not ready. Please refresh page.");
+      toast.error("Chat not ready. Please refresh page.");
       return;
     }
 
@@ -435,7 +436,7 @@ function PropertyDetail() {
             </div>
 
             <div className="carousel-badges">
-              {property.purpose === "Sold" ? (
+              {property.sold ? (
                 <span className="premium-badge type" style={{ background: '#ef4444' }}>SOLD</span>
               ) : (
                 <span className="premium-badge verified">Verified</span>

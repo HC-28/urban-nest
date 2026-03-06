@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { appointmentApi, slotsApi, chatApi } from "../api/api";
+import toast from "react-hot-toast";
 import "../styles/AppointmentActionPanel.css";
 
 export default function AppointmentActionPanel({
@@ -20,6 +21,10 @@ export default function AppointmentActionPanel({
 
     const fetchAppointmentStatus = async () => {
         setLoading(true);
+        if (userRole === "AGENT") {
+            setLoading(false);
+            return;
+        }
         try {
             // Fetch appointments for buyer, filter by this property/agent
             const res = await appointmentApi.get(`/buyer/${buyerId}`);
@@ -53,7 +58,7 @@ export default function AppointmentActionPanel({
             setAvailableSlots(res.data);
             setShowSlots(true);
         } catch (e) {
-            alert("No slots available currently");
+            toast.error("No slots available currently");
         }
     };
 
@@ -63,11 +68,11 @@ export default function AppointmentActionPanel({
                 slotId: slotId,
                 buyerId: buyerId
             });
-            alert("Appointment booked! Agent will be notified.");
+            toast.success("Appointment booked! Agent will be notified.");
             setShowSlots(false);
             fetchAppointmentStatus();
         } catch (e) {
-            alert(e.response?.data || "Failed to book");
+            toast.error(e.response?.data || "Failed to book");
         }
     };
 
@@ -75,10 +80,11 @@ export default function AppointmentActionPanel({
         if (!appointment) return;
         try {
             await appointmentApi.put(`/${appointment.id}/buyer-confirmation`, { answer });
-            alert(answer === "YES" ? "Confirmed! Waiting for Agent to verify." : "Purchase denied.");
+            if (answer === "YES") toast.success("Confirmed! Waiting for Agent to verify.");
+            else toast.success("Purchase denied.");
             fetchAppointmentStatus();
         } catch (e) {
-            alert(e.response?.data || "Failed to confirm");
+            toast.error(e.response?.data || "Failed to confirm");
         }
     };
 
@@ -86,7 +92,8 @@ export default function AppointmentActionPanel({
         if (!appointment) return;
         try {
             await appointmentApi.put(`/${appointment.id}/agent-confirmation`, { answer });
-            alert(answer === "YES" ? "Sale Confirmed! Property marked as SOLD." : "Sale denied.");
+            if (answer === "YES") toast.success("Sale Confirmed! Property marked as SOLD.");
+            else toast.success("Sale denied.");
 
             // If yes, trigger a broadcast chat message
             if (answer === "YES") {
@@ -101,7 +108,7 @@ export default function AppointmentActionPanel({
 
             fetchAppointmentStatus();
         } catch (e) {
-            alert(e.response?.data || "Failed to confirm");
+            toast.error(e.response?.data || "Failed to confirm");
         }
     };
 

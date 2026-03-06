@@ -49,6 +49,20 @@ CREATE TABLE IF NOT EXISTS property (
     is_active BOOLEAN DEFAULT TRUE,
     purpose VARCHAR(50),
     is_featured BOOLEAN DEFAULT FALSE,
+    views INT DEFAULT 0,
+    favorites INT DEFAULT 0,
+    inquiries INT DEFAULT 0,
+    listed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_viewed_at TIMESTAMP,
+    is_sold BOOLEAN DEFAULT FALSE,
+    sold_to_user_id BIGINT,
+    sold_at TIMESTAMP,
+    launch_date VARCHAR(50),
+    possession_starts VARCHAR(50),
+    rera_id VARCHAR(100),
+    video_link TEXT,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
     FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
@@ -69,6 +83,10 @@ CREATE TABLE IF NOT EXISTS appointments (
     slot_id BIGINT,
     confirmation_deadline TIMESTAMP,
     buyer_confirmed VARCHAR(10),
+    agent_confirmed VARCHAR(10),
+    sold_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (property_id) REFERENCES property(id) ON DELETE CASCADE,
     FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE CASCADE
@@ -172,5 +190,5 @@ VALUES ('Jane Smith', 'agent@urbannest.com', 'password123', 'AGENT', 'Mumbai', '
 ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role;
 
 -- Optional: Insert a test property
-INSERT INTO property (title, description, type, price, area, bhk, city, pin_code, agent_id, agent_name, agent_email, purpose, is_active)
-VALUES ('Luxury Apartment in Bandra', 'Spacious 3BHK with sea view.', 'Apartment', 25000000, 1500, 3, 'Mumbai', '400050', 3, 'Jane Smith', 'agent@urbannest.com', 'Sale', TRUE);
+INSERT INTO property (title, description, type, price, area, bhk, city, pin_code, agent_id, agent_name, agent_email, purpose, is_active, amenities)
+VALUES ('Luxury Apartment in Bandra', 'Spacious 3BHK with sea view.', 'Apartment', 25000000, 1500, 3, 'Mumbai', '400050', 3, 'Jane Smith', 'agent@urbannest.com', 'Sale', TRUE, 'WiFi, Gym, Pool, Parking, Security, Balcony');

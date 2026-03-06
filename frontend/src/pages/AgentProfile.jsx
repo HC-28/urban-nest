@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyCard from "../components/PropertyCard";
 import { agentsApi } from "../api/api";
-import { FiMail, FiPhone, FiMapPin, FiStar, FiHome } from "react-icons/fi";
+import { FiMail, FiPhone, FiMapPin, FiStar, FiHome, FiCheckCircle } from "react-icons/fi";
 import CountUp from 'react-countup';
 import { Helmet } from "react-helmet-async";
 import "../styles/AgentProfile.css";
@@ -162,9 +162,27 @@ function AgentProfile() {
                 </div>
             )}
 
+            {/* Recently Sold Section */}
+            {agent.soldProperties && agent.soldProperties.length > 0 && (
+                <div className="properties-section sold-section">
+                    <div className="section-container">
+                        <div className="section-header">
+                            <FiCheckCircle className="section-icon" style={{ color: '#10b981' }} />
+                            <h2>Recently Sold</h2>
+                        </div>
+                        <div className="properties-grid">
+                            {agent.soldProperties.map((property) => (
+                                <PropertyCard key={property.id} property={property} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* No Properties Message */}
             {(!agent.featuredProperties || agent.featuredProperties.length === 0) &&
-                (!agent.otherProperties || agent.otherProperties.length === 0) && (
+                (!agent.otherProperties || agent.otherProperties.length === 0) &&
+                (!agent.soldProperties || agent.soldProperties.length === 0) && (
                     <div className="no-properties">
                         <p>This agent hasn't listed any properties yet.</p>
                     </div>
