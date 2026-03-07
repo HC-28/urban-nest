@@ -115,7 +115,7 @@ export default function BuyerChats() {
                                     key={key}
                                     className="chat-card"
                                     onClick={() =>
-                                        navigate(`/chat/${lastMsg.propertyId}/${lastMsg.buyerId}/${lastMsg.agentId}`)
+                                        navigate(`/buyer/chat/${lastMsg.propertyId}/${lastMsg.agentId}`)
                                     }
                                 >
                                     {profilePicUrl ? (

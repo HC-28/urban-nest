@@ -61,7 +61,7 @@ export function parsePropertyImages(photos) {
  * @param {string} fallback - Fallback image URL
  * @returns {string} - First image URL or fallback
  */
-export function getFirstImage(photos, fallback = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200") {
+export function getFirstImage(photos, fallback = "/placeholder.jpg") {
     const images = parsePropertyImages(photos);
     return images.length > 0 ? images[0] : fallback;
 }

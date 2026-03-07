@@ -375,6 +375,34 @@
     background: #f59e0b;
   }
 
+  /* ===== PROPERTY TABLE ITEMS ===== */
+  .property-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .property-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .property-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+
+  .property-meta {
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+
+
   /* ===== RESPONSIVE ===== */
 
   @media (max-width: 768px) {

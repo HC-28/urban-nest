@@ -344,7 +344,7 @@ public class AnalyticsService {
         if (n == 0)
             return;
         if (n == 1) {
-            setter.accept(sorted.get(0), 100.0); // Top percentile if only one
+            setter.accept(sorted.get(0), 50.0); // Neutral when only one pincode (no comparison data)
             return;
         }
         for (int i = 0; i < n; i++) {

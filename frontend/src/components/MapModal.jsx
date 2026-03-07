@@ -28,53 +28,41 @@ const cities = [
     { name: "Bangalore", coords: [12.9716, 77.5946], zoom: 11, geoFile: "bangalore.geojson" }
 ];
 
-/* ── Color palettes ── */
+/* ── Color palettes (3 gradient colors per mode) ── */
 const DYNAMIC_PALETTES = {
-    price: { title: "Price per sq.ft (₹)", colors: ["#22c55e", "#facc15", "#fb923c", "#dc2626", "#7f1d1d"] },
-    inventory: { title: "Inventory Level", colors: ["#dbeafe", "#93c5fd", "#3b82f6", "#1d4ed8", "#1e3a8a"] },
-    market_activity: { title: "Market Activity", colors: ["#ede9fe", "#c4b5fd", "#a78bfa", "#7c3aed", "#4c1d95"] },
-    buyer_opportunity: { title: "Buyer Opportunity", colors: ["#e0f7fa", "#a5f3fc", "#67e8f9", "#06b6d4", "#0e7490"] },
-    demand: { title: "Demand (Agent)", colors: ["#fef9c3", "#fde68a", "#fbbf24", "#d97706", "#92400e"] },
-    liquidity: { title: "Liquidity Score", colors: ["#f0fdf4", "#bbf7d0", "#4ade80", "#16a34a", "#14532d"] },
-    saturation: { title: "Market Saturation", colors: ["#fff1f2", "#fecaca", "#f87171", "#dc2626", "#7f1d1d"] }
+    price: { title: "Price per sq.ft (₹)", colors: ["#22c55e", "#fb923c", "#dc2626"] },
+    inventory: { title: "Inventory Level", colors: ["#93c5fd", "#3b82f6", "#1e3a8a"] },
+    buyer_opportunity: { title: "Buyer Opportunity", colors: ["#a5f3fc", "#06b6d4", "#0e7490"] },
+    demand: { title: "Demand (Agent)", colors: ["#fde68a", "#fbbf24", "#92400e"] },
+    liquidity: { title: "Liquidity Score", colors: ["#bbf7d0", "#4ade80", "#14532d"] }
 };
 
 /* ── Score info descriptions ── */
 const SCORE_DESCRIPTIONS = {
     price: {
         title: "💰 Price Index",
-        description: "This heatmap shows the median price per square foot across different neighborhoods. Darker or warmer colors indicate higher-priced areas, while lighter or cooler colors indicate more affordable zones. Click on any area to see actual property listings and their prices. This helps you quickly identify which neighborhoods fit your budget and compare value across the city.",
-        tip: "Pro Tip: Compare this with the Inventory view — areas with low prices AND high inventory often mean great deals with room to negotiate. Areas with high prices but low inventory suggest premium, in-demand neighborhoods."
+        description: "Median price per square foot across neighborhoods. Warmer colors = higher-priced areas, cooler = more affordable. Click any area to see listings.",
+        tip: "Pro Tip: Compare with Inventory — low price + high inventory = great deals with negotiation room."
     },
     inventory: {
         title: "📦 Inventory Level",
-        description: "This view shows how many active property listings are currently available in each area. More listings mean more choices for buyers and potentially more room to negotiate. Fewer listings suggest a tighter market where properties may sell faster. Use this to find neighborhoods where you'll have the most options to choose from.",
-        tip: "Pro Tip: Low inventory + high demand (check Activity view) usually means prices are rising and you'll face competition. High inventory areas give you leverage to negotiate better deals. If you're a first-time buyer, start with high-inventory areas."
-    },
-    market_activity: {
-        title: "🔥 Market Activity",
-        description: "This heatmap reveals how 'hot' each neighborhood is based on buyer engagement — including property views, inquiries, favorites, and appointment requests. Areas glowing with warm colors are attracting the most attention from buyers. Cooler areas have less competition, which could mean either hidden opportunities or lower demand.",
-        tip: "Pro Tip: High activity = more competition and potentially bidding wars. Low-activity areas may have hidden gems where you can take your time and negotiate. Check why an area is quiet — it could be an upcoming neighborhood that hasn't been discovered yet."
+        description: "Active property listings per area. More listings = more buyer choices and negotiation room. Fewer = tighter market, faster sales.",
+        tip: "Pro Tip: High inventory gives you leverage. Low inventory + high demand means rising prices and competition."
     },
     buyer_opportunity: {
         title: "🏠 Buyer Opportunity",
-        description: "This smart index combines multiple factors — price trends, inventory levels, demand, and market activity — to highlight areas where buyers currently have the upper hand. High opportunity scores mean favorable conditions: reasonable prices, good inventory, and manageable competition. Low scores suggest seller-friendly markets.",
-        tip: "Pro Tip: This is the best starting point for first-time buyers! Focus on neighborhoods with high opportunity scores for the best chance of finding a good deal. These areas offer the ideal mix of affordability, choice, and negotiation power."
+        description: "Combines price, inventory, and demand to highlight areas favoring buyers. High scores = good conditions for buying.",
+        tip: "Pro Tip: Best starting point for first-time buyers! Focus on high-opportunity areas for the best deals."
     },
     demand: {
         title: "📈 Demand Score (Agent View)",
-        description: "Designed for agents and sellers, this view shows where buyer demand is strongest relative to available listings. High-demand areas have more interested buyers than available properties — ideal for sellers looking to list. As an agent, this helps you advise clients on pricing strategy and identify the hottest markets.",
-        tip: "Pro Tip: List properties in high-demand areas with competitive pricing for the fastest sales. In low-demand areas, focus on unique selling points and consider pricing slightly below market to attract attention."
+        description: "Buyer demand relative to available listings. High demand = more buyers than properties — ideal for agents looking to list.",
+        tip: "Pro Tip: List in high-demand areas with competitive pricing for fastest sales."
     },
     liquidity: {
         title: "💧 Liquidity Score (Agent View)",
-        description: "This shows how quickly properties tend to sell in each neighborhood. High liquidity means properties move fast — listings don't stay on the market long. Low liquidity indicates slower sales cycles where properties take longer to find buyers. This is crucial for setting realistic expectations with sellers about timeline.",
-        tip: "Pro Tip: High liquidity areas are great for quick flips and investment properties. Low liquidity areas may require longer marketing periods but often have better margins for patient investors or buyers willing to wait."
-    },
-    saturation: {
-        title: "🔴 Market Saturation (Agent View)",
-        description: "This reveals the competition level among agents and listings in each area. Highly saturated areas have many agents competing for buyers, making it harder to stand out. Low saturation means less competition, giving you a better chance to capture market share and attract clients.",
-        tip: "Pro Tip: The golden opportunity is low saturation + rising demand — you can establish yourself as the go-to agent before competition increases. Avoid highly saturated areas unless you have a strong unique value proposition."
+        description: "How quickly properties sell in each area. High liquidity = fast sales. Low = longer cycles.",
+        tip: "Pro Tip: High liquidity = quick flips. Low liquidity = longer marketing but often better margins."
     }
 };
 
@@ -126,34 +114,23 @@ function MapModal({ isOpen, onClose }) {
     const currentCity = useMemo(() => cities.find(c => c.name === selectedCity) || cities[0], [selectedCity]);
     const palette = DYNAMIC_PALETTES[heatmapMode] || DYNAMIC_PALETTES.price;
 
-    // Dynamic bins
-    const [dynamicBins, setDynamicBins] = useState(null);
-
-    useEffect(() => {
-        if (!heatmapData || Object.keys(heatmapData).length === 0) { setDynamicBins(null); return; }
-        const values = [];
-        Object.values(heatmapData).forEach(data => {
-            if (data.activeListings > 10) {
-                let val = heatmapMode === 'price' ? data.medianPrice : data.score;
-                if (val != null) values.push(val);
-            }
-        });
-        if (values.length === 0) { setDynamicBins(null); return; }
-        values.sort((a, b) => a - b);
-        const getP = (p) => values[Math.max(0, Math.floor((p / 100) * (values.length - 1)))];
-        setDynamicBins([getP(20), getP(40), getP(60), getP(80)]);
-    }, [heatmapData, heatmapMode]);
+    // Static bins configuration per mode
+    const staticBinsMap = {
+        price: [10000, 20000],          // Below 10k = Low, 10k-20k = Medium, >20k = High
+        inventory: [15, 30],            // Below 15 = Low, 15-30 = Medium, >30 = High
+        buyer_opportunity: [40, 70],    // Score out of 100
+        demand: [30, 60],               // Score out of 100
+        liquidity: [40, 75]             // Score out of 100
+    };
 
     // Modes
     const modes = [
         { value: "price", label: "Price Heatmap", icon: "💰" },
         { value: "inventory", label: "Inventory", icon: "📦" },
-        { value: "market_activity", label: "Activity", icon: "🔥" },
         { value: "buyer_opportunity", label: "Opportunity", icon: "🏠" },
         ...(isAgent ? [
             { value: "demand", label: "Demand", icon: "📈" },
-            { value: "liquidity", label: "Liquidity", icon: "💧" },
-            { value: "saturation", label: "Saturation", icon: "🔴" }
+            { value: "liquidity", label: "Liquidity", icon: "💧" }
         ] : [])
     ];
 
@@ -188,27 +165,24 @@ function MapModal({ isOpen, onClose }) {
     useEffect(() => {
         if (!showPins || !isOpen) { setAllProperties([]); return; }
         setLoadingPins(true);
-        propertyApi.get(`/`, { params: { city: selectedCity } })
+        propertyApi.get(`/`, { params: { city: selectedCity, type: selectedType } })
             .then(res => setAllProperties(res.data || []))
             .catch(() => setAllProperties([]))
             .finally(() => setLoadingPins(false));
-    }, [showPins, selectedCity, isOpen]);
+    }, [showPins, selectedCity, selectedType, isOpen]);
 
     // Color logic
     const getColor = (feature) => {
         const geoPincode = String(feature.properties?.pin_code || feature.properties?.pincode || feature.properties?.PINCODE || "").trim();
         const data = heatmapData[geoPincode];
-        if (!data || data.activeListings === 0 || data.activeListings == null) return "#ffffff";
-        if (data.activeListings > 0 && data.activeListings <= 10) return "#9ca3af";
+        if (!data || data.activeListings === 0 || data.activeListings == null) return "#f0f0f0";
+        if (data.activeListings > 0 && data.activeListings <= 5) return "#9ca3af";
         let val = heatmapMode === 'price' ? (data.medianPrice ?? null) : (data.score ?? null);
         if (val === null || val === undefined) return "#6b7280";
-        if (!dynamicBins) return palette.colors[2];
-        const [p20, p40, p60, p80] = dynamicBins;
-        if (val <= p20) return palette.colors[0];
-        if (val <= p40) return palette.colors[1];
-        if (val <= p60) return palette.colors[2];
-        if (val <= p80) return palette.colors[3];
-        return palette.colors[4];
+        const [p33, p66] = staticBinsMap[heatmapMode] || [33, 66];
+        if (val <= p33) return palette.colors[0];
+        if (val <= p66) return palette.colors[1];
+        return palette.colors[2];
     };
 
     // Fetch mini properties
@@ -355,10 +329,10 @@ function MapModal({ isOpen, onClose }) {
                                     miniProperties.map(p => (
                                         <div key={p.id} className="mini-property-card" onClick={() => { onClose(); navigate(`/property/${p.id}`); }}>
                                             <img
-                                                src={parsePropertyImages(p.photos)[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400"}
+                                                src={parsePropertyImages(p.photos)[0] || "/placeholder.jpg"}
                                                 alt="Property"
                                                 className="mini-card-img"
-                                                onError={(e) => e.target.src = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400"}
+                                                onError={(e) => { e.target.onerror = null; e.target.src = "/placeholder.jpg"; }}
                                             />
                                             <div className="mini-card-info">
                                                 <div className="mini-card-price">{formatPrice(p.price)}</div>
@@ -387,26 +361,27 @@ function MapModal({ isOpen, onClose }) {
                     {legendOpen && (
                         <div className="legend-items">
                             <div className="legend-item">
-                                <span className="legend-color" style={{ background: "#ffffff", border: "1px solid rgba(255,255,255,0.3)" }}></span>
-                                <span>0 properties</span>
+                                <span className="legend-color" style={{ background: "#f0f0f0", border: "1px solid rgba(255,255,255,0.3)" }}></span>
+                                <span>No properties</span>
                             </div>
                             <div className="legend-item">
                                 <span className="legend-color" style={{ background: "#9ca3af" }}></span>
-                                <span>1-10 properties</span>
+                                <span>1–5 properties</span>
                             </div>
-                            {dynamicBins ? (
-                                [
-                                    { color: palette.colors[0], label: `< ${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[0] / 1000) + 'K' : Math.round(dynamicBins[0])}` },
-                                    { color: palette.colors[1], label: `${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[0] / 1000) + 'K' : Math.round(dynamicBins[0])}–${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[1] / 1000) + 'K' : Math.round(dynamicBins[1])}` },
-                                    { color: palette.colors[2], label: `${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[1] / 1000) + 'K' : Math.round(dynamicBins[1])}–${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[2] / 1000) + 'K' : Math.round(dynamicBins[2])}` },
-                                    { color: palette.colors[3], label: `${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[2] / 1000) + 'K' : Math.round(dynamicBins[2])}–${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[3] / 1000) + 'K' : Math.round(dynamicBins[3])}` },
-                                    { color: palette.colors[4], label: `> ${heatmapMode === 'price' ? '₹' + Math.round(dynamicBins[3] / 1000) + 'K' : Math.round(dynamicBins[3])}` }
-                                ].map((item, i) => (
-                                    <div key={i} className="legend-item">
-                                        <span className="legend-color" style={{ background: item.color }}></span>
-                                        <span>{item.label}</span>
-                                    </div>
-                                ))
+                            {Object.keys(heatmapData).length > 0 ? (
+                                (() => {
+                                    const staticBins = staticBinsMap[heatmapMode] || [33, 66];
+                                    return [
+                                        { color: palette.colors[0], label: `Low${heatmapMode === 'price' ? ' (< ₹' + Math.round(staticBins[0] / 1000) + 'K)' : ''}` },
+                                        { color: palette.colors[1], label: `Medium${heatmapMode === 'price' ? ' (₹' + Math.round(staticBins[0] / 1000) + 'K–₹' + Math.round(staticBins[1] / 1000) + 'K)' : ''}` },
+                                        { color: palette.colors[2], label: `High${heatmapMode === 'price' ? ' (> ₹' + Math.round(staticBins[1] / 1000) + 'K)' : ''}` }
+                                    ].map((item, i) => (
+                                        <div key={i} className="legend-item">
+                                            <span className="legend-color" style={{ background: item.color }}></span>
+                                            <span>{item.label}</span>
+                                        </div>
+                                    ));
+                                })()
                             ) : (
                                 <div className="legend-item">
                                     <span className="legend-color" style={{ background: "#6b7280" }}></span>
@@ -456,9 +431,12 @@ function MapModal({ isOpen, onClose }) {
                                 }}
                                 eventHandlers={{
                                     click: () => {
-                                        setSelectedPincode(null);
-                                        setMiniProperties([p]);
-                                        setSelectedPincode(p.pinCode || "Pin");
+                                        if (p.pinCode) {
+                                            fetchMiniProperties(p.pinCode);
+                                        } else {
+                                            setSelectedPincode("Pin");
+                                            setMiniProperties([p]);
+                                        }
                                     }
                                 }}
                             >

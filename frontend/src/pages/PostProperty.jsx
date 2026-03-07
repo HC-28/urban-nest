@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import toast from "react-hot-toast";
 import "../styles/PostProperty.css";
 import { FiUpload, FiX, FiCheck, FiLock } from "react-icons/fi";
 import { propertyApi } from "../api/api";
@@ -180,7 +181,8 @@ function PostProperty() {
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
     if (step !== 4) return;
 
     try {
@@ -221,18 +223,25 @@ function PostProperty() {
         params: { agentId: user?.id }
       });
 
-      alert("Property listed successfully!");
+      toast.success("Property listed successfully!");
       navigate("/dashboard");
 
     } catch (err) {
       console.error(err);
-      alert("Failed to submit property: " + (err.response?.data || err.message));
+      toast.error("Failed to submit property: " + (err.response?.data || err.message));
     } finally {
       setLoading(false);
     }
   };
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
+  const nextStep = () => {
+    const form = document.getElementById("property-form");
+    if (form && !form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    setStep(prev => Math.min(prev + 1, 4));
+  };
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
   if (!user || user.role !== "AGENT") {
@@ -304,7 +313,7 @@ function PostProperty() {
           </div>
         </div>
 
-        <div className="property-form">
+        <form id="property-form" className="property-form" onSubmit={handleSubmit}>
           {step === 1 && (
             <div className="form-step">
               <h2>Basic Information</h2>
@@ -705,7 +714,7 @@ function PostProperty() {
                 <div className="uploaded-images">
                   {formData.images.map((img, index) => (
                     <div key={index} className="uploaded-image">
-                      <img src={img.preview} alt={`Upload ${index + 1}`} />
+                      <img src={img} alt={`Upload ${index + 1}`} />
                       <button type="button" className="remove-image" onClick={() => removeImage(index)}><FiX /></button>
                     </div>
                   ))}
@@ -716,9 +725,9 @@ function PostProperty() {
 
           <div className="form-navigation">
             {step > 1 && <button type="button" className="nav-btn prev" onClick={prevStep}>Previous</button>}
-            {step < 4 ? <button type="button" className="nav-btn next" onClick={nextStep}>Next</button> : <button type="button" className="nav-btn submit" disabled={loading} onClick={handleSubmit}>{loading ? "Submitting..." : "Submit Property"}</button>}
+            {step < 4 ? <button type="button" className="nav-btn next" onClick={nextStep}>Next</button> : <button type="submit" className="nav-btn submit" disabled={loading}>{loading ? "Submitting..." : "Submit Property"}</button>}
           </div>
-        </div>
+        </form>
       </div>
       <Footer />
     </div>

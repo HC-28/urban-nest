@@ -1,5 +1,3 @@
--- Urban Nest Database Initialization Script for PostgreSQL
--- Run this script in your PostgreSQL database to set up the schema and insert a default admin.
 
 -- 1. Table: users
 CREATE TABLE IF NOT EXISTS users (
@@ -157,16 +155,39 @@ CREATE TABLE IF NOT EXISTS agent_slots (
     FOREIGN KEY (property_id) REFERENCES property(id) ON DELETE CASCADE
 );
 
--- 9. Table: pincode_scores
+-- 9. Table: pincode_scores (Heatmap Analytics)
+-- IMPORTANT: This table is managed by JPA/Hibernate (ddl-auto=update).
+-- The unique constraint is (city, pincode) NOT (pin_code, property_type).
 CREATE TABLE IF NOT EXISTS pincode_scores (
     id BIGSERIAL PRIMARY KEY,
-    pin_code VARCHAR(50) NOT NULL,
-    property_type VARCHAR(100) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    pincode VARCHAR(10) NOT NULL,
+
+    -- Buyer Scores (0-100)
+    price_score DOUBLE PRECISION DEFAULT 0,
+    market_activity_score DOUBLE PRECISION DEFAULT 0,
+    inventory_score DOUBLE PRECISION DEFAULT 0,
+    buyer_opportunity_score DOUBLE PRECISION DEFAULT 0,
+
+    -- Agent Scores (0-100)
     demand_score DOUBLE PRECISION DEFAULT 0,
     liquidity_score DOUBLE PRECISION DEFAULT 0,
+    growth_score DOUBLE PRECISION DEFAULT 0,
     saturation_score DOUBLE PRECISION DEFAULT 0,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (pin_code, property_type)
+    conversion_score DOUBLE PRECISION DEFAULT 0,
+
+    -- Raw Metrics
+    active_listings INT DEFAULT 0,
+    median_price_per_sqft DOUBLE PRECISION,
+    avg_price_per_sqft DOUBLE PRECISION,
+    avg_days_on_market DOUBLE PRECISION,
+    total_views INT DEFAULT 0,
+    total_favorites INT DEFAULT 0,
+    total_inquiries INT DEFAULT 0,
+    agent_count INT DEFAULT 0,
+    last_computed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (city, pincode)
 );
 
 -- =========================================================

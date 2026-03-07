@@ -54,6 +54,32 @@ public class PropertyController {
     @Autowired
     private EmailService emailService;
 
+    /**
+     * Extract the authenticated user's ID from the JWT token (stored in
+     * SecurityContext).
+     * Returns null if no authentication is present.
+     * Validates that the caller has ROLE_AGENT or ROLE_ADMIN.
+     */
+    private Long getAuthenticatedAgentId() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getCredentials() == null)
+            return null;
+        // credentials stores userId (set by JwtAuthenticationFilter)
+        try {
+            return (Long) auth.getCredentials();
+        } catch (ClassCastException e) {
+            return null;
+        }
+    }
+
+    private boolean isAgentOrAdmin() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null)
+            return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_AGENT") || a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
     /** GET /api/properties — All active, unsold properties with optional filters */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional(readOnly = true)
@@ -228,6 +254,23 @@ public class PropertyController {
             return ResponseEntity.badRequest().body(Map.of("error", "Agent ID is required"));
         }
         try {
+            // Server-side role validation: ensure caller is AGENT or ADMIN
+            if (!isAgentOrAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Only agents can post properties"));
+            }
+            // Verify the JWT user matches the agentId param (admins can post on behalf)
+            Long authenticatedId = getAuthenticatedAgentId();
+            if (authenticatedId != null && !authenticatedId.equals(agentId)) {
+                var auth = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                        .getAuthentication();
+                boolean isAdmin = auth.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                if (!isAdmin) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("error", "You can only post properties under your own account"));
+                }
+            }
             property.setAgentId(agentId);
             Property savedProperty = propertyRepository.save(property);
 
@@ -490,6 +533,17 @@ public class PropertyController {
                 case "buyer_opportunity":
                     properties = propertyRepository
                             .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByPriceAsc(pincode);
+                    break;
+                case "liquidity":
+                    // Liquidity = fast-selling areas → show newest listings (recently listed =
+                    // active market)
+                    properties = propertyRepository
+                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(pincode);
+                    break;
+                case "saturation":
+                    // Saturation = competition level → show most viewed (competitive) properties
+                    properties = propertyRepository
+                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(pincode);
                     break;
                 case "price":
                 default:

@@ -283,6 +283,10 @@ public class AppointmentController {
             property.setActive(false);
             propertyRepository.save(property);
 
+            if (property.getCity() != null) {
+                analyticsService.computeScoresForCity(property.getCity());
+            }
+
             // Cancel other pending appointments
             List<String> activeStatuses = Arrays.asList("pending", "confirmed", "awaiting_buyer");
             List<Appointment> otherAppointments = appointmentRepository

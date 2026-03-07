@@ -39,6 +39,30 @@ public class UserController {
     }
 
     /**
+     * GET /api/users/{id}
+     * Get public basic profile info
+     */
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        try {
+            AppUser dbUser = userRepository.findById(id).orElse(null);
+            if (dbUser == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
+            }
+            return ResponseEntity.ok(Map.of(
+                    "id", dbUser.getId(),
+                    "name", dbUser.getName() != null ? dbUser.getName() : "Agent",
+                    "email", dbUser.getEmail(),
+                    "profilePicture", dbUser.getProfilePicture() != null ? dbUser.getProfilePicture() : "",
+                    "phone", dbUser.getPhone() != null ? dbUser.getPhone() : "",
+                    "agencyName", dbUser.getAgencyName() != null ? dbUser.getAgencyName() : ""));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Server error"));
+        }
+    }
+
+    /**
      * PUT /api/users/me/profile
      * Update own profile
      */

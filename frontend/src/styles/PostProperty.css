@@ -4,7 +4,7 @@
   min-height: 100vh;
   background: transparent;
   padding-top: 80px;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* Animated Background */
