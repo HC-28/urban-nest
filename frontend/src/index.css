@@ -1,0 +1,395 @@
+/* ============= URBAN-NEST DESIGN SYSTEM - UNIQUE & DISTINCTIVE ============= */
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap");
+
+:root {
+  /* ===== PRIMARY COLORS - Deep Navy / Blue accent ===== */
+  --primary-color: #3B82F6;
+  --primary-dark: #2563EB;
+  --primary-light: #60A5FA;
+  --primary-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  --primary-glow: 0 0 30px rgba(59, 130, 246, 0.3);
+
+  /* ===== SECONDARY COLORS - Light Slate ===== */
+  --secondary-color: #3B82F6;
+  /* Bright vibrant blue for accents */
+  --secondary-dark: #2563EB;
+  --secondary-light: #60A5FA;
+  --secondary-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+
+  /* ===== ACCENT COLORS - Crisp White ===== */
+  --accent-color: #FFFFFF;
+  --accent-dark: #E2E8F0;
+  --accent-light: #F8FAFC;
+
+  /* ===== BACKGROUNDS - Ultra-Deep Navy (Dark Mode) ===== */
+  --bg-primary: #060d18;
+  --bg-secondary: #0d1526;
+  --bg-card: rgba(15, 23, 42, 0.7);
+  --bg-tertiary: #1a2438;
+  --bg-dark: #030810;
+  --bg-glass: rgba(6, 13, 24, 0.65);
+  --bg-glass-strong: rgba(6, 13, 24, 0.85);
+
+  /* ===== TEXT COLORS - Inverted for Dark Mode ===== */
+  --text-primary: #FFFFFF;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-dark: #0F172A;
+  --text-on-primary: #0A192F;
+  /* Very dark blue/slate for high contrast on white/primary buttons */
+
+  /* ===== UTILITY COLORS ===== */
+  --success-color: #059669;
+  --warning-color: #D97706;
+  --error-color: #DC2626;
+  --info-color: #38BDF8;
+
+  /* ===== SHADOWS - Dark Mode Shadows ===== */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.6);
+  --shadow-amber-glow: 0 0 30px rgba(255, 255, 255, 0.15);
+  --shadow-blue-glow: 0 0 30px rgba(148, 163, 184, 0.15);
+
+  /* ===== BORDER COLORS - Subtler for Dark Mode ===== */
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.12);
+  --border-dark: rgba(255, 255, 255, 0.04);
+  --border-amber: rgba(255, 255, 255, 0.2);
+  --border-cyan: rgba(148, 163, 184, 0.2);
+
+  /* ===== BORDER RADIUS - Distinctive ===== */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* ===== SPACING SYSTEM ===== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* ===== TYPOGRAPHY ===== */
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color-scheme: dark;
+  color: var(--text-secondary);
+  background-color: var(--bg-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-image: linear-gradient(135deg, rgba(10, 25, 47, 0.92) 0%, rgba(17, 34, 64, 0.88) 100%), url('./assets/hero-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: var(--text-secondary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Outfit", sans-serif;
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+h2 {
+  font-size: 2.25rem;
+}
+
+h3 {
+  font-size: 1.75rem;
+}
+
+h4 {
+  font-size: 1.5rem;
+}
+
+h5 {
+  font-size: 1.25rem;
+}
+
+h6 {
+  font-size: 1rem;
+}
+
+/* ===== LINKS ===== */
+a {
+  font-weight: 500;
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary-light);
+}
+
+/* ===== BUTTONS - Clean Base Styles ===== */
+button {
+  border-radius: var(--radius-md);
+  border: none;
+  padding: 0.75em 1.5em;
+  font-size: 1em;
+  font-weight: 700;
+  font-family: inherit;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+}
+
+button:hover {
+  background: #3B82F6;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===== FORM ELEMENTS ===== */
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  backdrop-filter: blur(10px);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  background: var(--bg-secondary);
+}
+
+/* Chrome Autofill styles override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #112240 inset !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: #FFFFFF;
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+/* Glassmorphism */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+}
+
+.glass-strong {
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-medium);
+}
+
+/* Gradient Borders */
+.gradient-border {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-lg);
+  z-index: -1;
+  opacity: 0.8;
+}
+
+/* Glow Effects */
+.glow-amber {
+  box-shadow: var(--shadow-cyan-glow);
+}
+
+.glow-blue {
+  box-shadow: var(--shadow-blue-glow);
+}
+
+/* Animated Gradient Background */
+.animated-gradient {
+  background: linear-gradient(135deg, #0A192F 0%, #112240 50%, #0A192F 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ===== RESPONSIVE UTILITIES ===== */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  h4 {
+    font-size: 1.25rem;
+  }
+}

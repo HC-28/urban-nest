@@ -1,0 +1,273 @@
+/* ===== Appointment Action Panel — Chat-integrated ===== */
+.appointment-action-panel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-mode {
+    font-size: 13px;
+}
+
+.panel-loading {
+    color: #8696a0;
+    font-size: 12px;
+}
+
+/* Status Labels */
+.status-label {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.status-label.info {
+    background: rgba(2, 132, 199, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.status-label.active {
+    background: rgba(0, 168, 132, 0.15);
+    color: #00a884;
+    border: 1px solid rgba(0, 168, 132, 0.2);
+}
+
+.status-label.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.status-label.expired {
+    background: rgba(100, 116, 139, 0.15);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.status-label.sold {
+    background: rgba(0, 168, 132, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 168, 132, 0.15);
+}
+
+/* Book Button */
+.panel-ready,
+.panel-pending {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    width: 100%;
+}
+
+.panel-pending .status-label {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+}
+
+.book-btn {
+    background: #00a884;
+    color: white;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.book-btn:hover {
+    background: #06cf9c;
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0, 168, 132, 0.25);
+}
+
+/* Slots dropdown */
+.slots-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: #1f2c34;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    width: 280px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.close-slots {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #8696a0;
+    padding: 4px;
+    box-shadow: none;
+}
+
+.close-slots:hover {
+    color: #e9edef;
+    transform: none;
+    box-shadow: none;
+}
+
+.slot-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #e9edef;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.15s;
+}
+
+.slot-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.slot-option span {
+    color: #e9edef;
+    font-weight: 500;
+}
+
+.slot-option button {
+    background: #00a884;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.15s;
+    box-shadow: none;
+}
+
+.slot-option button:hover {
+    background: #06cf9c;
+    transform: none;
+    box-shadow: none;
+}
+
+.slots-dropdown p {
+    color: #8696a0;
+    text-align: center;
+    font-size: 13px;
+    padding: 12px 0;
+}
+
+/* Timer & Verify sections */
+.panel-timer,
+.panel-verify {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.verify-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e9edef;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: none;
+}
+
+.verify-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: none;
+    box-shadow: none;
+}
+
+/* Yes/No buttons */
+.yes-btn,
+.no-btn {
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 12px;
+    box-shadow: none;
+    transition: all 0.15s;
+}
+
+.yes-btn {
+    background: #00a884;
+    color: white;
+}
+
+.yes-btn:hover {
+    background: #06cf9c;
+    transform: none;
+    box-shadow: none;
+}
+
+.no-btn {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.no-btn:hover {
+    background: rgba(239, 68, 68, 0.3);
+    transform: none;
+    box-shadow: none;
+}
+
+.expires-txt {
+    font-size: 11px;
+    color: #f87171;
+    font-weight: 500;
+}
+
+/* Sidebar specific overrides */
+.agent-card .appointment-action-panel {
+    margin-top: 5px;
+    padding-top: 10px;
+}
+
+.agent-card .book-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.agent-card .status-label {
+    width: 100%;
+    justify-content: center;
+}
+
+.agent-card .slots-dropdown {
+    right: auto;
+    left: 0;
+    width: 100%;
+}

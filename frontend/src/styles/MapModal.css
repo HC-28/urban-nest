@@ -1,0 +1,96 @@
+/* ============ Map Modal — Premium Overlay ============ */
+.map-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 25, 47, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: mapModalFadeIn 0.3s ease;
+}
+
+@keyframes mapModalFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.map-container {
+    width: 95%;
+    max-width: 1500px;
+    height: 90%;
+    background: #0f172a;
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    border: 1.5px solid rgba(59, 130, 246, 0.15);
+    animation: mapSlideUp 0.35s ease;
+}
+
+@keyframes mapSlideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.map-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10001;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+
+.map-close-btn:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+}
+
+.map-error-msg {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 14px 28px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(239, 68, 68, 0.2);
+    border-left: 4px solid #ef4444;
+    z-index: 10001;
+    color: #fca5a5;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.leaflet-container {
+    background: #0F172A !important;
+}
