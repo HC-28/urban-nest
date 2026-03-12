@@ -206,15 +206,25 @@ export default function BuyerChat() {
                 </div>
 
                 {/* ================= INPUT ================= */}
-                <div className="chat-input">
-                    <input
-                        value={text}
-                        onChange={e => setText(e.target.value)}
-                        placeholder="Type a message..."
-                        onKeyDown={e => e.key === "Enter" && sendMessage()}
-                    />
-                    <button onClick={sendMessage}>Send</button>
-                </div>
+                {property?.sold ? (
+                    <div className="chat-sold-banner">
+                        <div className="sold-icon">🏠</div>
+                        <div className="sold-text">
+                            <strong>This property has been sold</strong>
+                            <span>Messaging is disabled for sold properties.</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="chat-input">
+                        <input
+                            value={text}
+                            onChange={e => setText(e.target.value)}
+                            placeholder="Type a message..."
+                            onKeyDown={e => e.key === "Enter" && sendMessage()}
+                        />
+                        <button onClick={sendMessage}>Send</button>
+                    </div>
+                )}
             </div>
 
             <Footer />

@@ -1,9 +1,11 @@
 package com.realestate.backend.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "property")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Property {
 
     @Id
@@ -86,6 +88,9 @@ public class Property {
 
     private String launchDate;
     private String possessionStarts;
+
+    @Column(name = "review")
+    private String review;
 
     // Professional Listing Fields
     @Column(name = "rera_id")
@@ -433,5 +438,20 @@ public class Property {
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public String getReview() {
+        return review;
+    }
+
+    public void setReview(String review) {
+        this.review = review;
+    }
+
+    // Virtual getter for frontend compatibility
+    public String getStatus() {
+        if (isSold)
+            return "SOLD";
+        return isActive ? "LISTED" : "UNLISTED";
     }
 }

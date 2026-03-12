@@ -40,11 +40,14 @@ export default function BuyerChats() {
 
         uniquePropertyIds.forEach(pid => {
             if (!propertyMap[pid]) {
-                propertyApi.get(`/${pid}`).then(res => {
-                    setPropertyMap(prev => ({
-                        ...prev,
-                        [pid]: res.data
-                    }));
+                // Include userId+role so sold properties are accessible to the buyer who bought them
+                propertyApi.get(`/${pid}?userId=${buyerId}&role=BUYER`).then(res => {
+                    // Only store valid property objects, not error response objects
+                    if (res.data && res.data.id) {
+                        setPropertyMap(prev => ({ ...prev, [pid]: res.data }));
+                    }
+                }).catch(() => {
+                    // Silently ignore — property may be deleted or inaccessible
                 });
             }
         });
@@ -52,10 +55,12 @@ export default function BuyerChats() {
         uniqueAgentIds.forEach(aid => {
             if (!userMap[aid]) {
                 userApi.get(`/${aid}`).then(res => {
-                    setUserMap(prev => ({
-                        ...prev,
-                        [aid]: res.data
-                    }));
+                    // Only store valid user objects, not error response objects
+                    if (res.data && res.data.id) {
+                        setUserMap(prev => ({ ...prev, [aid]: res.data }));
+                    }
+                }).catch(() => {
+                    // Agent may have been deleted — silently ignore
                 });
             }
         });
@@ -158,6 +163,9 @@ export default function BuyerChats() {
                                     </div>
                                     {lastMsg.seen === false && lastMsg.sender === "AGENT" && (
                                         <span className="unread-badge">New Message</span>
+                                    )}
+                                    {property?.sold && (
+                                        <span className="unread-badge" style={{ background: '#ef4444', boxShadow: 'none' }}>Sold</span>
                                     )}
                                 </div>
                             );

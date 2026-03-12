@@ -22,10 +22,10 @@ public class Appointment {
     @Column(name = "agent_id", nullable = false)
     private Long agentId;
 
-    @Column(name = "appointment_date", nullable = false)
+    @Column(name = "appointment_date", nullable = true)
     private LocalDate appointmentDate;
 
-    @Column(name = "appointment_time", nullable = false)
+    @Column(name = "appointment_time", nullable = true)
     private LocalTime appointmentTime;
 
     @Column(name = "duration_minutes")

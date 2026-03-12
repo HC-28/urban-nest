@@ -21,10 +21,6 @@ export default function AppointmentActionPanel({
 
     const fetchAppointmentStatus = async () => {
         setLoading(true);
-        if (userRole === "AGENT") {
-            setLoading(false);
-            return;
-        }
         try {
             // Fetch appointments for buyer, filter by this property/agent
             const res = await appointmentApi.get(`/buyer/${buyerId}`);
@@ -52,27 +48,44 @@ export default function AppointmentActionPanel({
         }
     };
 
-    const handleFetchSlots = async () => {
+    const handleBookRequest = async () => {
         try {
-            const res = await slotsApi.get(`/property/${propertyId}`);
-            setAvailableSlots(res.data);
-            setShowSlots(true);
+            await appointmentApi.post("", {
+                buyerId: buyerId,
+                propertyId: propertyId
+            });
+            toast.success("Appointment request sent! Agent will assign a slot.");
+            fetchAppointmentStatus();
         } catch (e) {
-            toast.error("No slots available currently");
+            toast.error(e.response?.data?.error || "Failed to send request");
         }
     };
 
-    const handleBookAppointment = async (slotId) => {
+    const handleAgentBookWithSlot = async (slotId) => {
         try {
             await appointmentApi.post("", {
-                slotId: slotId,
-                buyerId: buyerId
+                buyerId: buyerId,
+                propertyId: propertyId,
+                slotId: slotId
             });
-            toast.success("Appointment booked! Agent will be notified.");
+            toast.success("Appointment booked successfully!");
             setShowSlots(false);
             fetchAppointmentStatus();
         } catch (e) {
-            toast.error(e.response?.data || "Failed to book");
+            toast.error(e.response?.data?.error || "Failed to book appointment");
+        }
+    };
+
+    const handleAssignSlot = async (slotId) => {
+        try {
+            await appointmentApi.post(`/${appointment.id}/assign-slot`, {
+                slotId: slotId
+            });
+            toast.success("Slot assigned! Buyer has been notified.");
+            setShowSlots(false);
+            fetchAppointmentStatus();
+        } catch (e) {
+            toast.error(e.response?.data?.error || "Failed to assign slot");
         }
     };
 
@@ -119,18 +132,15 @@ export default function AppointmentActionPanel({
             return (
                 <div className="panel-ready">
                     {appointment?.status === 'expired' && <span className="status-label expired">Previous timer expired.</span>}
-                    <button className="book-btn" onClick={handleFetchSlots}>Book Appointment</button>
-                    {showSlots && (
-                        <div className="slots-dropdown">
-                            <button className="close-slots" onClick={() => setShowSlots(false)}>×</button>
-                            {availableSlots.length > 0 ? availableSlots.map(s => (
-                                <div key={s.id} className="slot-option">
-                                    <span>{s.slotDate} {s.slotTime}</span>
-                                    <button onClick={() => handleBookAppointment(s.id)}>Select</button>
-                                </div>
-                            )) : <p>No slots found</p>}
-                        </div>
-                    )}
+                    <button className="book-btn" onClick={handleBookRequest}>Request Appointment</button>
+                </div>
+            );
+        }
+
+        if (appointment.status === 'pending') {
+            return (
+                <div className="panel-pending">
+                    <span className="status-label info">Request Sent. Waiting for Agent to assign a slot.</span>
                 </div>
             );
         }
@@ -166,7 +176,45 @@ export default function AppointmentActionPanel({
     };
 
     const renderAgentView = () => {
-        if (!appointment) return <span className="status-label">No active appointment</span>;
+        if (!appointment) {
+            return (
+                <div className="panel-ready">
+                    <span className="status-label info">Waiting for Buyer to request</span>
+                </div>
+            );
+        }
+
+        if (appointment.status === 'pending') {
+            return (
+                <div className="panel-pending">
+                    <button
+                        className="book-btn"
+                        onClick={async () => {
+                            try {
+                                const res = await slotsApi.get(`/property/${propertyId}`);
+                                setAvailableSlots(res.data);
+                                setShowSlots(true);
+                            } catch (e) {
+                                toast.error("No slots available to assign");
+                            }
+                        }}
+                    >
+                        Assign Slot
+                    </button>
+                    {showSlots && (
+                        <div className="slots-dropdown">
+                            <button className="close-slots" onClick={() => setShowSlots(false)}>×</button>
+                            {availableSlots.length > 0 ? availableSlots.map(s => (
+                                <div key={s.id} className="slot-option">
+                                    <span>{s.slotDate} {s.slotTime}</span>
+                                    <button onClick={() => handleAssignSlot(s.id)}>Assign</button>
+                                </div>
+                            )) : <p>No slots found. Create some in Dashboard.</p>}
+                        </div>
+                    )}
+                </div>
+            );
+        }
 
         if (appointment.status === 'confirmed') {
             return (

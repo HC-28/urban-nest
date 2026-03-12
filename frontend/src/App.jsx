@@ -14,6 +14,7 @@ import "leaflet/dist/leaflet.css";
 // Lazy-loaded components for Code Splitting
 const Home = lazy(() => import("./pages/Home"));
 const Signup = lazy(() => import("./pages/Signup"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Properties = lazy(() => import("./pages/Properties"));
@@ -74,6 +75,7 @@ function App() {
                         <Routes location={location} key={location.pathname}>
                             <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
                             <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
+                            <Route path="/verify-email" element={<PageWrapper><VerifyEmail /></PageWrapper>} />
                             <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
                             <Route path="/dashboard" element={<PageWrapper><ProtectedRoute><Dashboard /></ProtectedRoute></PageWrapper>} />
                             <Route path="/properties" element={<PageWrapper><Properties /></PageWrapper>} />

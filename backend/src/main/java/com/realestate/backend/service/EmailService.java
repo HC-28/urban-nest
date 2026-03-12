@@ -142,6 +142,43 @@ public class EmailService {
 
     /**
      * Sent to a buyer when they register on the platform.
+     * Includes a verification link.
+     */
+    public void sendVerificationEmail(String toEmail, String name, String token) {
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(FROM);
+            msg.setTo(toEmail);
+            msg.setSubject("[" + APP_NAME + "] Please verify your email");
+
+            // In a real app, this would be your production URL
+            // String verificationUrl = "https://urban-nest.com/verify-email?token=" +
+            // token;
+            String verificationUrl = "http://localhost:5173/verify-email?token=" + token;
+
+            msg.setText(
+                    "Hi " + name + ",\n\n" +
+                            "Welcome to " + APP_NAME + "! We are thrilled to have you here.\n\n" +
+                            "To complete your registration, please click the link below to verify your email address:\n\n"
+                            +
+                            verificationUrl + "\n\n" +
+                            "Once verified, you can explore thousands of properties and connect with agents.\n\n" +
+                            "Best regards,\n" + APP_NAME + " Team");
+
+            // Console log for easy testing if SMTP fails
+            System.out.println("----------------------------------------------------------------");
+            System.out.println("?? [EmailService] Verification Link for " + toEmail + ":");
+            System.out.println("?? " + verificationUrl);
+            System.out.println("----------------------------------------------------------------");
+
+            mailSender.send(msg);
+        } catch (Exception e) {
+            System.err.println("⚠️ [EmailService] Failed to send verification email: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Sent to a buyer when they register on the platform.
      */
     public void sendBuyerWelcomeEmail(String toEmail, String name) {
         try {

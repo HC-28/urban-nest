@@ -1,10 +1,10 @@
-/* ============ Property Card — Trulia-inspired ============ */
+/* ============ Property Card — Premium Dark ============ */
 .property-card {
-  background: var(--bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 18px;
   overflow: hidden;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -13,15 +13,16 @@
 }
 
 .property-card:hover {
-  transform: translateY(-6px) scale(1.015);
+  transform: translateY(-8px);
+  border-color: rgba(59, 130, 246, 0.12);
   box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(59, 130, 246, 0.15);
+    0 25px 50px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(59, 130, 246, 0.08);
 }
 
 /* ─── Image Section ─── */
 .property-image {
-  height: 260px;
+  height: 240px;
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
@@ -31,20 +32,20 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .property-card:hover .property-image img {
-  transform: scale(1.08);
+  transform: scale(1.06);
 }
 
-/* Bottom gradient for price readability */
+/* Bottom gradient */
 .image-gradient {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg,
-      transparent 40%,
-      rgba(0, 0, 0, 0.7) 100%);
+      transparent 35%,
+      rgba(0, 0, 0, 0.75) 100%);
   pointer-events: none;
   z-index: 1;
 }
@@ -55,63 +56,61 @@
   top: 14px;
   left: 14px;
   color: white;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.8px;
   z-index: 3;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .purpose-badge.sale {
-  background: rgba(37, 99, 235, 0.85);
+  background: rgba(37, 99, 235, 0.8);
 }
 
 .purpose-badge.rent {
-  background: rgba(139, 92, 246, 0.85);
+  background: rgba(139, 92, 246, 0.8);
 }
 
 .purpose-badge.commercial {
-  background: rgba(245, 158, 11, 0.85);
+  background: rgba(245, 158, 11, 0.8);
 }
 
 .purpose-badge.project {
-  background: rgba(16, 185, 129, 0.85);
+  background: rgba(16, 185, 129, 0.8);
 }
 
 .featured-badge {
   position: absolute;
   top: 14px;
-  left: 120px;
+  left: 110px;
   background: linear-gradient(135deg, #0ea5e9, #2563eb);
   color: #ffffff;
-  padding: 5px 12px;
-  border-radius: 8px;
-  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
   z-index: 3;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  letter-spacing: 0.6px;
 }
 
 .verified-badge {
   position: absolute;
   top: 14px;
   right: 56px;
-  background: rgba(16, 185, 129, 0.9);
+  background: rgba(16, 185, 129, 0.85);
   color: white;
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 10px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  font-size: 9px;
   font-weight: 700;
   z-index: 3;
   backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
 }
 
 /* ─── Heart / Favourite ─── */
@@ -122,10 +121,10 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(6, 13, 24, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,20 +137,20 @@
 .heart-icon {
   font-size: 18px;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.75);
   display: block;
   pointer-events: none;
 }
 
 .save-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
-  transform: scale(1.15);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  transform: scale(1.12);
 }
 
 .save-btn.active {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .save-btn.active .heart-icon {
@@ -166,10 +165,9 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(6, 13, 24, 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -182,14 +180,14 @@
 .compare-icon {
   font-size: 16px;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.75);
   font-weight: bold;
 }
 
 .compare-card-btn:hover {
-  background: rgba(59, 130, 246, 0.5);
-  border-color: rgba(59, 130, 246, 0.8);
-  transform: scale(1.15);
+  background: rgba(59, 130, 246, 0.4);
+  border-color: rgba(59, 130, 246, 0.6);
+  transform: scale(1.12);
 }
 
 .compare-card-btn.active {
@@ -201,36 +199,36 @@
   color: #ffffff;
 }
 
-/* ─── Price Overlay (Trulia-style, bottom of image) ─── */
+/* ─── Price Overlay ─── */
 .price-overlay {
   position: absolute;
-  bottom: 12px;
-  left: 14px;
+  bottom: 14px;
+  left: 16px;
   z-index: 2;
 }
 
 .price-overlay .price {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #ffffff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
   letter-spacing: -0.5px;
   font-family: 'Outfit', sans-serif;
 }
 
 /* ─── Info Section ─── */
 .property-info {
-  padding: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 8px;
+  gap: 6px;
 }
 
 .property-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #f1f5f9;
   margin: 0;
   line-height: 1.35;
   display: -webkit-box;
@@ -246,8 +244,8 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #94a3b8;
-  font-size: 0.85rem;
+  color: #64748b;
+  font-size: 0.82rem;
   margin: 0;
   font-weight: 500;
 }
@@ -259,21 +257,21 @@
   color: #3b82f6;
 }
 
-/* ─── Compact Feature Row ─── */
+/* ─── Feature Row ─── */
 .property-features-row {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 0.85rem;
-  color: #cbd5e1;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 0.82rem;
+  color: #94a3b8;
   font-weight: 600;
 }
 
 .dot-sep {
-  color: rgba(255, 255, 255, 0.2);
-  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.12);
+  font-size: 0.65rem;
 }
 
 /* ─── Footer ─── */
@@ -306,15 +304,15 @@
 }
 
 .posted-by {
-  color: var(--text-secondary);
+  color: #64748b;
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .posted-date {
-  color: #64748b;
+  color: #475569;
   font-weight: 500;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
 }
 
 /* ─── Accessibility ─── */
@@ -354,13 +352,13 @@
 }
 
 .amenity-tag {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(59, 130, 246, 0.08);
   color: #60a5fa;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   padding: 3px 10px;
   border-radius: 6px;
   font-weight: 600;
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.12);
 }
 
 /* ─── Responsive ─── */
@@ -376,7 +374,7 @@
   }
 
   .property-image {
-    height: 220px;
+    height: 210px;
   }
 
   .price-overlay .price {
@@ -384,7 +382,7 @@
   }
 
   .property-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .save-btn {

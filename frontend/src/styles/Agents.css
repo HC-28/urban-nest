@@ -1,13 +1,13 @@
-/* ============ Agents Page - Unique Design ============ */
+/* ============ Agents Page — Premium Directory ============ */
 .agents-page {
   min-height: 100vh;
-  background: transparent;
+  background: #060d18;
   padding-top: 80px;
 }
 
-/* Hero Section */
+/* ═══ Hero ═══ */
 .agents-hero {
-  background: linear-gradient(135deg, rgba(10, 25, 47, 0.5), rgba(17, 34, 64, 0.4)),
+  background: linear-gradient(135deg, rgba(6, 13, 24, 0.6), rgba(15, 23, 42, 0.5)),
     url('../assets/hero-bg.png');
   background-size: cover;
   background-position: center;
@@ -16,121 +16,124 @@
   color: white;
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .agents-hero::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, transparent 0%, rgba(10, 25, 47, 0.25) 100%);
+  background: radial-gradient(ellipse at center top, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
 }
 
 .agents-hero-content {
   position: relative;
   z-index: 1;
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
 .agents-hero h1 {
-  font-size: 3rem;
+  font-size: 2.8rem;
   font-weight: 800;
   margin-bottom: 14px;
   color: #FFFFFF;
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.03em;
 }
 
 .agents-hero p {
-  font-size: 1.15rem;
-  color: rgba(255, 255, 255, 0.8);
-  max-width: 600px;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.65);
+  max-width: 500px;
   margin: 0 auto;
+  line-height: 1.6;
 }
 
-/* Search Bar */
+/* ═══ Search ═══ */
 .agent-search-container {
-  max-width: 700px;
+  max-width: 580px;
   margin: 0 auto;
   position: relative;
 }
 
 .agent-search-box {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  padding: 8px;
-  border-radius: 50px;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(16px);
+  padding: 6px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
   transition: all 0.3s ease;
 }
 
 .agent-search-box:focus-within {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
 }
 
 .search-icon {
-  color: #94A3B8;
-  margin-left: 16px;
-  font-size: 1.2rem;
+  color: #64748b;
+  margin-left: 14px;
+  font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
 .agent-search-box input {
   flex: 1;
   background: transparent;
   border: none;
-  padding: 12px 16px;
-  color: white;
-  font-size: 1.1rem;
+  padding: 14px 14px;
+  color: #f1f5f9;
+  font-size: 15px;
+  font-weight: 500;
   outline: none;
 }
 
 .agent-search-box input::placeholder {
-  color: #94A3B8;
+  color: #64748b;
 }
 
 .search-btn {
-  background: var(--primary-gradient);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: white;
   border: none;
-  padding: 12px 32px;
-  border-radius: 40px;
+  padding: 12px 28px;
+  border-radius: 12px;
   font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
+  white-space: nowrap;
 }
 
 .search-btn:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
 }
 
-/* Agents Grid */
+/* ═══ Container & Grid ═══ */
 .agents-container {
-  max-width: 1400px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: 40px 24px 80px;
 }
 
 .agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 24px;
 }
 
-/* Agent Card - Premium Dark Design */
+/* ═══ Agent Card — Premium ═══ */
 .agent-card {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -141,40 +144,59 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 4px;
-  background: var(--primary-gradient);
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #2563eb, #7c3aed, #2563eb);
+  background-size: 200% 100%;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .agent-card:hover {
-  transform: translateY(-8px);
-  background: rgba(15, 23, 42, 0.95);
-  border-color: rgba(59, 130, 246, 0.2);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  transform: translateY(-6px);
+  border-color: rgba(59, 130, 246, 0.15);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(59, 130, 246, 0.08);
 }
 
 .agent-card:hover::before {
   opacity: 1;
+  animation: gradientSlide 3s linear infinite;
 }
 
-/* Agent Header - Image + Badge */
+@keyframes gradientSlide {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+/* Agent Header */
 .agent-header {
   position: relative;
   display: flex;
   justify-content: center;
-  padding: 28px 20px 12px;
+  padding: 32px 20px 14px;
 }
 
 .agent-image {
-  width: 90px;
-  height: 90px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  background: var(--bg-secondary);
+  border: 3px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  transition: all 0.3s ease;
+}
+
+.agent-card:hover .agent-image {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.15);
 }
 
 .agent-header .verified-badge {
@@ -184,14 +206,14 @@
   background: linear-gradient(135deg, #10B981, #059669);
   color: white;
   padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.3px;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25);
 }
 
-/* Agent Info Section */
+/* Agent Info */
 .agent-info {
   padding: 8px 24px 24px;
   display: flex;
@@ -201,21 +223,23 @@
 }
 
 .agent-info h3 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: white;
+  color: #f1f5f9;
   margin-bottom: 2px;
+  font-family: 'Outfit', sans-serif;
 }
 
 .agent-info .company {
-  color: #94A3B8;
-  font-size: 0.9rem;
+  color: #64748b;
+  font-size: 0.85rem;
   margin-bottom: 6px;
+  font-weight: 500;
 }
 
 .agent-info .location {
-  color: #94A3B8;
-  font-size: 0.85rem;
+  color: #64748b;
+  font-size: 0.82rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -224,8 +248,8 @@
 }
 
 .agent-info .specialization {
-  color: var(--primary-color);
-  font-size: 0.85rem;
+  color: #60a5fa;
+  font-size: 0.82rem;
   font-weight: 600;
   margin-bottom: 12px;
 }
@@ -240,30 +264,30 @@
 }
 
 .agent-rating .star-icon {
-  color: #F59E0B;
-  fill: #F59E0B;
+  color: #f59e0b;
+  fill: #f59e0b;
 }
 
 .agent-rating .rating {
-  color: white;
+  color: #f1f5f9;
   font-weight: 700;
   font-size: 0.95rem;
 }
 
 .agent-rating .reviews {
-  color: #64748B;
-  font-size: 0.85rem;
+  color: #475569;
+  font-size: 0.82rem;
 }
 
-/* Agent Stats */
+/* Stats */
 .agent-info .agent-stats {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 24px;
   margin-bottom: 20px;
   padding: 14px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .agent-info .agent-stats .stat {
@@ -274,17 +298,18 @@
 }
 
 .agent-info .agent-stats .stat .value {
-  color: var(--primary-color);
-  font-size: 1.15rem;
+  color: #60a5fa;
+  font-size: 1.1rem;
   font-weight: 800;
+  font-family: 'Outfit', sans-serif;
 }
 
 .agent-info .agent-stats .stat .label {
-  color: #64748B;
-  font-size: 0.75rem;
-  font-weight: 500;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 
 /* Action Buttons */
@@ -300,43 +325,41 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 8px;
+  padding: 11px 8px;
   border-radius: 12px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  color: #94a3b8;
 }
 
 .action-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
 }
 
 .action-btn.call:hover {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
   color: #34D399;
 }
 
 .action-btn.email:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.25);
   color: #60A5FA;
 }
 
 .action-btn.properties:hover {
-  background: rgba(224, 122, 56, 0.15);
-  border-color: rgba(224, 122, 56, 0.3);
-  color: #F09050;
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
 }
 
-/* Filters Section */
+/* ═══ Filters ═══ */
 .agents-filters {
   margin-bottom: 30px;
 }
@@ -345,18 +368,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(15, 23, 42, 0.5);
-  border: 1.5px solid rgba(59, 130, 246, 0.15);
+  background: rgba(15, 23, 42, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
   padding: 12px 18px;
   margin-bottom: 16px;
-  backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .agents-filters .search-box:focus-within {
-  border-color: rgba(59, 130, 246, 0.5);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.06);
 }
 
 .agents-filters .search-box .search-icon {
@@ -373,13 +395,13 @@
   font-weight: 500;
   outline: none;
   padding: 6px 0;
-  font-family: 'Inter', sans-serif;
 }
 
 .agents-filters .search-box input::placeholder {
-  color: #64748B;
+  color: #475569;
 }
 
+/* City Filter Pills */
 .city-filter {
   display: flex;
   flex-wrap: wrap;
@@ -387,60 +409,58 @@
 }
 
 .city-btn {
-  padding: 10px 20px;
-  border-radius: 12px;
-  border: 1.5px solid rgba(59, 130, 246, 0.12);
-  background: rgba(15, 23, 42, 0.4);
-  color: #94a3b8;
-  font-size: 0.9rem;
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
+  background: rgba(15, 23, 42, 0.3);
+  color: #64748b;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.25s ease;
-  font-family: 'Inter', sans-serif;
 }
 
 .city-btn:hover {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #bfdbfe;
-  transform: translateY(-1px);
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #94a3b8;
 }
 
 .city-btn.active {
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: white;
   border-color: transparent;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
 }
 
-/* Results count */
+/* Results */
 .results-count {
-  color: #94A3B8;
-  font-size: 0.95rem;
+  color: #64748b;
+  font-size: 0.9rem;
   margin-bottom: 20px;
   font-weight: 500;
 }
 
 .no-results {
-  color: #64748B;
+  color: #475569;
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   font-size: 1.1rem;
 }
 
-/* Loading State */
+/* Loading */
 .loading-container {
   text-align: center;
   padding: 100px 20px;
 }
 
 .loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--primary-color);
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(59, 130, 246, 0.1);
+  border-top-color: #3b82f6;
   border-radius: 50%;
-  animation: spin 1s infinite linear;
+  animation: spin 0.8s linear infinite;
   margin: 0 auto 20px;
 }
 
@@ -450,21 +470,21 @@
   }
 }
 
-/* Responsive */
+/* ═══ Responsive ═══ */
 @media (max-width: 768px) {
   .agents-hero h1 {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
   }
 
   .agents-grid {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
   }
 
   .agent-search-box {
     flex-direction: column;
-    padding: 16px;
-    border-radius: 24px;
+    padding: 14px;
+    border-radius: 16px;
     gap: 12px;
   }
 
@@ -475,5 +495,9 @@
 
   .search-btn {
     width: 100%;
+  }
+
+  .agents-container {
+    padding: 24px 16px 60px;
   }
 }

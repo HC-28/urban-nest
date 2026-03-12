@@ -1,7 +1,9 @@
 package com.realestate.backend.controller;
 
 import com.realestate.backend.entity.AgentSlot;
+import com.realestate.backend.entity.Property;
 import com.realestate.backend.repository.AgentSlotRepository;
+import com.realestate.backend.repository.PropertyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +25,21 @@ public class AgentSlotController {
     @Autowired
     private AgentSlotRepository agentSlotRepository;
 
+    @Autowired
+    private PropertyRepository propertyRepository;
+
     /** POST /api/slots — Agent creates a new availability slot */
     @PostMapping
     public ResponseEntity<?> createSlot(@RequestBody Map<String, Object> body) {
         try {
             AgentSlot slot = new AgentSlot();
             slot.setAgentId(Long.parseLong(body.get("agentId").toString()));
-            slot.setPropertyId(Long.parseLong(body.get("propertyId").toString()));
+            Object propertyId = body.get("propertyId");
+            if (propertyId != null && !propertyId.toString().isEmpty() && !propertyId.toString().equals("-1")) {
+                slot.setPropertyId(Long.parseLong(propertyId.toString()));
+            } else {
+                slot.setPropertyId(null); // Global slot
+            }
             slot.setSlotDate(LocalDate.parse(body.get("slotDate").toString()));
             slot.setSlotTime(java.time.LocalTime.parse(body.get("slotTime").toString()));
             if (body.containsKey("durationMinutes")) {
@@ -48,8 +58,12 @@ public class AgentSlotController {
     @GetMapping("/property/{propertyId}")
     public ResponseEntity<?> getAvailableSlotsForProperty(@PathVariable Long propertyId) {
         try {
-            List<AgentSlot> slots = agentSlotRepository
-                    .findByPropertyIdAndIsBookedFalseAndSlotDateGreaterThanEqual(propertyId, LocalDate.now());
+            Property property = propertyRepository.findById(propertyId).orElse(null);
+            if (property == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Property not found"));
+            }
+            List<AgentSlot> slots = agentSlotRepository.findAvailableSlots(propertyId, property.getAgentId(),
+                    LocalDate.now());
             return ResponseEntity.ok(slots);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

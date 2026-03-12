@@ -8,22 +8,24 @@ function Footer() {
       <div className="footer-main">
         <div className="footer-inner">
           {/* Company Info */}
-          <div className="footer-section about">
-            <h3 className="footer-logo">🏠 Urban-Nest</h3>
-            <p>India's leading real estate platform connecting buyers, sellers, and agents. Find your dream property from our extensive collection of verified listings.</p>
+          <div className="footer-col footer-brand">
+            <h3>Urban Nest</h3>
+            <p className="footer-description">
+              India's leading real estate platform connecting buyers, sellers, and agents. Find your dream property from our extensive collection of verified listings.
+            </p>
             <div className="social-links">
-              <a href="#" aria-label="Facebook"><FiFacebook /></a>
-              <a href="#" aria-label="Twitter"><FiTwitter /></a>
-              <a href="#" aria-label="Instagram"><FiInstagram /></a>
-              <a href="#" aria-label="LinkedIn"><FiLinkedin /></a>
-              <a href="#" aria-label="YouTube"><FiYoutube /></a>
+              <a href="#" className="social-link" aria-label="Facebook"><FiFacebook /></a>
+              <a href="#" className="social-link" aria-label="Twitter"><FiTwitter /></a>
+              <a href="#" className="social-link" aria-label="Instagram"><FiInstagram /></a>
+              <a href="#" className="social-link" aria-label="LinkedIn"><FiLinkedin /></a>
+              <a href="#" className="social-link" aria-label="YouTube"><FiYoutube /></a>
             </div>
           </div>
 
           {/* Quick Links */}
-          <div className="footer-section">
+          <div className="footer-col">
             <h4>Quick Links</h4>
-            <ul>
+            <ul className="footer-links-list">
               <li><Link to="/properties">Buy Property</Link></li>
               <li><Link to="/properties?type=rent">Rent Property</Link></li>
               <li><Link to="/properties?type=commercial">Commercial</Link></li>
@@ -33,39 +35,28 @@ function Footer() {
           </div>
 
           {/* Popular Cities */}
-          <div className="footer-section">
+          <div className="footer-col">
             <h4>Popular Cities</h4>
-            <ul>
+            <ul className="footer-links-list">
               <li><Link to="/properties?city=Ahmedabad">Ahmedabad</Link></li>
               <li><Link to="/properties?city=Mumbai">Mumbai</Link></li>
               <li><Link to="/properties?city=Bangalore">Bangalore</Link></li>
             </ul>
           </div>
 
-          {/* Company */}
-          <div className="footer-section">
-            <h4>Company</h4>
-            <ul>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/contact">Contact Us</Link></li>
-              <li><Link to="/terms">Terms of Service</Link></li>
-              <li><Link to="/privacy">Privacy Policy</Link></li>
-            </ul>
-          </div>
-
           {/* Contact Info */}
-          <div className="footer-section contact">
+          <div className="footer-col contact-col">
             <h4>Contact Us</h4>
             <div className="contact-item">
-              <FiMapPin />
+              <FiMapPin className="contact-icon" />
               <span>123 Business Park, Andheri East, Mumbai 400069</span>
             </div>
             <div className="contact-item">
-              <FiPhone />
-              <span>+91 1800-123-4567 (Toll Free)</span>
+              <FiPhone className="contact-icon" />
+              <span>+91 1800-123-4567</span>
             </div>
             <div className="contact-item">
-              <FiMail />
+              <FiMail className="contact-icon" />
               <span>support@urbannest.com</span>
             </div>
           </div>
@@ -74,12 +65,13 @@ function Footer() {
 
       {/* Bottom Bar */}
       <div className="footer-bottom">
-        <div className="footer-inner">
-          <p>© {new Date().getFullYear()} Urban-Nest. All rights reserved.</p>
-          <div className="footer-links">
-            <Link to="/about">About</Link>
+        <div className="footer-bottom-inner">
+          <p>© {new Date().getFullYear()} Urban Nest. All rights reserved.</p>
+          <div className="footer-bottom-links">
+            <Link to="/about">About Us</Link>
             <Link to="/contact">Contact</Link>
-            <Link to="/terms">Terms</Link>
+            <Link to="/terms">Terms of Service</Link>
+            <Link to="/privacy">Privacy Policy</Link>
           </div>
         </div>
       </div>

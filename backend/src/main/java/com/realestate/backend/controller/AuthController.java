@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.Optional;
 
 /**
  * Handles authentication: signup and login.
@@ -64,28 +66,61 @@ public class AuthController {
                         .body(Map.of("error", "Invalid role"));
             }
 
-            // Set verified=false for new agents (must be approved by admin)
+            // Hash password before saving
+            user.setPassword(encoder.encode(user.getPassword()));
+
+            // Auto-verify email
+            user.setEmailVerified(true);
+            user.setVerificationToken(null);
+
+            // Admin approval (verified flag)
             if ("AGENT".equalsIgnoreCase(user.getRole())) {
                 user.setVerified(false);
             } else {
                 user.setVerified(true);
             }
 
-            // Hash password before saving
-            user.setPassword(encoder.encode(user.getPassword()));
-            userRepository.save(user);
-
-            // Send Welcome Email to newly registered Buyers
-            if ("BUYER".equalsIgnoreCase(user.getRole())) {
+            // Send Welcome Email
+            if ("AGENT".equalsIgnoreCase(user.getRole())) {
+                // Agents still need admin approval, but verification is done
+            } else {
                 emailService.sendBuyerWelcomeEmail(user.getEmail(), user.getName());
             }
 
+            userRepository.save(user);
+
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of("message", "Signup successful"));
+                    .body(Map.of("message", "Registration successful! You can now log in."));
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Server error"));
+        }
+    }
+
+    /**
+     * GET /api/auth/verify-email
+     * Verifies user email using the token.
+     */
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
+        try {
+            Optional<AppUser> userOpt = userRepository.findByVerificationToken(token);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Invalid or expired verification token"));
+            }
+
+            AppUser user = userOpt.get();
+            user.setEmailVerified(true);
+            user.setVerificationToken(null);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(Map.of("message", "Email verified successfully! You can now log in."));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Server error during verification"));
         }
     }
 
@@ -105,26 +140,29 @@ public class AuthController {
                         .body(Map.of("error", "Only Gmail or UrbanNest login allowed"));
             }
 
+            System.out.println("[Login Debug] Attempting login for email: " + user.getEmail());
             AppUser dbUser = userRepository.findByEmail(user.getEmail()).orElse(null);
 
             if (dbUser == null) {
+                System.out.println("[Login Debug] User not found for email: " + user.getEmail());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Invalid credentials"));
             }
 
             // Check if password matches hash
             if (encoder.matches(user.getPassword(), dbUser.getPassword())) {
-                // Good match
+                System.out.println("[Login Debug] Password match successful (hashed)");
             } else if (dbUser.getPassword().equals(user.getPassword())) {
-                // Fallback: Plain text match (Legacy user) — migrate to hash
+                System.out.println("[Login Debug] Password match successful (plain text fallback)");
                 dbUser.setPassword(encoder.encode(user.getPassword()));
                 userRepository.save(dbUser);
             } else {
+                System.out.println("[Login Debug] Password mismatch for: " + user.getEmail());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Invalid credentials"));
             }
 
-            // Block unverified agents from logging in
+            // Block unapproved agents
             if ("AGENT".equalsIgnoreCase(dbUser.getRole()) && !dbUser.isVerified()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "Agent account pending admin approval"));

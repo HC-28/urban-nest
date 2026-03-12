@@ -7,6 +7,8 @@ import com.realestate.backend.repository.AppointmentRepository;
 import com.realestate.backend.repository.PropertyRepository;
 import com.realestate.backend.repository.UserRepository;
 import com.realestate.backend.repository.DeletedUserRepository;
+import com.realestate.backend.repository.FavoriteRepository;
+import com.realestate.backend.repository.PropertyViewRepository;
 import com.realestate.backend.service.EmailService;
 import com.realestate.backend.repository.ChatMessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +46,34 @@ public class AdminController {
 
     @Autowired
     private DeletedUserRepository deletedUserRepository;
+
+    @Autowired
+    private FavoriteRepository favoriteRepository;
+
+    @Autowired
+    private PropertyViewRepository propertyViewRepository;
+
+    // ============================================================
+    // STATS
+    // ============================================================
+
+    /** GET /api/admin/stats — Quick platform stats for admin profile */
+    @GetMapping("/stats")
+    public ResponseEntity<?> getAdminStats() {
+        try {
+            long totalProperties = propertyRepository.count();
+            long totalUsers = userRepository.count();
+            long propertiesSold = propertyRepository.countByIsSoldTrue();
+            return ResponseEntity.ok(Map.of(
+                    "totalProperties", totalProperties,
+                    "totalUsers", totalUsers,
+                    "propertiesSold", propertiesSold));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Server error"));
+        }
+    }
 
     // ============================================================
     // USER MANAGEMENT
@@ -136,6 +166,10 @@ public class AdminController {
             archive.setDeletionReason(reason);
             archive.setDeletedBy(adminId);
             deletedUserRepository.save(archive);
+
+            // Manual cleanup of related data before hard-deleting the user
+            favoriteRepository.deleteByUser_Id(id);
+            propertyViewRepository.deleteByUser(user);
 
             // Hard-delete from users (frees up the email for re-registration)
             userRepository.deleteById(id);

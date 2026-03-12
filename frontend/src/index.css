@@ -21,14 +21,14 @@
   --accent-dark: #E2E8F0;
   --accent-light: #F8FAFC;
 
-  /* ===== BACKGROUNDS - Deep Navy (Dark Mode) ===== */
-  --bg-primary: #0A192F;
-  --bg-secondary: #112240;
-  --bg-card: rgba(17, 34, 64, 0.9);
-  --bg-tertiary: #233554;
-  --bg-dark: #020C1B;
-  --bg-glass: rgba(10, 25, 47, 0.6);
-  --bg-glass-strong: rgba(10, 25, 47, 0.8);
+  /* ===== BACKGROUNDS - Ultra-Deep Navy (Dark Mode) ===== */
+  --bg-primary: #060d18;
+  --bg-secondary: #0d1526;
+  --bg-card: rgba(15, 23, 42, 0.7);
+  --bg-tertiary: #1a2438;
+  --bg-dark: #030810;
+  --bg-glass: rgba(6, 13, 24, 0.65);
+  --bg-glass-strong: rgba(6, 13, 24, 0.85);
 
   /* ===== TEXT COLORS - Inverted for Dark Mode ===== */
   --text-primary: #FFFFFF;

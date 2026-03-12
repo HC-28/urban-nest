@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -10,10 +10,12 @@ import heroBg from "../assets/hero-bg.png";
 
 function PostProperty() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -26,7 +28,6 @@ function PostProperty() {
     balconies: "1",
     floor: "",
     totalFloors: "",
-    facing: "East",
     furnishing: "Unfurnished",
     reraId: "",
 
@@ -154,24 +155,78 @@ function PostProperty() {
     }
     return title;
   };
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-
-    const newFiles = files.slice(0, 10 - formData.images.length);
-
-    newFiles.forEach(file => {
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          images: [...prev.images, reader.result].slice(0, 10)
-        }));
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          // Max dimensions
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Resolve with compressed base64
+          resolve(canvas.toDataURL("image/jpeg", 0.7)); // 0.7 quality
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     });
+  };
 
-    e.target.value = "";
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const remainingSlots = 10 - formData.images.length;
+    if (remainingSlots <= 0) {
+      toast.error("Maximum 10 images allowed");
+      return;
+    }
+
+    const newFiles = files.slice(0, remainingSlots);
+    setUploadingImages(true);
+
+    try {
+      const uploadPromises = newFiles.map(file => compressImage(file));
+      const compressedImages = await Promise.all(uploadPromises);
+
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...compressedImages].slice(0, 10)
+      }));
+
+      if (files.length > remainingSlots) {
+        toast.error(`Only ${remainingSlots} images were added (limit 10)`);
+      }
+    } catch (err) {
+      console.error("Image processing error:", err);
+      toast.error("Failed to process some images");
+    } finally {
+      setUploadingImages(false);
+      e.target.value = "";
+    }
   };
 
   const removeImage = (index) => {
@@ -197,7 +252,6 @@ function PostProperty() {
         bhk: parseInt(formData.bhk) || 2,
         bathrooms: parseInt(formData.bathrooms) || 2,
         balconies: parseInt(formData.balconies) || 0,
-        facing: formData.facing || null,
         furnishing: formData.furnishing || null,
         reraId: formData.reraId || null,
 
@@ -475,16 +529,7 @@ function PostProperty() {
                         <option value="Fully Furnished">Fully Furnished</option>
                       </select>
                     </div>
-                    <div className="form-group">
-                      <label>Facing</label>
-                      <select name="facing" value={formData.facing} onChange={handleChange}>
-                        <option value="East">East</option>
-                        <option value="West">West</option>
-                        <option value="North">North</option>
-                        <option value="South">South</option>
-                        <option value="North-East">North-East</option>
-                      </select>
-                    </div>
+
                   </div>
                 </>
               )}
@@ -703,12 +748,33 @@ function PostProperty() {
           {step === 4 && (
             <div className="form-step">
               <h2>Property Photos</h2>
-              <div className="image-upload-area">
-                <input type="file" id="images" multiple accept="image/*" onChange={handleImageUpload} hidden />
-                <label htmlFor="images" className="upload-label">
-                  <FiUpload size={40} />
-                  <span>Click to upload images</span>
-                </label>
+              <div
+                className={`image-upload-area ${uploadingImages ? 'uploading' : ''}`}
+                onClick={() => !uploadingImages && fileInputRef.current?.click()}
+              >
+                <input
+                  type="file"
+                  id="images"
+                  ref={fileInputRef}
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  hidden
+                />
+                <div className="upload-label">
+                  {uploadingImages ? (
+                    <>
+                      <div className="loader"></div>
+                      <span>Processing Images...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiUpload size={40} />
+                      <span>{formData.images.length === 0 ? "Click to upload images" : `Add more images (${formData.images.length}/10)`}</span>
+                      <small>Maximum 10 images. High-quality photos attract more buyers.</small>
+                    </>
+                  )}
+                </div>
               </div>
               {formData.images.length > 0 && (
                 <div className="uploaded-images">
@@ -724,8 +790,12 @@ function PostProperty() {
           )}
 
           <div className="form-navigation">
-            {step > 1 && <button type="button" className="nav-btn prev" onClick={prevStep}>Previous</button>}
-            {step < 4 ? <button type="button" className="nav-btn next" onClick={nextStep}>Next</button> : <button type="submit" className="nav-btn submit" disabled={loading}>{loading ? "Submitting..." : "Submit Property"}</button>}
+            {step > 1 && <button key="prev-btn" type="button" className="nav-btn prev" onClick={prevStep}>Previous</button>}
+            {step < 4 ? (
+              <button key="next-btn" type="button" className="nav-btn next" onClick={nextStep}>Next</button>
+            ) : (
+              <button key="submit-btn" type="submit" className="nav-btn submit" disabled={loading}>{loading ? "Submitting..." : "Submit Property"}</button>
+            )}
           </div>
         </form>
       </div>

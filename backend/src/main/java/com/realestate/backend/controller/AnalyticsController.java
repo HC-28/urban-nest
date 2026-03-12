@@ -69,7 +69,7 @@ public class AnalyticsController {
             if (userId != null) {
                 analyticsService.trackView(propertyId, userId);
             } else {
-                analyticsService.trackView(propertyId, null);
+                analyticsService.trackView(propertyId);
             }
             return ResponseEntity.ok(Map.of("message", "View tracked"));
         } catch (Exception ex) {

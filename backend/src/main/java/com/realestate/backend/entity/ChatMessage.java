@@ -29,15 +29,28 @@ public class ChatMessage {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "seen", nullable = false)
+    private Boolean seen = false;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.seen == null)
+            this.seen = false;
     }
 
     // ✅ GETTERS & SETTERS
 
     public Long getId() {
         return id;
+    }
+
+    public Boolean getSeen() {
+        return seen;
+    }
+
+    public void setSeen(Boolean seen) {
+        this.seen = seen;
     }
 
     public Long getPropertyId() {

@@ -368,8 +368,8 @@ export default function Home() {
                         <p>Properties you checked out lately</p>
                     </div>
                     <div className="property-grid">
-                        {recentProperties.map((property) => (
-                            <PropertyCard key={property.id} property={property} formatPrice={formatPrice} />
+                        {recentProperties.map((property, idx) => (
+                            <PropertyCard key={`recent-${property.id}-${idx}`} property={property} formatPrice={formatPrice} />
                         ))}
                     </div>
                 </section>
@@ -388,10 +388,38 @@ export default function Home() {
                 <div className="featured-grid">
                     {loading ? (
                         <p>Loading...</p>
-                    ) : (
+                    ) : featuredProperties.length > 0 ? (
                         featuredProperties.map((property, i) => (
-                            <PropertyCard key={i} property={property} formatPrice={formatPrice} />
+                            <PropertyCard key={`featured-${property.id}-${i}`} property={property} formatPrice={formatPrice} />
                         ))
+                    ) : (
+                        <div style={{
+                            gridColumn: '1 / -1',
+                            textAlign: 'center',
+                            padding: '60px 24px',
+                            background: 'rgba(255,255,255,0.03)',
+                            borderRadius: '20px',
+                            border: '1px dashed rgba(255,255,255,0.1)'
+                        }}>
+                            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🏡</div>
+                            <h3 style={{ fontSize: '1.4rem', marginBottom: '8px', color: '#e2e8f0' }}>No Featured Properties Yet</h3>
+                            <p style={{ color: '#64748b', marginBottom: '24px' }}>Check back soon for handpicked listings from our agents.</p>
+                            <button
+                                onClick={() => navigate("/properties")}
+                                style={{
+                                    background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '12px 28px',
+                                    borderRadius: '50px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                Browse All Properties →
+                            </button>
+                        </div>
                     )}
                 </div>
             </section>

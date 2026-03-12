@@ -1,24 +1,11 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import MapModal from "../components/MapModal";
+import AppointmentActionPanel from "../components/AppointmentActionPanel";
 import "../styles/PropertyDetail.css";
-import {
-  FiMapPin,
-  FiHome,
-  FiMaximize,
-  FiCalendar,
-  FiUser,
-  FiPhone,
-  FiMail,
-  FiHeart,
-  FiCheck,
-  FiChevronLeft,
-  FiChevronRight,
-  FiEye,
-  FiX,
-  FiShare2
-} from "react-icons/fi";
+import { FiEye, FiHeart, FiShare2, FiHome, FiMaximize, FiCalendar, FiMapPin, FiUser, FiInfo, FiCheck, FiMail, FiPhone, FiX, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { propertyApi, favoritesApi, userApi, chatApi, slotsApi, appointmentApi, BASE_URL, IMAGE_URL } from "../api/api";
 import { formatPrice } from "../utils/priceUtils";
 import { parsePropertyImages } from "../utils/imageUtils";
@@ -29,6 +16,7 @@ import { Helmet } from "react-helmet-async";
 function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation(); // Added useLocation
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +30,8 @@ function PropertyDetail() {
 
   const [showSlots, setShowSlots] = useState(false);
   const [availableSlots, setAvailableSlots] = useState([]);
+  const [showMap, setShowMap] = useState(false);
+  const chatMessagesRef = useRef(null);
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -93,7 +83,11 @@ function PropertyDetail() {
           favorites: data.favorites || 0,
           inquiries: data.inquiries || 0,
           listedDate: data.listedDate || null,
-          sold: data.sold || false
+          sold: data.sold || false,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          city: data.city,
+          pinCode: data.pinCode
         };
 
         // Create initial property data
@@ -141,15 +135,15 @@ function PropertyDetail() {
     };
 
     fetchProperty();
-  }, [id]);
+  }, [id, user]); // Added user to dependency array
 
   /* ================= HANDLE AUTO-CHAT ================= */
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(location.search); // Changed window.location.search to location.search
     if (params.get("chat") === "true") {
       setShowChat(true);
     }
-  }, []);
+  }, [location.search]); // Added location.search to dependency array
 
   /* ================= FETCH CHAT HISTORY ================= */
   useEffect(() => {
@@ -160,7 +154,7 @@ function PropertyDetail() {
 
     const fetchChats = async () => {
       try {
-        const res = await chatApi.get(`/messages`, {
+        const res = await chatApi.get(`/ messages`, {
           params: { propertyId: property.id, buyerId: user.id, agentId: property.agentId }
         });
 
@@ -171,7 +165,7 @@ function PropertyDetail() {
         }
 
         // Mark AGENT messages as SEEN
-        await chatApi.post(`/seen`, {
+        await chatApi.post(`/ seen`, {
           propertyId: property.id,
           buyerId: user.id,
           agentId: property.agentId,
@@ -186,10 +180,20 @@ function PropertyDetail() {
     fetchChats();
   }, [showChat, property, user]);
 
-  /* ================= HANDLE SLOTS ================= */
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
   const handleShowSlots = async () => {
     if (!user) {
       toast.error("Please login first to book an appointment");
+      return;
+    }
+    if (property.sold) {
+      toast.error("This property is already sold. Appointments are no longer available.");
       return;
     }
     if (user.role !== "BUYER") {
@@ -212,12 +216,14 @@ function PropertyDetail() {
     try {
       await appointmentApi.post("", {
         slotId: slotId,
-        buyerId: user.id
+        buyerId: user.id,
+        propertyId: property.id
       });
-      toast.success("Appointment booked successfully! The agent will be notified.");
+
+      toast.success("Appointment request sent successfully!");
       setShowSlots(false);
     } catch (e) {
-      toast.error(e.response?.data || "Failed to book slot");
+      toast.error(e.response?.data?.error || "Failed to book appointment");
     }
   };
 
@@ -263,7 +269,7 @@ function PropertyDetail() {
       try {
         await navigator.share({
           title: property.title,
-          text: `Check out this property: ${property.title}`,
+          text: `Check out this property: ${property.title} `,
           url: window.location.href,
         });
       } catch (err) {
@@ -309,7 +315,7 @@ function PropertyDetail() {
     };
 
     try {
-      const res = await chatApi.post(`/messages`, payload);
+      const res = await chatApi.post(`/ messages`, payload);
       setChatMessages(prev => [...prev, res.data]);
       setChatMessage("");
     } catch (err) {
@@ -322,7 +328,7 @@ function PropertyDetail() {
     if (!user || user.role !== "BUYER") return;
 
     try {
-      const res = await chatApi.get(`/messages`, {
+      const res = await chatApi.get(`/ messages`, {
         params: { propertyId: property.id, buyerId: user.id, agentId: property.agentId }
       });
       setChatMessages(res.data);
@@ -570,11 +576,24 @@ function PropertyDetail() {
               </button>
 
               <button
-                className="action-btn"
-                onClick={handleShowSlots}
-                style={{ background: showSlots ? 'var(--primary-color)' : '', color: showSlots ? 'white' : '' }}
+                className={`action-btn ${property.sold ? 'disabled' : ''}`}
+                onClick={property.sold ? () => toast.error("Property is sold") : handleShowSlots}
+                style={{
+                  background: showSlots ? 'var(--primary-color)' : (property.sold ? '#334155' : ''),
+                  color: (showSlots || property.sold) ? 'white' : '',
+                  cursor: property.sold ? 'not-allowed' : 'pointer',
+                  opacity: property.sold ? 0.7 : 1
+                }}
+                disabled={property.sold}
               >
-                📅 Book Appointment
+                📅 {property.sold ? "Sold" : "Book Appointment"}
+              </button>
+
+              <button
+                className="action-btn"
+                onClick={() => setShowMap(true)}
+              >
+                <FiMapPin /> Show in Map
               </button>
 
             </div>
@@ -645,53 +664,80 @@ function PropertyDetail() {
             {showChat && user?.role === "BUYER" && (
               <div className="chat-box-compact animate-in">
                 <div className="chat-header">
-                  <div className="chat-id">
-                    <div className="chat-avatar-small">
-                      <FiUser />
-                    </div>
-                    <div>
-                      <h4>Chat with {property.agent.name}</h4>
-                      <p className="meta">Regarding: {property.title}</p>
+                  <div className="agent-info-mini">
+                    {property.agent.profilePicture ? (
+                      <img src={property.agent.profilePicture.startsWith('http') ? property.agent.profilePicture : `${IMAGE_URL}${property.agent.profilePicture} `} alt={property.agent.name} />
+                    ) : (
+                      <div className="chat-avatar-small"><FiUser /></div>
+                    )}
+                    <div className="chat-status-info">
+                      <h4>{property.agent.name}</h4>
+                      <p className="status-text"><span className="online-indicator"></span> Online</p>
                     </div>
                   </div>
                   <button className="close-chat-btn" onClick={() => setShowChat(false)}>
-                    <FiCheck style={{ transform: 'rotate(45deg)', fontSize: '1.2rem' }} />
+                    <FiX />
                   </button>
                 </div>
 
-                <div className="chat-messages">
+                <div className="chat-messages" ref={chatMessagesRef}>
+                  <div className="chat-notice">
+                    <p>Regarding: <strong>{property.title}</strong></p>
+                  </div>
                   {!Array.isArray(chatMessages) || chatMessages.length === 0 ? (
-                    <p className="chat-empty">Start the conversation by sending a message below.</p>
+                    <div className="empty-chat-state">
+                      <p>Start the conversation by sending a message below.</p>
+                    </div>
                   ) : (
-                    chatMessages.map((msg, i) => (
-                      <div
-                        key={i}
-                        className={`chat-message ${msg.sender === "BUYER" ? "buyer" : "agent"}`}
-                      >
-                        <div className="msg-text">{msg.message}</div>
-                        <div className="msg-meta">
-                          <small className="time">{formatTime(msg.createdAt)}</small>
-                          {msg.sender === "BUYER" && (
-                            <span className={`status ${msg.seen ? "seen" : ""}`}>
-                              {msg.seen ? "✓✓" : "✓"}
-                            </span>
-                          )}
+                    chatMessages.map((msg, i) => {
+                      const isAppointment = msg.message && (msg.message.includes("Appointment Booked") || msg.message.includes("🗓️"));
+                      const isSystem = msg.sender === "SYSTEM";
+
+                      return (
+                        <div
+                          key={i}
+                          className={`chat - message ${isSystem ? 'system-msg' : (msg.sender === "BUYER" ? "buyer" : "agent")} ${isAppointment ? "appointment-msg" : ""} `}
+                        >
+                          <div className={`msg - bubble ${isAppointment ? "appointment" : ""} ${isSystem ? "system" : ""} `}>
+                            <div className="msg-text">
+                              {/* Handle bold markdown-ish text */}
+                              {msg.message.split('**').map((part, idx) =>
+                                idx % 2 === 1 ? <strong key={idx}>{part}</strong> : part
+                              )}
+                            </div>
+                            {!isSystem && <div className="msg-meta">
+                              <span className="time">{formatTime(msg.createdAt)}</span>
+                              {msg.sender === "BUYER" && (
+                                <span className={`status ${msg.seen ? "seen" : ""} `}>
+                                  {msg.seen ? "✓✓" : "✓"}
+                                </span>
+                              )}
+                            </div>}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
 
-                <div className="chat-input">
-                  <input
-                    type="text"
-                    placeholder="Type your message..."
-                    value={chatMessage}
-                    onChange={e => setChatMessage(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && sendMessage()}
-                  />
-                  <button onClick={sendMessage}>Send</button>
-                </div>
+                {property.sold ? (
+                  <div className="chat-sold-overlay">
+                    <p>Messaging disabled for sold properties</p>
+                  </div>
+                ) : (
+                  <div className="chat-input">
+                    <input
+                      type="text"
+                      placeholder="Type your message..."
+                      value={chatMessage}
+                      onChange={e => setChatMessage(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && sendMessage()}
+                    />
+                    <button className="send-btn" onClick={sendMessage} disabled={!chatMessage.trim()}>
+                      <FiShare2 style={{ transform: 'rotate(-45deg)', marginLeft: '4px' }} />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -726,7 +772,7 @@ function PropertyDetail() {
               </div>
 
               <div className="agent-actions">
-                <a href={`mailto:${property.agent.email}`} className="contact-btn email">
+                <a href={`mailto:${property.agent.email} `} className="contact-btn email">
                   <FiMail /> Email
                 </a>
                 <a href="tel:+919999999999" className="contact-btn phone">
@@ -734,6 +780,18 @@ function PropertyDetail() {
                 </a>
               </div>
             </div>
+
+            {user && (
+              <div className="agent-card">
+                <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Appointment Status</h4>
+                <AppointmentActionPanel
+                  propertyId={property.id}
+                  buyerId={user.id}
+                  agentId={property.agentId}
+                  userRole={user.role}
+                />
+              </div>
+            )}
 
             <div className="property-stats">
               <div className="stat-item">
@@ -748,6 +806,12 @@ function PropertyDetail() {
       </div>
 
       <Footer />
+      <MapModal
+        isOpen={showMap}
+        onClose={() => setShowMap(false)}
+        initialProperty={property}
+      />
+
     </div>
   );
 }

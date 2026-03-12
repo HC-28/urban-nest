@@ -40,7 +40,9 @@ function Login() {
       }
 
     } catch (err) {
-      setError(err.response?.data?.error || err.response?.data || "Login failed");
+      const errorData = err.response?.data;
+      const errorMsg = errorData?.error || errorData || "Login failed";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

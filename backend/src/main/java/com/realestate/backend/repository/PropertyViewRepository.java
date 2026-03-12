@@ -16,4 +16,7 @@ public interface PropertyViewRepository extends JpaRepository<PropertyView, Long
     Optional<PropertyView> findByUserAndProperty(AppUser user, Property property);
 
     List<PropertyView> findByUserOrderByViewedAtDesc(AppUser user, Pageable pageable);
+
+    @jakarta.transaction.Transactional
+    void deleteByUser(AppUser user);
 }

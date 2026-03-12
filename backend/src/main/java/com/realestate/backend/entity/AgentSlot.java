@@ -20,7 +20,7 @@ public class AgentSlot {
     @Column(name = "agent_id", nullable = false)
     private Long agentId;
 
-    @Column(name = "property_id", nullable = false)
+    @Column(name = "property_id", nullable = true)
     private Long propertyId;
 
     @Column(name = "slot_date", nullable = false)

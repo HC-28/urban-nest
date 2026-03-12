@@ -21,7 +21,7 @@ import {
   FiXCircle,
   FiShoppingBag
 } from "react-icons/fi";
-import { appointmentApi, slotsApi } from "../api/api.js";
+import { appointmentApi, slotsApi, chatApi } from "../api/api.js";
 import { formatPrice } from "../utils/priceUtils";
 
 function Dashboard() {
@@ -41,6 +41,7 @@ function Dashboard() {
     return <Navigate to="/admin" replace />;
   }
 
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("properties");
   const [appointments, setAppointments] = useState([]);
   const [slots, setSlots] = useState([]);
@@ -88,11 +89,7 @@ function Dashboard() {
       const { data } = await appointmentApi.get(`/buyer/${user.id}`);
       setAppointments(data);
       // Filter sold properties for bought properties tab
-      const sold = data.filter(a => a.status === "sold").map(a => a.propertyId);
-      if (sold.length > 0) {
-        // Fetch property details for these IDs (simplified for now)
-        setBoughtProperties(data.filter(a => a.status === "sold"));
-      }
+      setBoughtProperties(data.filter(a => a.status === "sold"));
     } catch (err) {
       console.error("Error fetching buyer appointments:", err);
     }
@@ -110,7 +107,24 @@ function Dashboard() {
   const fetchMyProperties = async () => {
     try {
       const response = await propertyApi.get(`/agent/${user.id}`);
-      const properties = response.data;
+      let properties = response.data;
+
+      // Fallback for missing reviews in cached properties
+      try {
+        const chatsRes = await chatApi.get(`/agent/${user.id}`);
+        const chats = chatsRes.data || [];
+        properties = properties.map(p => {
+          let computedReview = p.review;
+          if (!computedReview && p.sold) {
+            const fbMsg = chats.find(c => String(c.propertyId) === String(p.id) && c.message?.startsWith('⭐ FEEDBACK:'));
+            if (fbMsg) computedReview = fbMsg.message.includes('Positive') ? 'Positive' : 'Negative';
+          }
+          return { ...p, review: computedReview };
+        });
+      } catch (e) {
+        console.error("Error fetching chats for reviews fallback:", e);
+      }
+
       setMyProperties(properties);
       // Filter sold properties for the "Sold Properties" tab
       setSoldProperties(properties.filter(p => p.sold));
@@ -163,6 +177,7 @@ function Dashboard() {
     setEditForm({
       title: property.title,
       type: property.type,
+      purpose: property.purpose,
       price: property.price,
       area: property.area,
       bhk: property.bhk,
@@ -431,6 +446,9 @@ function Dashboard() {
                         <thead>
                           <tr>
                             <th>Property</th>
+                            <th>Purpose</th>
+                            <th>Area</th>
+                            <th>City</th>
                             <th>Status</th>
                             <th>Actions</th>
                           </tr>
@@ -439,12 +457,24 @@ function Dashboard() {
                           {myProperties.map(property => (
                             <tr key={property.id} className={!property.active ? 'inactive-row' : ''}>
                               {editingProperty === property.id ? (
-                                <td colSpan="3">
-                                  <div className="inline-edit-form" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '10px' }}>
-                                    <input type="text" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={{ flex: 1, padding: '8px', border: '1px solid #334155', borderRadius: '4px', background: '#1e293b', color: 'white' }} placeholder="Title" />
-                                    <input type="number" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} style={{ width: '120px', padding: '8px', border: '1px solid #334155', borderRadius: '4px', background: '#1e293b', color: 'white' }} placeholder="Price" />
-                                    <button onClick={() => handleSaveEdit(property.id)} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Save</button>
-                                    <button onClick={handleCancelEdit} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
+                                <td colSpan="6">
+                                  <div className="inline-edit-form">
+                                    <input type="text" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} placeholder="Title" style={{ flex: 1 }} />
+                                    <select
+                                      value={editForm.purpose}
+                                      onChange={e => setEditForm({ ...editForm, purpose: e.target.value })}
+                                      style={{ width: '130px', background: '#060d18', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '8px' }}
+                                    >
+                                      <option value="For Sale">For Sale</option>
+                                      <option value="For Rent">For Rent</option>
+                                      <option value="Commercial">Commercial</option>
+                                      <option value="Project">Project</option>
+                                    </select>
+                                    <input type="number" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} placeholder="Price" style={{ width: '140px' }} />
+                                    <div className="edit-actions">
+                                      <button className="save-btn" onClick={() => handleSaveEdit(property.id)}>Save</button>
+                                      <button className="cancel-btn" onClick={handleCancelEdit}>Cancel</button>
+                                    </div>
                                   </div>
                                 </td>
                               ) : (
@@ -459,10 +489,15 @@ function Dashboard() {
                                       />
                                       <div>
                                         <div className="property-title">{property.title}</div>
-                                        <div className="property-meta">{property.type} • {formatPrice(property.price)}</div>
+                                        <div className="property-meta">
+                                          {property.type} • {formatPrice(property.price)}
+                                        </div>
                                       </div>
                                     </div>
                                   </td>
+                                  <td><span className="status-badge" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}>{property.purpose}</span></td>
+                                  <td><span style={{ color: '#cbd5e1', fontWeight: '600' }}>{property.area} sq.ft</span></td>
+                                  <td><span style={{ color: '#cbd5e1', fontWeight: '600' }}>{property.city}</span></td>
                                   <td>
                                     {property.sold ? (
                                       <span className="status-badge sold">SOLD</span>
@@ -514,9 +549,12 @@ function Dashboard() {
                     required
                   >
                     <option value="">Choose a property...</option>
-                    {myProperties.map(p => (
-                      <option key={p.id} value={p.id}>{p.title}</option>
-                    ))}
+                    {/* Only show properties that have at least one appointment and are not sold */}
+                    {myProperties
+                      .filter(p => !p.sold && appointments.some(a => String(a.propertyId) === String(p.id)))
+                      .map(p => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                      ))}
                   </select>
                 </div>
                 <div className="form-group">
@@ -549,7 +587,7 @@ function Dashboard() {
                       <FiClock /> {slot.slotTime}
                     </div>
                     <div className="slot-property">
-                      Property ID: {slot.propertyId}
+                      {slot.propertyId ? `Property ID: ${slot.propertyId}` : "All Properties (Global)"}
                     </div>
                     <div className="slot-actions">
                       {slot.booked ? (
@@ -618,18 +656,36 @@ function Dashboard() {
 
           {activeTab === "bought" && user.role === "BUYER" && (
             <div className="bought-section">
-              <h2>Bought Properties</h2>
-              <div className="bought-list">
+              <h2><FiShoppingBag style={{ marginRight: 10, verticalAlign: 'middle' }} />Bought Properties</h2>
+              <div className="bought-grid">
                 {boughtProperties.length === 0 ? (
-                  <p className="empty-msg">You haven't bought any properties yet.</p>
+                  <div className="empty-state">
+                    <FiShoppingBag size={48} />
+                    <h3>No Purchased Properties</h3>
+                    <p>Properties you buy will appear here.</p>
+                  </div>
                 ) : (
                   boughtProperties.map(p => (
-                    <div key={p.id} className="bought-card property-info" onClick={() => navigate(`/property/${p.propertyId}?userId=${user.id}&role=${user.role}`)}>
-                      <FiShoppingBag size={24} />
-                      <div className="bought-info">
-                        <h3>{p.buyerName ? `Purchase for Property #${p.propertyId}` : "Successfully Purchased"}</h3>
-                        <p>Purchased on: {new Date(p.updatedAt).toLocaleDateString()}</p>
-                        <span className="view-link">View Documentation →</span>
+                    <div key={p.id} className="bought-card-v2">
+                      <div className="bought-card-img">
+                        <img
+                          src={getFirstImage(p.propertyImage, "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400")}
+                          alt={p.propertyTitle || "Property"}
+                        />
+                        <span className="purchased-badge"><FiCheckCircle /> Purchased</span>
+                      </div>
+                      <div className="bought-card-body">
+                        <h3 className="bought-card-title">{p.propertyTitle || `Property #${p.propertyId}`}</h3>
+                        <div className="bought-card-meta">
+                          <span className="bought-agent"><FiStar /> Agent: <strong>{p.agentName || "Assigned Agent"}</strong></span>
+                          <span className="bought-date"><FiCalendar /> {new Date(p.soldAt || p.updatedAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                        <button
+                          className="bought-view-btn"
+                          onClick={() => navigate(`/property/${p.propertyId}?userId=${user.id}&role=${user.role}`)}
+                        >
+                          <FiEye /> View Property Details
+                        </button>
                       </div>
                     </div>
                   ))
@@ -649,7 +705,11 @@ function Dashboard() {
                     <thead>
                       <tr>
                         <th>Property</th>
+                        <th>Purpose</th>
+                        <th>Area</th>
+                        <th>City</th>
                         <th>Sold Date</th>
+                        <th>Review</th>
                         <th>Action</th>
                       </tr>
                     </thead>
@@ -666,11 +726,27 @@ function Dashboard() {
                               />
                               <div>
                                 <div className="property-title">{p.title}</div>
-                                <div className="property-meta">{p.type}</div>
+                                <div className="property-meta">{p.type} • {formatPrice(p.price)}</div>
                               </div>
                             </div>
                           </td>
+                          <td><span className="status-badge" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}>{p.purpose}</span></td>
+                          <td><span style={{ color: '#cbd5e1', fontWeight: '600' }}>{p.area} sq.ft</span></td>
+                          <td><span style={{ color: '#cbd5e1', fontWeight: '600' }}>{p.city}</span></td>
                           <td>{p.soldAt ? new Date(p.soldAt).toLocaleDateString() : 'Recently'}</td>
+                          <td>
+                            {p.review ? (
+                              <span className={`status-badge ${p.review.toLowerCase() === 'positive' ? 'active' : 'inactive'}`} style={{
+                                background: p.review.toLowerCase() === 'positive' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                color: p.review.toLowerCase() === 'positive' ? '#10b981' : '#ef4444',
+                                border: `1px solid ${p.review.toLowerCase() === 'positive' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+                              }}>
+                                {p.review}
+                              </span>
+                            ) : (
+                              <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Pending</span>
+                            )}
+                          </td>
                           <td>
                             <button className="view-btn" onClick={() => navigate(`/property/${p.id}?userId=${user.id}&role=${user.role}`)}>
                               View Details
@@ -689,21 +765,20 @@ function Dashboard() {
 
       {/* Sold Confirmation Modal */}
       {showSoldModal && propertyToMarkSold && (
-        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="modal-content" style={{ background: '#1e293b', padding: '30px', borderRadius: '12px', width: '90%', maxWidth: '500px', border: '1px solid #334155' }}>
-            <h2 style={{ marginBottom: '15px', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>
               <FiCheckCircle color="#10b981" /> Finalize Sale
             </h2>
-            <p style={{ color: '#cbd5e1', marginBottom: '20px', lineHeight: '1.5' }}>
+            <p>
               You are marking <strong>{propertyToMarkSold.title}</strong> as SOLD. This will cancel all pending appointments and notify interested buyers.
             </p>
 
-            <div style={{ marginBottom: '25px' }}>
-              <label style={{ display: 'block', color: '#94a3b8', marginBottom: '8px', fontSize: '14px' }}>Who purchased this property?</label>
+            <div className="form-group">
+              <label>Who purchased this property?</label>
               <select
                 value={selectedBuyerId}
                 onChange={(e) => setSelectedBuyerId(e.target.value)}
-                style={{ width: '100%', padding: '12px', background: '#0f172a', border: '1px solid #334155', color: 'white', borderRadius: '8px', fontSize: '15px' }}
               >
                 <option value="">Sold outside platform / Unknown Buyer</option>
                 {buyersForProperty.map(buyer => (
@@ -719,17 +794,11 @@ function Dashboard() {
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={handleCancelMarkSold}
-                style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #475569', color: '#cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-              >
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={handleCancelMarkSold}>
                 Cancel
               </button>
-              <button
-                onClick={handleConfirmMarkSold}
-                style={{ padding: '10px 20px', background: '#10b981', border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-              >
+              <button className="save-btn" onClick={handleConfirmMarkSold}>
                 Confirm Sale
               </button>
             </div>

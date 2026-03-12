@@ -54,25 +54,55 @@ public class AppointmentController {
             Object slotIdObj = request.get("slotId");
             Object buyerIdObj = request.get("buyerId");
 
-            if (buyerIdObj == null || slotIdObj == null) {
+            if (buyerIdObj == null) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Missing required fields (buyerId, slotId)."));
+                        .body(Map.of("error", "Missing required field: buyerId."));
             }
 
-            Long slotId = Long.valueOf(slotIdObj.toString());
             Long buyerId = Long.valueOf(buyerIdObj.toString());
+            Long slotId = (slotIdObj != null) ? Long.valueOf(slotIdObj.toString()) : null;
 
             // 1. Validate slot
-            AgentSlot slot = agentSlotRepository.findById(slotId).orElse(null);
-            if (slot == null)
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Slot not found"));
-            if (slot.isBooked())
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("error", "This slot is already booked"));
+            AgentSlot slot = null;
+            if (slotId != null) {
+                slot = agentSlotRepository.findById(slotId).orElse(null);
+                if (slot == null)
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(Map.of("error", "Slot not found"));
+                if (slot.isBooked())
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(Map.of("error", "This slot is already booked"));
+            }
+
+            // Get propertyId from request or slot
+            Long propertyId = null;
+            if (request.containsKey("propertyId") && request.get("propertyId") != null) {
+                propertyId = Long.valueOf(request.get("propertyId").toString());
+            } else if (slotId != null) {
+                propertyId = slot.getPropertyId();
+            }
+
+            // Get AgentId
+            Long agentId = null;
+            if (slotId != null) {
+                agentId = slot.getAgentId();
+            } else if (propertyId != null) {
+                Property p = propertyRepository.findById(propertyId).orElse(null);
+                if (p != null)
+                    agentId = p.getAgentId();
+            }
+
+            if (agentId == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Agent ID could not be determined."));
+            }
+
+            if (propertyId == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Property ID is required (slot is global but no propertyId provided)."));
+            }
 
             // 2. Validate property
-            Property property = propertyRepository.findById(slot.getPropertyId()).orElse(null);
+            Property property = propertyRepository.findById(propertyId).orElse(null);
             if (property == null)
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Property not found"));
@@ -80,20 +110,23 @@ public class AppointmentController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "This property has already been sold"));
 
-            // 3. Buyer time-conflict check
-            List<Appointment> conflicts = appointmentRepository.findConflictingBuyerAppointments(
-                    buyerId, slot.getSlotDate(), slot.getSlotTime());
-            if (!conflicts.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("error",
-                                "You already have an appointment at " + slot.getSlotTime() + " on " + slot.getSlotDate()
-                                        +
-                                        " for another property. Please choose a different time."));
+            // 3. Buyer time-conflict check (if slot provided)
+            if (slotId != null) {
+                List<Appointment> conflicts = appointmentRepository.findConflictingBuyerAppointments(
+                        buyerId, slot.getSlotDate(), slot.getSlotTime());
+                if (!conflicts.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(Map.of("error",
+                                    "You already have an appointment at " + slot.getSlotTime() + " on "
+                                            + slot.getSlotDate()
+                                            +
+                                            " for another property. Please choose a different time."));
+                }
             }
 
             // 4. Duplicate appointment check
             List<Appointment> existing = appointmentRepository.findByBuyerIdAndPropertyId(buyerId,
-                    slot.getPropertyId());
+                    propertyId);
             boolean hasActive = existing.stream().anyMatch(a -> "confirmed".equals(a.getStatus())
                     || "awaiting_buyer".equals(a.getStatus()) || "awaiting_agent".equals(a.getStatus()));
             if (hasActive) {
@@ -110,18 +143,23 @@ public class AppointmentController {
 
             // 6. Create appointment
             Appointment appointment = new Appointment();
-            appointment.setPropertyId(slot.getPropertyId());
+            appointment.setPropertyId(propertyId);
             appointment.setBuyerId(buyerId);
-            appointment.setAgentId(slot.getAgentId());
-            appointment.setSlotId(slotId);
-            appointment.setAppointmentDate(slot.getSlotDate());
-            appointment.setAppointmentTime(slot.getSlotTime());
-            appointment.setDurationMinutes(slot.getDurationMinutes());
+            appointment.setAgentId(agentId);
             appointment.setBuyerName(buyer.getName());
             appointment.setBuyerEmail(buyer.getEmail());
             appointment.setBuyerPhone(buyer.getPhone());
-            appointment.setStatus("confirmed");
-            appointment.setConfirmationDeadline(slot.getSlotDate().atTime(23, 59).plusDays(5));
+
+            if (slotId != null) {
+                appointment.setSlotId(slotId);
+                appointment.setAppointmentDate(slot.getSlotDate());
+                appointment.setAppointmentTime(slot.getSlotTime());
+                appointment.setDurationMinutes(slot.getDurationMinutes());
+                appointment.setStatus("confirmed");
+                appointment.setConfirmationDeadline(slot.getSlotDate().atTime(23, 59).plusDays(5));
+            } else {
+                appointment.setStatus("pending");
+            }
 
             if (request.containsKey("message")) {
                 appointment.setMessage(request.get("message").toString());
@@ -129,28 +167,104 @@ public class AppointmentController {
 
             Appointment saved = appointmentRepository.save(appointment);
 
-            // 7. Lock the slot
-            slot.setBooked(true);
-            agentSlotRepository.save(slot);
+            // 7. Lock the slot & tracking & notifications
+            if (slotId != null) {
+                slot.setBooked(true);
+                agentSlotRepository.save(slot);
 
-            // 8. Track as inquiry
-            analyticsService.trackInquiry(slot.getPropertyId());
+                // 8. Track as inquiry
+                analyticsService.trackInquiry(slot.getPropertyId());
 
-            // 9. Send confirmation email
-            emailService.sendAppointmentConfirmation(
-                    buyer.getEmail(), buyer.getName(), property.getTitle(),
-                    slot.getSlotDate().toString(), slot.getSlotTime().toString());
+                // 9. Send confirmation email
+                emailService.sendAppointmentConfirmation(
+                        buyer.getEmail(), buyer.getName(), property.getTitle(),
+                        slot.getSlotDate().toString(), slot.getSlotTime().toString());
+            }
+
+            // 10. Automated Chat Message
+            ChatMessage autoMsg = new ChatMessage();
+            autoMsg.setPropertyId(propertyId);
+            autoMsg.setAgentId(agentId);
+            autoMsg.setBuyerId(buyerId);
+            autoMsg.setSender("BUYER");
+            autoMsg.setSeen(false);
+            autoMsg.setMessage(slotId != null
+                    ? "🗓️ **Appointment Booked!** at " + (slot != null ? slot.getSlotTime() : "") + " on "
+                            + (slot != null ? slot.getSlotDate() : "")
+                    : "🗓️ **I want to book an appointment**. Please assign a time slot.");
+            chatMessageRepository.save(autoMsg);
 
             return ResponseEntity.ok(Map.of(
-                    "message", "Appointment booked successfully",
+                    "message", slotId != null ? "Appointment booked successfully" : "Appointment request sent",
                     "appointmentId", saved.getId(),
-                    "status", "confirmed",
-                    "confirmationDeadline", saved.getConfirmationDeadline().toString()));
+                    "status", saved.getStatus(),
+                    "confirmationDeadline",
+                    saved.getConfirmationDeadline() != null ? saved.getConfirmationDeadline().toString() : "N/A"));
 
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error: " + ex.getMessage()));
+        }
+    }
+
+    /**
+     * POST /api/appointments/{id}/assign-slot — Agent assigns a slot to a pending
+     * request
+     */
+    @PostMapping("/{id}/assign-slot")
+    public ResponseEntity<?> assignSlot(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        try {
+            Object slotIdObj = request.get("slotId");
+            if (slotIdObj == null)
+                return ResponseEntity.badRequest().body(Map.of("error", "slotId required"));
+
+            Appointment appt = appointmentRepository.findById(id).orElse(null);
+            if (appt == null)
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Appt not found"));
+            if (!"pending".equals(appt.getStatus()))
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Only pending requests can be assigned/confirmed."));
+
+            Long slotId = Long.valueOf(slotIdObj.toString());
+            AgentSlot slot = agentSlotRepository.findById(slotId).orElse(null);
+            if (slot == null)
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Slot not found"));
+            if (slot.isBooked())
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Slot already taken"));
+
+            // Update appt
+            appt.setSlotId(slotId);
+            appt.setAppointmentDate(slot.getSlotDate());
+            appt.setAppointmentTime(slot.getSlotTime());
+            appt.setDurationMinutes(slot.getDurationMinutes());
+            appt.setStatus("confirmed");
+            appt.setConfirmationDeadline(slot.getSlotDate().atTime(23, 59).plusDays(5));
+            appointmentRepository.save(appt);
+
+            // Lock slot
+            slot.setBooked(true);
+            agentSlotRepository.save(slot);
+
+            // Notify
+            Property p = propertyRepository.findById(appt.getPropertyId()).orElse(null);
+            emailService.sendAppointmentConfirmation(
+                    appt.getBuyerEmail(), appt.getBuyerName(), (p != null ? p.getTitle() : "Property"),
+                    slot.getSlotDate().toString(), slot.getSlotTime().toString());
+
+            // Chat Msg
+            ChatMessage sysMsg = new ChatMessage();
+            sysMsg.setPropertyId(appt.getPropertyId());
+            sysMsg.setAgentId(appt.getAgentId());
+            sysMsg.setBuyerId(appt.getBuyerId());
+            sysMsg.setSender("AGENT");
+            sysMsg.setMessage("🗓️ **Slot Assigned!** Your appointment is fixed at " + slot.getSlotTime() + " on "
+                    + slot.getSlotDate());
+            chatMessageRepository.save(sysMsg);
+
+            return ResponseEntity.ok(Map.of("message", "Slot assigned successfully", "status", "confirmed"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(Map.of("error", "Error assigning slot: " + ex.getMessage()));
         }
     }
 
@@ -379,7 +493,39 @@ public class AppointmentController {
     @GetMapping("/buyer/{buyerId}")
     public ResponseEntity<?> getBuyerAppointments(@PathVariable Long buyerId) {
         try {
-            return ResponseEntity.ok(appointmentRepository.findByBuyerId(buyerId));
+            List<Appointment> appts = appointmentRepository.findByBuyerId(buyerId);
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Appointment a : appts) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", a.getId());
+                map.put("propertyId", a.getPropertyId());
+                map.put("buyerId", a.getBuyerId());
+                map.put("agentId", a.getAgentId());
+                map.put("appointmentDate", a.getAppointmentDate());
+                map.put("appointmentTime", a.getAppointmentTime());
+                map.put("durationMinutes", a.getDurationMinutes());
+                map.put("buyerName", a.getBuyerName());
+                map.put("buyerEmail", a.getBuyerEmail());
+                map.put("buyerPhone", a.getBuyerPhone());
+                map.put("status", a.getStatus());
+                map.put("message", a.getMessage());
+                map.put("slotId", a.getSlotId());
+                map.put("confirmationDeadline", a.getConfirmationDeadline());
+                map.put("buyerConfirmed", a.getBuyerConfirmed());
+                map.put("agentConfirmed", a.getAgentConfirmed());
+                map.put("soldAt", a.getSoldAt());
+                map.put("createdAt", a.getCreatedAt());
+                map.put("updatedAt", a.getUpdatedAt());
+
+                // Fetch property title & agent name
+                propertyRepository.findById(a.getPropertyId()).ifPresent(p -> {
+                    map.put("propertyTitle", p.getTitle());
+                    map.put("agentName", p.getAgentName());
+                    map.put("propertyImage", p.getPhotos());
+                });
+                result.add(map);
+            }
+            return ResponseEntity.ok(result);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error: " + ex.getMessage()));
@@ -390,7 +536,38 @@ public class AppointmentController {
     @GetMapping("/agent/{agentId}")
     public ResponseEntity<?> getAgentAppointments(@PathVariable Long agentId) {
         try {
-            return ResponseEntity.ok(appointmentRepository.findByAgentId(agentId));
+            List<Appointment> appts = appointmentRepository.findByAgentId(agentId);
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Appointment a : appts) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", a.getId());
+                map.put("propertyId", a.getPropertyId());
+                map.put("buyerId", a.getBuyerId());
+                map.put("agentId", a.getAgentId());
+                map.put("appointmentDate", a.getAppointmentDate());
+                map.put("appointmentTime", a.getAppointmentTime());
+                map.put("durationMinutes", a.getDurationMinutes());
+                map.put("buyerName", a.getBuyerName());
+                map.put("buyerEmail", a.getBuyerEmail());
+                map.put("buyerPhone", a.getBuyerPhone());
+                map.put("status", a.getStatus());
+                map.put("message", a.getMessage());
+                map.put("slotId", a.getSlotId());
+                map.put("confirmationDeadline", a.getConfirmationDeadline());
+                map.put("buyerConfirmed", a.getBuyerConfirmed());
+                map.put("agentConfirmed", a.getAgentConfirmed());
+                map.put("soldAt", a.getSoldAt());
+                map.put("createdAt", a.getCreatedAt());
+                map.put("updatedAt", a.getUpdatedAt());
+
+                // Fetch property title & buyer name (already in appt) & image
+                propertyRepository.findById(a.getPropertyId()).ifPresent(p -> {
+                    map.put("propertyTitle", p.getTitle());
+                    map.put("propertyImage", p.getPhotos());
+                });
+                result.add(map);
+            }
+            return ResponseEntity.ok(result);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error: " + ex.getMessage()));

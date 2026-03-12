@@ -18,13 +18,18 @@ export default function AgentChats() {
     const user = JSON.parse(localStorage.getItem("user"));
     const agentId = user?.id;
 
-    useEffect(() => {
+    const fetchInquiries = () => {
         if (!agentId) return;
-
         chatApi.get(`/agent/${agentId}`).then(res => {
             setChats(res.data);
             setLoading(false);
         }).catch(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        fetchInquiries();
+        const interval = setInterval(fetchInquiries, 10000); // refresh every 10s
+        return () => clearInterval(interval);
     }, [agentId]);
 
     // fetch details for properties and buyers
@@ -34,17 +39,28 @@ export default function AgentChats() {
 
         uniquePropertyIds.forEach(pid => {
             if (!propertyMap[pid]) {
-                propertyApi.get(`/${pid}`).then(res => {
-                    setPropertyMap(prev => ({ ...prev, [pid]: res.data }));
-                }).catch(e => console.error(e));
+                // Include userId+role so sold properties are accessible to the agent
+                propertyApi.get(`/${pid}?userId=${agentId}&role=AGENT`).then(res => {
+                    // Only store valid property objects, not error responses
+                    if (res.data && res.data.id) {
+                        setPropertyMap(prev => ({ ...prev, [pid]: res.data }));
+                    }
+                }).catch(() => {
+                    // Silently ignore — property may be deleted or inaccessible
+                });
             }
         });
 
         uniqueBuyerIds.forEach(bid => {
             if (!userMap[bid]) {
                 userApi.get(`/${bid}`).then(res => {
-                    setUserMap(prev => ({ ...prev, [bid]: res.data }));
-                }).catch(e => console.error(e));
+                    // Only store valid user objects, not error responses
+                    if (res.data && res.data.id) {
+                        setUserMap(prev => ({ ...prev, [bid]: res.data }));
+                    }
+                }).catch(() => {
+                    // Buyer may have been deleted — silently ignore
+                });
             }
         });
     }, [chats]);
@@ -100,10 +116,13 @@ export default function AgentChats() {
                             const property = propertyMap[lastMsg.propertyId];
                             const buyer = userMap[lastMsg.buyerId];
 
+                            const isUnread = lastMsg.seen === false && lastMsg.sender === "BUYER";
+                            const isSold = property?.sold;
+
                             return (
                                 <div
                                     key={key}
-                                    className="chat-card"
+                                    className={`chat-card ${isUnread ? 'is-unread' : ''}`}
                                     onClick={() =>
                                         navigate(`/agent/chat/${lastMsg.propertyId}/${lastMsg.buyerId}`)
                                     }
@@ -122,7 +141,7 @@ export default function AgentChats() {
                                     <div className="chat-info">
                                         <div className="chat-info-header">
                                             <h4>{buyer?.name || "Interested Buyer"}</h4>
-                                            <span className="chat-date">
+                                            <span className={`chat-date ${isUnread ? 'unread-date' : ''}`}>
                                                 {new Date(lastMsg.createdAt).toLocaleDateString(undefined, {
                                                     month: 'short',
                                                     day: 'numeric'
@@ -134,11 +153,23 @@ export default function AgentChats() {
                                             {property?.title || `Property #${lastMsg.propertyId}`}
                                         </div>
                                         <p className="last-msg">
-                                            {lastMsg.sender === "AGENT" ? "You: " : ""}{lastMsg.message}
+                                            {lastMsg.sender === "AGENT" ? (
+                                                <span className="you-prefix">You: </span>
+                                            ) : null}
+                                            {lastMsg.message}
                                         </p>
                                     </div>
-                                    {lastMsg.seen === false && lastMsg.sender === "BUYER" && (
-                                        <span className="unread-badge">New message</span>
+
+                                    {isUnread && (
+                                        <div className="unread-container">
+                                            <span className="unread-count">
+                                                {grouped[key].filter(m => m.seen === false && m.sender === "BUYER").length}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {isSold && (
+                                        <span className="unread-badge sold-badge">Sold</span>
                                     )}
                                 </div>
                             );

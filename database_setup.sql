@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS users (
     experience VARCHAR(100),
     specialties VARCHAR(255),
     verified BOOLEAN DEFAULT TRUE NOT NULL,
+    email_verified BOOLEAN DEFAULT FALSE NOT NULL,
     deletion_requested BOOLEAN DEFAULT FALSE NOT NULL,
+    verification_token VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -98,6 +100,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     agent_id BIGINT NOT NULL,
     sender VARCHAR(50) NOT NULL,
     message VARCHAR(1000) NOT NULL,
+    seen BOOLEAN DEFAULT FALSE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     FOREIGN KEY (property_id) REFERENCES property(id) ON DELETE CASCADE,
     FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE,

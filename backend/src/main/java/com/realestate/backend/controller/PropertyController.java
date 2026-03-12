@@ -103,7 +103,7 @@ public class PropertyController {
                         .filter(p -> p.getCity() != null && p.getCity().toLowerCase().equals(c))
                         .toList();
             }
-            if (type != null && !type.isBlank()) {
+            if (type != null && !type.isBlank() && !type.equalsIgnoreCase("All")) {
                 String t = type.toLowerCase();
                 properties = properties.stream()
                         .filter(p -> p.getType() != null && p.getType().toLowerCase().equals(t))
@@ -222,6 +222,14 @@ public class PropertyController {
                         isAllowed = true;
                     } else if (userId.equals(property.getSoldToUserId())) {
                         isAllowed = true;
+                    } else {
+                        // Allow any user who had a chat on this property (buyer who inquired)
+                        boolean hasChatted = chatMessageRepository
+                                .findByPropertyId(id)
+                                .stream()
+                                .anyMatch(c -> userId.equals(c.getBuyerId()) || userId.equals(c.getAgentId()));
+                        if (hasChatted)
+                            isAllowed = true;
                     }
                 }
                 if (!isAllowed) {
@@ -517,62 +525,38 @@ public class PropertyController {
      */
     @GetMapping(value = "/top", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getTopProperties(@RequestParam String pincode,
-            @RequestParam(defaultValue = "price") String mode,
-            @RequestParam(required = false) String purpose) {
+            @RequestParam(defaultValue = "price") String mode) {
         try {
             List<Property> properties;
-            boolean hasPurpose = purpose != null && !purpose.isEmpty();
-
             switch (mode) {
                 case "inventory":
-                    properties = hasPurpose
-                            ? propertyRepository
-                                    .findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(
-                                            pincode, purpose)
-                            : propertyRepository.findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(
-                                    pincode);
+                    properties = propertyRepository
+                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(pincode);
                     break;
                 case "market_activity":
                 case "demand":
-                    properties = hasPurpose
-                            ? propertyRepository
-                                    .findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(pincode,
-                                            purpose)
-                            : propertyRepository
-                                    .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(pincode);
+                    properties = propertyRepository
+                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(pincode);
                     break;
                 case "buyer_opportunity":
-                    properties = hasPurpose
-                            ? propertyRepository
-                                    .findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByPriceAsc(pincode,
-                                            purpose)
-                            : propertyRepository
-                                    .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByPriceAsc(pincode);
+                    properties = propertyRepository
+                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByPriceAsc(pincode);
                     break;
                 case "liquidity":
-                    properties = hasPurpose
-                            ? propertyRepository
-                                    .findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(
-                                            pincode, purpose)
-                            : propertyRepository
-                                    .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(pincode);
+                    // Liquidity = fast-selling areas → show newest listings (recently listed =
+                    // active market)
+                    properties = propertyRepository
+                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(pincode);
                     break;
                 case "saturation":
-                    properties = hasPurpose
-                            ? propertyRepository
-                                    .findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(pincode,
-                                            purpose)
-                            : propertyRepository
-                                    .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(pincode);
+                    // Saturation = competition level → show most viewed (competitive) properties
+                    properties = propertyRepository
+                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(pincode);
                     break;
                 case "price":
                 default:
-                    properties = hasPurpose
-                            ? propertyRepository
-                                    .findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByPriceDesc(pincode,
-                                            purpose)
-                            : propertyRepository
-                                    .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByPriceDesc(pincode);
+                    properties = propertyRepository
+                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByPriceDesc(pincode);
                     break;
             }
             return ResponseEntity.ok(properties);
@@ -597,10 +581,10 @@ public class PropertyController {
             boolean hasType = type != null && !type.isEmpty();
 
             if (hasCity && hasPurpose && hasType) {
-                results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurposeAndType(city, purpose,
+                results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurposeAndTypeWithEngagement(city, purpose,
                         type);
             } else if (hasCity && hasPurpose) {
-                results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurpose(city, purpose);
+                results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurposeWithEngagement(city, purpose);
             } else if (hasCity && hasType) {
                 results = propertyRepository.countActivePropertiesByPinCodeAndCityAndType(city, type);
             } else if (hasCity) {

@@ -1,7 +1,7 @@
 /* ============ Properties Page - Premium Professional Design ============ */
 .properties-page {
   min-height: 100vh;
-  background: #0a1929;
+  background: #060d18;
   padding-top: 80px;
 }
 
@@ -23,7 +23,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, transparent 0%, rgba(10, 25, 47, 0.25) 100%);
+  background: radial-gradient(ellipse at center top, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
 }
 
 .properties-hero-content {

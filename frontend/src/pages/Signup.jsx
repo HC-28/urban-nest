@@ -18,6 +18,7 @@ function Signup() {
   });
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
 
   const handleChange = (e) => {
@@ -61,27 +62,8 @@ function Signup() {
 
     try {
       const res = await authApi.post("/register", user);
-
-      const loginRes = await authApi.post("/login", {
-        email: user.email,
-        password: user.password,
-      });
-
-      // Store JWT token and user data separately
-      localStorage.setItem("token", loginRes.data.token);
-      const userData = { ...loginRes.data };
-      delete userData.token;
-      localStorage.setItem("user", JSON.stringify(userData));
-
-      // Route by role — matching Login.jsx behavior
-      if (userData.role === "ADMIN") {
-        navigate("/admin");
-      } else if (userData.role === "AGENT") {
-        navigate("/dashboard");
-      } else {
-        navigate("/");
-      }
-
+      setSuccess(true);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       console.error("Signup error:", err);
       setError(err.response?.data?.error || err.response?.data?.message || "Signup failed. Please try again.");
@@ -89,6 +71,22 @@ function Signup() {
       setLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="auth-page" style={{ backgroundImage: `url(${heroBg})` }}>
+        <div className="auth-overlay"></div>
+        <div className="auth-card glass-strong arrow-border" style={{ textAlign: 'center', padding: '40px' }}>
+          <div className="auth-logo-icon">🎉</div>
+          <h2 style={{ color: 'var(--text-primary)', marginBottom: '15px' }}>Account Created!</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6' }}>
+            Your account has been created successfully.<br />
+            Redirecting you to the login page...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page" style={{ backgroundImage: `url(${heroBg})` }}>

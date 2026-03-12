@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from "react-leaflet";
 import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -8,16 +8,15 @@ import { analyticsApi, propertyApi } from "../api/api";
 import { parsePropertyImages } from "../utils/imageUtils";
 import { formatPrice } from "../utils/priceUtils";
 
-/* ── Helper to fix the "Blank Map" resize issue ── */
-function RecenterMap({ coords }) {
+function RecenterMap({ coords, zoom }) {
     const map = useMap();
     useEffect(() => {
         const timer = setTimeout(() => {
             if (map && typeof map.invalidateSize === 'function') map.invalidateSize();
-            if (coords) map.setView(coords);
+            if (coords) map.setView(coords, zoom || map.getZoom());
         }, 300);
         return () => clearTimeout(timer);
-    }, [map, coords]);
+    }, [map, coords, zoom]);
     return null;
 }
 
@@ -68,15 +67,15 @@ const SCORE_DESCRIPTIONS = {
 
 /* ── Map Tile Layers ── */
 const TILE_LAYERS = {
-    dark: { url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", label: "Dark" },
-    light: { url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", label: "Light" },
+    dark: { url: "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{r}.png", label: "Dark" },
+    light: { url: "https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}{r}.png", label: "Light" },
     satellite: { url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", label: "Satellite" }
 };
 
 /* ════════════════════════════════════════
    MAP MODAL COMPONENT
    ════════════════════════════════════════ */
-function MapModal({ isOpen, onClose }) {
+function MapModal({ isOpen, onClose, initialProperty }) {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem("user"));
     const isAgent = user?.role === "AGENT" || user?.role === "ADMIN";
@@ -93,12 +92,15 @@ function MapModal({ isOpen, onClose }) {
 
     // Filters
     const [selectedCity, setSelectedCity] = useState("Ahmedabad");
-    const [selectedType, setSelectedType] = useState("Apartment");
+    const [selectedArea, setSelectedArea] = useState("");
+    const [selectedType, setSelectedType] = useState("All");
     const [heatmapMode, setHeatmapMode] = useState("price");
+
+    const [mapCenter, setMapCenter] = useState(null);
+    const [mapZoom, setMapZoom] = useState(null);
 
     // Map style
     const [tileLayer, setTileLayer] = useState("dark");
-    const [selectedPurpose, setSelectedPurpose] = useState("Sale");
 
     // Property Pins Toggle
     const [showPins, setShowPins] = useState(false);
@@ -108,11 +110,50 @@ function MapModal({ isOpen, onClose }) {
     // Legend collapsed state
     const [legendOpen, setLegendOpen] = useState(true);
 
-    const propertyTypes = ["Apartment", "Villa", "House", "Penthouse", "Studio", "Plot", "Commercial"];
+    const [selectedPurpose, setSelectedPurpose] = useState("Sale");
 
-    useEffect(() => { setSelectedPincode(null); }, [selectedCity]);
+    const propertyPurposes = ["All", "Sale", "Rent"];
+    const propertyTypes = ["All", "Apartment", "Villa", "House", "Penthouse", "Studio", "Plot", "Commercial"];
 
-    const currentCity = useMemo(() => cities.find(c => c.name === selectedCity) || cities[0], [selectedCity]);
+    // Handle initialProperty when modal opens
+    useEffect(() => {
+        if (isOpen && initialProperty) {
+            if (initialProperty.city) {
+                const cityMatch = cities.find(c => c.name.toLowerCase() === initialProperty.city.toLowerCase());
+                if (cityMatch) {
+                    setSelectedCity(cityMatch.name);
+                }
+            }
+            if (initialProperty.pinCode) {
+                setSelectedPincode(initialProperty.pinCode);
+                setMiniProperties([initialProperty]);
+            } else if (initialProperty.latitude && initialProperty.longitude) {
+                setSelectedPincode("Selected Property");
+                setMiniProperties([initialProperty]);
+            }
+        }
+    }, [isOpen, initialProperty]);
+
+    useEffect(() => {
+        setSelectedPincode(null);
+        setSelectedArea("");
+        setMapCenter(null);
+        setMapZoom(null);
+    }, [selectedCity]);
+
+    const currentCity = useMemo(() => {
+        if (initialProperty?.latitude && initialProperty?.longitude) {
+            // Find if property city is in our list to get proper geoFile, otherwise default zoom/coords
+            const cityMatch = cities.find(c => c.name.toLowerCase() === initialProperty.city?.toLowerCase());
+            return {
+                name: initialProperty.city || "Custom",
+                coords: [initialProperty.latitude, initialProperty.longitude],
+                zoom: 15,
+                geoFile: cityMatch?.geoFile || null
+            };
+        }
+        return cities.find(c => c.name === selectedCity) || cities[0];
+    }, [selectedCity, initialProperty]);
     const palette = DYNAMIC_PALETTES[heatmapMode] || DYNAMIC_PALETTES.price;
 
     // Static bins configuration per mode
@@ -148,7 +189,7 @@ function MapModal({ isOpen, onClose }) {
             .catch(err => { console.error(`Failed to load GeoJSON for ${currentCity.name}:`, err); setGeoData(null); });
 
         const fetchHeatmap = analyticsApi.get(`/heatmap/${encodeURIComponent(selectedCity)}`, {
-            params: { mode: heatmapMode, type: selectedType, purpose: selectedPurpose }
+            params: { mode: heatmapMode, type: selectedType, purpose: selectedPurpose === "All" ? null : selectedPurpose }
         })
             .then(res => {
                 const json = res.data;
@@ -166,7 +207,10 @@ function MapModal({ isOpen, onClose }) {
     useEffect(() => {
         if (!showPins || !isOpen) { setAllProperties([]); return; }
         setLoadingPins(true);
-        propertyApi.get(`/`, { params: { city: selectedCity, type: selectedType, purpose: selectedPurpose } })
+        const params = { city: selectedCity, type: selectedType };
+        if (selectedPurpose !== "All") params.purpose = selectedPurpose;
+
+        propertyApi.get(``, { params })
             .then(res => setAllProperties(res.data || []))
             .catch(() => setAllProperties([]))
             .finally(() => setLoadingPins(false));
@@ -177,9 +221,15 @@ function MapModal({ isOpen, onClose }) {
         const geoPincode = String(feature.properties?.pin_code || feature.properties?.pincode || feature.properties?.PINCODE || "").trim();
         const data = heatmapData[geoPincode];
         if (!data || data.activeListings === 0 || data.activeListings == null) return "#f0f0f0";
-        if (data.activeListings > 0 && data.activeListings <= 5) return "#9ca3af";
+
         let val = heatmapMode === 'price' ? (data.medianPrice ?? null) : (data.score ?? null);
-        if (val === null || val === undefined) return "#6b7280";
+        if (val === null || val === undefined) return "#f0f0f0";
+
+        // If count is very low (1-2), use a faint version of the base color instead of grey
+        if (data.activeListings > 0 && data.activeListings <= 2) {
+            return palette.colors[0] + "44"; // Adding transparency for low density
+        }
+
         const [p33, p66] = staticBinsMap[heatmapMode] || [33, 66];
         if (val <= p33) return palette.colors[0];
         if (val <= p66) return palette.colors[1];
@@ -198,6 +248,19 @@ function MapModal({ isOpen, onClose }) {
         finally { setLoadingMini(false); }
     };
 
+    const availableAreas = useMemo(() => {
+        if (!geoData || !geoData.features) return [];
+        const areasMap = new Map();
+        geoData.features.forEach(f => {
+            const name = f.properties.area_name || f.properties.name || f.properties.AREA || f.properties.PINCODE;
+            const pincode = f.properties.pin_code || f.properties.pincode || f.properties.PINCODE;
+            if (name && !areasMap.has(name)) {
+                areasMap.set(name, { name, pincode, feature: f });
+            }
+        });
+        return Array.from(areasMap.values()).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    }, [geoData]);
+
     const defaultStyle = (feature) => {
         const color = getColor(feature);
         const geoPincode = String(feature.properties?.pin_code || feature.properties?.pincode || feature.properties?.PINCODE || "").trim();
@@ -214,16 +277,32 @@ function MapModal({ isOpen, onClose }) {
         const price = data?.medianPrice != null ? `₹${Math.round(data.medianPrice).toLocaleString('en-IN')}` : "N/A";
 
         layer.bindTooltip(
-            `<div style="font-family:'Inter',sans-serif;padding:8px 10px;min-width:160px;">
-                <h4 style="margin:0 0 6px;color:#1e293b;font-size:14px;font-weight:700;">${area}</h4>
-                <div style="font-size:12px;color:#374151;line-height:1.8;">
-                    <strong>Pincode:</strong> ${geoPincode || "—"}<br/>
-                    <strong>Avg Price:</strong> ${price}/sq.ft<br/>
-                    <strong>Active Listings:</strong> ${activeListings}
+            `<div class="map-tooltip-card">
+                <div class="map-tooltip-header">
+                    <span class="map-tooltip-area">${area}</span>
+                    <span class="map-tooltip-pincode">${geoPincode || "—"}</span>
                 </div>
-                ${!data ? '<div style="color:#9ca3af;font-size:11px;margin-top:4px;">No data available</div>' : ''}
+                <div class="map-tooltip-body">
+                    <div class="map-tooltip-stat">
+                        <span class="map-tooltip-label">Avg Price</span>
+                        <span class="map-tooltip-value">${price}/sq.ft</span>
+                    </div>
+                    <div class="map-tooltip-stat">
+                        <span class="map-tooltip-label">Active Listings</span>
+                        <span class="map-tooltip-value">${activeListings}</span>
+                    </div>
+                    ${data?.score != null ? `
+                    <div class="map-tooltip-stat">
+                        <span class="map-tooltip-label">Market Score</span>
+                        <div class="map-tooltip-score-bar">
+                            <div class="map-tooltip-score-fill" style="width: ${score}%; background: ${getColor(feature)}"></div>
+                        </div>
+                        <span class="map-tooltip-value">${score}%</span>
+                    </div>` : ''}
+                </div>
+                {!data ? '<div class="map-tooltip-no-data">Data pending...</div>' : ''}
             </div>`,
-            { sticky: true, opacity: 1 }
+            { sticky: true, opacity: 1, direction: 'top', offset: [0, -10] }
         );
 
         layer.on({
@@ -242,83 +321,115 @@ function MapModal({ isOpen, onClose }) {
                 {/* ─── Top Toolbar ─── */}
                 <div className="map-toolbar">
                     <div className="toolbar-left">
-                        {/* City pills */}
-                        <div className="city-pills">
-                            {cities.map(city => (
-                                <button
-                                    key={city.name}
-                                    className={`city-pill ${selectedCity === city.name ? "active" : ""}`}
-                                    onClick={() => setSelectedCity(city.name)}
+                        {/* City Section */}
+                        <div className="toolbar-section">
+                            <div className="city-selector">
+                                {cities.map(city => (
+                                    <button
+                                        key={city.name}
+                                        className={`city-btn ${selectedCity === city.name ? "active" : ""}`}
+                                        onClick={() => setSelectedCity(city.name)}
+                                    >
+                                        <span className="city-marker">📍</span>
+                                        {city.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        {/* Filter Section */}
+                        <div className="toolbar-section">
+                            {availableAreas.length > 0 && (
+                                <select
+                                    className="toolbar-select area-select"
+                                    value={selectedArea}
+                                    onChange={(e) => {
+                                        const areaName = e.target.value;
+                                        setSelectedArea(areaName);
+                                        if (!areaName) {
+                                            setMapCenter(null);
+                                            setMapZoom(null);
+                                        } else {
+                                            const areaObj = availableAreas.find(a => a.name === areaName);
+                                            if (areaObj) {
+                                                let coords = areaObj.feature.geometry.coordinates;
+                                                if (areaObj.feature.geometry.type === 'Polygon') coords = coords[0][0];
+                                                else if (areaObj.feature.geometry.type === 'MultiPolygon') coords = coords[0][0][0];
+
+                                                if (coords && coords.length >= 2) {
+                                                    setMapCenter([coords[1], coords[0]]);
+                                                    setMapZoom(14);
+                                                    if (areaObj.pincode) fetchMiniProperties(String(areaObj.pincode).trim());
+                                                }
+                                            }
+                                        }
+                                    }}
                                 >
-                                    📍 {city.name}
+                                    <option value="">All Areas</option>
+                                    {availableAreas.map(a => <option key={a.name} value={a.name}>{a.name}</option>)}
+                                </select>
+                            )}
+
+                            <select className="toolbar-select mode-select" value={heatmapMode} onChange={(e) => setHeatmapMode(e.target.value)}>
+                                {modes.map(m => <option key={m.value} value={m.value}>{m.icon} {m.label}</option>)}
+                            </select>
+
+                            <select className="toolbar-select type-select" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
+                                {propertyTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+
+                            <div className="tile-pills purpose-pills">
+                                <button
+                                    className={`tile-pill ${selectedPurpose === "Sale" ? "active" : ""}`}
+                                    onClick={() => setSelectedPurpose("Sale")}
+                                >
+                                    BUY
                                 </button>
-                            ))}
+                                <button
+                                    className={`tile-pill ${selectedPurpose === "Rent" ? "active" : ""}`}
+                                    onClick={() => setSelectedPurpose("Rent")}
+                                >
+                                    RENT
+                                </button>
+                            </div>
                         </div>
-
-                        <div className="toolbar-divider" />
-
-                        {/* Mode selector */}
-                        <select className="toolbar-select" value={heatmapMode} onChange={(e) => setHeatmapMode(e.target.value)}>
-                            {modes.map(m => <option key={m.value} value={m.value}>{m.icon} {m.label}</option>)}
-                        </select>
-
-                        <div className="toolbar-divider" />
-
-                        {/* Type selector */}
-                        <select className="toolbar-select" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
-                            {propertyTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-
-                        <div className="toolbar-divider" />
-
-                        {/* Purpose selector */}
-                        <div className="tile-pills purpose-pills">
-                            <button
-                                className={`tile-pill ${selectedPurpose === "Sale" ? "active" : ""}`}
-                                onClick={() => setSelectedPurpose("Sale")}
-                            >
-                                BUY
-                            </button>
-                            <button
-                                className={`tile-pill ${selectedPurpose === "Rent" ? "active" : ""}`}
-                                onClick={() => setSelectedPurpose("Rent")}
-                            >
-                                RENT
-                            </button>
-                        </div>
-
-                        <div className="toolbar-divider" />
-
-                        {/* Info button */}
-                        <button className={`toolbar-icon-btn info-btn ${showInfo ? 'active' : ''}`} onClick={() => setShowInfo(!showInfo)} title="What does this mean?">
-                            ℹ️ <span className="info-text">About Score</span>
-                        </button>
                     </div>
 
                     <div className="toolbar-right">
-                        {/* Pin toggle */}
-                        <div className="pin-toggle" onClick={() => setShowPins(!showPins)}>
-                            <div className={`toggle-track ${showPins ? "on" : ""}`}>
-                                <div className="toggle-thumb" />
+                        {/* Map Settings Section */}
+                        <div className="toolbar-section">
+                            <div className="pin-toggle" onClick={() => setShowPins(!showPins)} title="Toggle Property Markers">
+                                <div className={`toggle-track ${showPins ? "on" : ""}`}>
+                                    <div className="toggle-thumb" />
+                                </div>
+                                <span className="toggle-label">Pins</span>
                             </div>
-                            <span className="toggle-label">Pins</span>
+
+                            <div className="tile-pills">
+                                {Object.entries(TILE_LAYERS).map(([key, val]) => (
+                                    <button
+                                        key={key}
+                                        className={`tile-pill ${tileLayer === key ? "active" : ""}`}
+                                        onClick={() => setTileLayer(key)}
+                                        title={`${val.label} Mode`}
+                                    >
+                                        {val.label.charAt(0)}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Map style toggle */}
-                        <div className="tile-pills">
-                            {Object.entries(TILE_LAYERS).map(([key, val]) => (
-                                <button
-                                    key={key}
-                                    className={`tile-pill ${tileLayer === key ? "active" : ""}`}
-                                    onClick={() => setTileLayer(key)}
-                                >
-                                    {val.label}
-                                </button>
-                            ))}
-                        </div>
+                        <div className="toolbar-divider" />
 
-                        {/* Close */}
-                        <button className="toolbar-icon-btn close-btn-map" onClick={onClose}>✕</button>
+                        {/* Actions Section */}
+                        <div className="toolbar-section">
+                            <button className={`toolbar-icon-btn info-btn ${showInfo ? 'active' : ''}`} onClick={() => setShowInfo(!showInfo)} title="Market Score Guide">
+                                ℹ️
+                            </button>
+                            <button className="toolbar-icon-btn close-btn-map" onClick={onClose} title="Close Map">✕</button>
+                        </div>
                     </div>
                 </div>
 
@@ -386,8 +497,8 @@ function MapModal({ isOpen, onClose }) {
                                 <span>No properties</span>
                             </div>
                             <div className="legend-item">
-                                <span className="legend-color" style={{ background: "#9ca3af" }}></span>
-                                <span>1–5 properties</span>
+                                <span className="legend-color" style={{ background: palette.colors[0] + "44", border: "1px solid rgba(255,255,255,0.1)" }}></span>
+                                <span>Low Density (1-2)</span>
                             </div>
                             {Object.keys(heatmapData).length > 0 ? (
                                 (() => {
@@ -415,8 +526,8 @@ function MapModal({ isOpen, onClose }) {
 
                 {/* ─── Leaflet Map ─── */}
                 <MapContainer
-                    center={currentCity.coords}
-                    zoom={currentCity.zoom}
+                    center={mapCenter || currentCity.coords}
+                    zoom={mapZoom || currentCity.zoom}
                     scrollWheelZoom={true}
                     style={{ height: "100%", width: "100%" }}
                     key={selectedCity}
@@ -425,7 +536,7 @@ function MapModal({ isOpen, onClose }) {
                         url={TILE_LAYERS[tileLayer].url}
                         attribution='&copy; OpenStreetMap &copy; CARTO'
                     />
-                    <RecenterMap coords={currentCity.coords} />
+                    <RecenterMap coords={mapCenter || currentCity.coords} zoom={mapZoom || currentCity.zoom} />
 
                     {geoData && (
                         <GeoJSON
@@ -439,17 +550,24 @@ function MapModal({ isOpen, onClose }) {
                     {/* Property Pin Markers */}
                     {showPins && allProperties.map(p => {
                         if (!p.latitude || !p.longitude) return null;
+
+                        const priceIcon = L.divIcon({
+                            className: 'price-marker-icon',
+                            html: `
+                                <div class="price-marker-pill">
+                                    <span class="price-marker-text">${formatPrice(p.price)}</span>
+                                    <div class="price-marker-tip"></div>
+                                </div>
+                            `,
+                            iconSize: [70, 30],
+                            iconAnchor: [35, 30]
+                        });
+
                         return (
-                            <CircleMarker
+                            <Marker
                                 key={p.id}
-                                center={[p.latitude, p.longitude]}
-                                radius={6}
-                                pathOptions={{
-                                    color: "#2563eb",
-                                    fillColor: "#3b82f6",
-                                    fillOpacity: 0.85,
-                                    weight: 2
-                                }}
+                                position={[p.latitude, p.longitude]}
+                                icon={priceIcon}
                                 eventHandlers={{
                                     click: () => {
                                         if (p.pinCode) {
@@ -468,7 +586,7 @@ function MapModal({ isOpen, onClose }) {
                                         <small>{p.type} · {p.bhk} BHK</small>
                                     </div>
                                 </Popup>
-                            </CircleMarker>
+                            </Marker>
                         );
                     })}
                 </MapContainer>

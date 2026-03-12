@@ -122,6 +122,10 @@ public class AgentController {
             response.put("propertiesSold", propertiesSold);
             response.put("experience", agent.getExperience());
 
+            // Add reviews and ratings
+            response.put("reviews", agent.getReviews());
+            response.put("rating", agent.getRating());
+
             response.put("featuredProperties", featuredProperties);
             response.put("otherProperties", otherProperties);
             response.put("soldProperties", soldProperties);

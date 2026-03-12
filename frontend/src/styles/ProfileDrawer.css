@@ -12,17 +12,17 @@
   position: fixed;
   top: 0;
   right: 0;
-  width: 350px;
+  width: 360px;
   height: 100vh;
-  background: var(--bg-tertiary);
-  /* Forest Green Background */
+  background: linear-gradient(180deg, #0f1a2e 0%, #060d18 100%);
   color: var(--text-light);
   z-index: 9999;
-  padding: 24px;
+  padding: 28px;
   display: flex;
   flex-direction: column;
-  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4);
   animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 @keyframes slideIn {
@@ -38,8 +38,19 @@
 /* Header */
 .drawer-header {
   text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 24px;
+  position: relative;
+}
+
+.drawer-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
 }
 
 .drawer-avatar {
@@ -162,26 +173,35 @@
 /* Menu */
 .drawer-menu {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 6px;
   margin: 20px 0;
 }
 
 .drawer-menu button {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.9);
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.25s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: none;
 }
 
 .drawer-menu button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-  color: white;
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: #60a5fa;
+  transform: translateX(4px);
+  box-shadow: none;
 }
 
 /* Content */
@@ -285,12 +305,6 @@
   background: #dc2626;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
-}
-
-.logout-btn-drawer:hover {
-  background: rgba(239, 68, 68, 0.3);
-  color: white;
-  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {

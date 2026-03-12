@@ -42,13 +42,26 @@ public class AppUser {
     @Column(name = "specialties")
     private String specialties;
 
+    @Column(name = "reviews")
+    private Integer reviews = 0;
+
+    @Column(name = "rating")
+    private Double rating = 0.0;
+
     // Admin approval for Agents (false = pending, true = approved)
     @Column(name = "verified", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean verified = true;
 
+    // Email verification status
+    @Column(name = "email_verified", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean emailVerified = false;
+
     // Account deletion request flag
     @Column(name = "deletion_requested", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean deletionRequested = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
 
     @Column(name = "created_at")
     private java.time.LocalDateTime createdAt;
@@ -59,6 +72,14 @@ public class AppUser {
     }
 
     // Getters & Setters
+
+    public String getVerificationToken() {
+        return verificationToken;
+    }
+
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
+    }
 
     public Long getId() {
         return id;
@@ -172,6 +193,14 @@ public class AppUser {
         this.verified = verified;
     }
 
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
     public boolean isDeletionRequested() {
         return deletionRequested;
     }
@@ -182,6 +211,22 @@ public class AppUser {
 
     public java.time.LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public Integer getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(Integer reviews) {
+        this.reviews = reviews;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 
     public void setCreatedAt(java.time.LocalDateTime createdAt) {

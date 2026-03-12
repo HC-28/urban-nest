@@ -16,6 +16,9 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
     void deleteByUser_IdAndProperty_Id(Long userId, Long propertyId);
 
+    @jakarta.transaction.Transactional
+    void deleteByUser_Id(Long userId);
+
     long countByUser_Id(Long userId);
 
     long countByProperty_Id(Long propertyId); // For analytics tracking
