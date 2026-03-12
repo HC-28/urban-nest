@@ -34,3 +34,13 @@ frontend/dist/
 vite_out.txt
 vite_err.txt
 
+# Database and Scripts
+*.sql
+*.txt
+!*.md
+
+# Sensitive Configuration
+backend/src/main/resources/application.properties
+application.properties
+**/application.properties
+
