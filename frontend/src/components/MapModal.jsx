@@ -98,6 +98,7 @@ function MapModal({ isOpen, onClose }) {
 
     // Map style
     const [tileLayer, setTileLayer] = useState("dark");
+    const [selectedPurpose, setSelectedPurpose] = useState("Sale");
 
     // Property Pins Toggle
     const [showPins, setShowPins] = useState(false);
@@ -147,7 +148,7 @@ function MapModal({ isOpen, onClose }) {
             .catch(err => { console.error(`Failed to load GeoJSON for ${currentCity.name}:`, err); setGeoData(null); });
 
         const fetchHeatmap = analyticsApi.get(`/heatmap/${encodeURIComponent(selectedCity)}`, {
-            params: { mode: heatmapMode, type: selectedType }
+            params: { mode: heatmapMode, type: selectedType, purpose: selectedPurpose }
         })
             .then(res => {
                 const json = res.data;
@@ -159,17 +160,17 @@ function MapModal({ isOpen, onClose }) {
             .catch(err => console.error("Heatmap fetch error:", err));
 
         Promise.all([fetchGeo, fetchHeatmap]).finally(() => setLoading(false));
-    }, [isOpen, selectedCity, heatmapMode, selectedType]);
+    }, [isOpen, selectedCity, heatmapMode, selectedType, selectedPurpose]);
 
     // Fetch property pins when toggle is on
     useEffect(() => {
         if (!showPins || !isOpen) { setAllProperties([]); return; }
         setLoadingPins(true);
-        propertyApi.get(`/`, { params: { city: selectedCity, type: selectedType } })
+        propertyApi.get(`/`, { params: { city: selectedCity, type: selectedType, purpose: selectedPurpose } })
             .then(res => setAllProperties(res.data || []))
             .catch(() => setAllProperties([]))
             .finally(() => setLoadingPins(false));
-    }, [showPins, selectedCity, selectedType, isOpen]);
+    }, [showPins, selectedCity, selectedType, selectedPurpose, isOpen]);
 
     // Color logic
     const getColor = (feature) => {
@@ -191,7 +192,7 @@ function MapModal({ isOpen, onClose }) {
         setLoadingMini(true);
         setSelectedPincode(pincode);
         try {
-            const res = await propertyApi.get(`/top?pincode=${pincode}&mode=${heatmapMode}`);
+            const res = await propertyApi.get(`/top?pincode=${pincode}&mode=${heatmapMode}&purpose=${selectedPurpose}`);
             setMiniProperties(res.data);
         } catch { console.error("Failed to fetch mini properties"); }
         finally { setLoadingMini(false); }
@@ -267,6 +268,31 @@ function MapModal({ isOpen, onClose }) {
                         <select className="toolbar-select" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
                             {propertyTypes.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
+
+                        <div className="toolbar-divider" />
+
+                        {/* Purpose selector */}
+                        <div className="tile-pills purpose-pills">
+                            <button
+                                className={`tile-pill ${selectedPurpose === "Sale" ? "active" : ""}`}
+                                onClick={() => setSelectedPurpose("Sale")}
+                            >
+                                BUY
+                            </button>
+                            <button
+                                className={`tile-pill ${selectedPurpose === "Rent" ? "active" : ""}`}
+                                onClick={() => setSelectedPurpose("Rent")}
+                            >
+                                RENT
+                            </button>
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        {/* Info button */}
+                        <button className={`toolbar-icon-btn info-btn ${showInfo ? 'active' : ''}`} onClick={() => setShowInfo(!showInfo)} title="What does this mean?">
+                            ℹ️ <span className="info-text">About Score</span>
+                        </button>
                     </div>
 
                     <div className="toolbar-right">
@@ -290,11 +316,6 @@ function MapModal({ isOpen, onClose }) {
                                 </button>
                             ))}
                         </div>
-
-                        {/* Info button */}
-                        <button className={`toolbar-icon-btn info-btn ${showInfo ? 'active' : ''}`} onClick={() => setShowInfo(!showInfo)} title="What does this mean?">
-                            ℹ️ <span className="info-text">About Score</span>
-                        </button>
 
                         {/* Close */}
                         <button className="toolbar-icon-btn close-btn-map" onClick={onClose}>✕</button>

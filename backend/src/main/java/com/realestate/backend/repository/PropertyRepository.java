@@ -24,6 +24,19 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
 
         List<Property> findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(String pinCode);
 
+        // Filtered Top 5
+        List<Property> findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByPriceDesc(String pinCode,
+                        String purpose);
+
+        List<Property> findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByPriceAsc(String pinCode,
+                        String purpose);
+
+        List<Property> findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(String pinCode,
+                        String purpose);
+
+        List<Property> findTop5ByPinCodeAndPurposeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(String pinCode,
+                        String purpose);
+
         @Query("SELECT p.pinCode, COUNT(p), AVG(p.price / p.area) FROM Property p WHERE p.isActive = true AND p.isSold = false AND p.area > 0 GROUP BY p.pinCode")
         List<Object[]> countActivePropertiesByPinCode();
 
@@ -49,9 +62,17 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
         List<Object[]> countActivePropertiesByPinCodeAndCityAndType(@Param("city") String city,
                         @Param("type") String type);
 
-        @Query("SELECT p.pinCode, COUNT(p), AVG(p.price / p.area) FROM Property p WHERE p.isActive = true AND p.isSold = false AND p.area > 0 AND LOWER(p.city) = LOWER(:city) AND p.purpose = :purpose AND LOWER(p.type) = LOWER(:type) GROUP BY p.pinCode")
+        @Query("SELECT p.pinCode, COUNT(p), AVG(p.price / p.area), SUM(p.views), SUM(p.favorites), SUM(p.inquiries) FROM Property p WHERE p.isActive = true AND p.isSold = false AND p.area > 0 AND LOWER(p.city) = LOWER(:city) AND LOWER(p.purpose) = LOWER(:purpose) AND LOWER(p.type) = LOWER(:type) GROUP BY p.pinCode")
+        List<Object[]> countActivePropertiesByPinCodeAndCityAndPurposeAndTypeWithEngagement(@Param("city") String city,
+                        @Param("purpose") String purpose, @Param("type") String type);
+
+        @Query("SELECT p.pinCode, COUNT(p), AVG(p.price / p.area) FROM Property p WHERE p.isActive = true AND p.isSold = false AND p.area > 0 AND LOWER(p.city) = LOWER(:city) AND LOWER(p.purpose) = LOWER(:purpose) AND LOWER(p.type) = LOWER(:type) GROUP BY p.pinCode")
         List<Object[]> countActivePropertiesByPinCodeAndCityAndPurposeAndType(@Param("city") String city,
                         @Param("purpose") String purpose, @Param("type") String type);
+
+        @Query("SELECT p.pinCode, COUNT(p), AVG(p.price / p.area), SUM(p.views), SUM(p.favorites), SUM(p.inquiries) FROM Property p WHERE p.isActive = true AND p.isSold = false AND p.area > 0 AND LOWER(p.city) = LOWER(:city) AND LOWER(p.purpose) = LOWER(:purpose) GROUP BY p.pinCode")
+        List<Object[]> countActivePropertiesByPinCodeAndCityAndPurposeWithEngagement(@Param("city") String city,
+                        @Param("purpose") String purpose);
 
         List<Property> findByPurpose(String purpose);
 

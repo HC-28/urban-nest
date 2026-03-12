@@ -28,7 +28,13 @@ public class AnalyticsService {
     private PincodeScoreRepository pincodeScoreRepository;
 
     @Autowired
+    private com.realestate.backend.repository.UserRepository userRepository;
+
+    @Autowired
     private FavoriteRepository favoriteRepository;
+
+    @Autowired
+    private PropertyViewRepository propertyViewRepository;
 
     /**
      * Auto-compute scores for all cities on application startup
@@ -368,17 +374,6 @@ public class AnalyticsService {
     }
 
     /**
-     * Track a property view
-     */
-    @Autowired
-    private PropertyViewRepository propertyViewRepository;
-
-    @Autowired
-    private com.realestate.backend.repository.UserRepository userRepository;
-
-    // ... existing initialization ...
-
-    /**
      * Track a property view (Unique per user)
      */
     @Transactional
@@ -387,32 +382,20 @@ public class AnalyticsService {
             return;
         propertyRepository.findById(propertyId).ifPresent(property -> {
             boolean isUniqueView = true;
-
             if (userId != null) {
-                // Logged-in user: Check if they viewed it before
-                Optional<AppUser> userOpt = userRepository.findById(userId);
-                if (userOpt.isPresent()) {
-                    AppUser user = userOpt.get();
+                userRepository.findById(userId).ifPresent(user -> {
                     Optional<PropertyView> existingView = propertyViewRepository.findByUserAndProperty(user, property);
-
                     if (existingView.isPresent()) {
-                        // Update timestamp, do NOT increment public view count
                         PropertyView view = existingView.get();
                         view.setViewedAt(LocalDateTime.now());
                         propertyViewRepository.save(view);
-                        isUniqueView = false;
                     } else {
-                        // New view for this user
-                        PropertyView newView = new PropertyView(user, property);
-                        propertyViewRepository.save(newView);
+                        propertyViewRepository.save(new PropertyView(user, property));
                     }
-                }
+                });
+                isUniqueView = false; // Simplified logic, for guests it remains true
             }
-
-            // Increment public view count only if it's a unique view (or guest)
-            // Note: For guests (userId=null), we always increment (simple cookie-based
-            // tracking is out of scope)
-            if (isUniqueView) {
+            if (isUniqueView || userId == null) {
                 property.setViews(property.getViews() + 1);
                 property.setLastViewedAt(LocalDateTime.now());
                 propertyRepository.save(property);
@@ -421,7 +404,7 @@ public class AnalyticsService {
     }
 
     /**
-     * Track a property view (Legacy/Guest method)
+     * Delegate for trackView with propertyId only
      */
     @Transactional
     public void trackView(Long propertyId) {
@@ -447,16 +430,16 @@ public class AnalyticsService {
     public void trackInquiry(Long propertyId) {
         if (propertyId == null)
             return;
-        propertyRepository.findById(propertyId).ifPresent(property -> {
-            property.setInquiries(property.getInquiries() + 1);
-            propertyRepository.save(property);
+        propertyRepository.findById(propertyId).ifPresent(p -> {
+            p.setInquiries(p.getInquiries() + 1);
+            propertyRepository.save(p);
         });
     }
 
     /**
-     * Get heatmap data for a city
+     * Get pre-computed heatmap data for a city (No filters)
      */
-    public List<Map<String, Object>> getHeatmapData(String city, String mode) {
+    private List<Map<String, Object>> getPrecomputedHeatmapData(String city, String mode) {
         // Use case-insensitive lookup so "Ahmedabad" matches "ahmedabad" in DB
         List<PincodeScore> scores = pincodeScoreRepository.findByCityIgnoreCase(city);
 
@@ -502,20 +485,35 @@ public class AnalyticsService {
     }
 
     /**
-     * Get heatmap data for a city, optionally filtered by property type
+     * Get heatmap data for a city, optionally filtered by property type and purpose
      */
-    public List<Map<String, Object>> getHeatmapData(String city, String mode, String type) {
-        if (type != null && !type.equalsIgnoreCase("All") && !type.trim().isEmpty()) {
-            return getDynamicHeatmapData(city, mode, type);
+    public List<Map<String, Object>> getHeatmapData(String city, String mode, String type, String purpose) {
+        if ((type != null && !type.equalsIgnoreCase("All") && !type.trim().isEmpty()) ||
+                (purpose != null && !purpose.trim().isEmpty())) {
+            return getDynamicHeatmapData(city, mode, type, purpose);
         }
-        return getHeatmapData(city, mode);
+        return getPrecomputedHeatmapData(city, mode);
     }
 
     /**
-     * Generate heatmap data dynamically for a specific property type
+     * Generate heatmap data dynamically for a specific property type and purpose
      */
-    private List<Map<String, Object>> getDynamicHeatmapData(String city, String mode, String type) {
-        List<Object[]> results = propertyRepository.countActivePropertiesByPinCodeAndCityAndType(city, type);
+    private List<Map<String, Object>> getDynamicHeatmapData(String city, String mode, String type, String purpose) {
+        boolean hasType = type != null && !type.equalsIgnoreCase("All") && !type.trim().isEmpty();
+        boolean hasPurpose = purpose != null && !purpose.trim().isEmpty();
+
+        List<Object[]> results;
+        if (hasType && hasPurpose) {
+            results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurposeAndTypeWithEngagement(city,
+                    purpose, type);
+        } else if (hasType) {
+            results = propertyRepository.countActivePropertiesByPinCodeAndCityAndType(city, type);
+        } else if (hasPurpose) {
+            results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurposeWithEngagement(city, purpose);
+        } else {
+            return getPrecomputedHeatmapData(city, mode);
+        }
+
         List<PincodeScore> dynamicScores = new ArrayList<>();
 
         int maxListings = 0;

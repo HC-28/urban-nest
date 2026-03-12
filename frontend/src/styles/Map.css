@@ -295,6 +295,16 @@
     color: #ffffff;
 }
 
+@media (max-width: 1200px) {
+    .info-text {
+        display: none;
+    }
+
+    .info-btn {
+        padding: 0 12px;
+    }
+}
+
 /* ─── Leaflet Overrides ─── */
 .leaflet-container {
     width: 100%;

@@ -25,13 +25,14 @@ public class AnalyticsController {
             @PathVariable String city,
             @RequestParam(required = false, defaultValue = "price") String mode,
             @RequestParam(required = false) String userType,
-            @RequestParam(required = false) String type) {
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String purpose) {
         try {
             if (mode.equals("price") && userType != null) {
                 mode = userType.equalsIgnoreCase("agent") ? "demand" : "price";
             }
 
-            List<Map<String, Object>> heatmapData = analyticsService.getHeatmapData(city, mode, type);
+            List<Map<String, Object>> heatmapData = analyticsService.getHeatmapData(city, mode, type, purpose);
 
             return ResponseEntity.ok(Map.of(
                     "city", city,
@@ -68,7 +69,7 @@ public class AnalyticsController {
             if (userId != null) {
                 analyticsService.trackView(propertyId, userId);
             } else {
-                analyticsService.trackView(propertyId);
+                analyticsService.trackView(propertyId, null);
             }
             return ResponseEntity.ok(Map.of("message", "View tracked"));
         } catch (Exception ex) {
