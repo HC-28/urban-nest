@@ -9,7 +9,7 @@ import {
     FiHome, FiMessageCircle, FiUsers, FiEdit, FiTrash2,
     FiEye, FiEyeOff, FiSend, FiCheckCircle, FiXCircle,
     FiTrendingUp, FiDollarSign, FiActivity, FiPieChart, FiX,
-    FiCalendar, FiSearch, FiFilter, FiAlertTriangle, FiClock, FiUser, FiLock
+    FiCalendar, FiSearch, FiFilter, FiAlertTriangle, FiClock, FiUser, FiLock, FiShield
 } from "react-icons/fi";
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -59,13 +59,21 @@ function AdminDashboard() {
 
             const propsRes = await adminApi.get("/properties");
             const allProperties = propsRes.data;
-            setProperties(allProperties);
 
             const chatsRes = await adminApi.get("/chats").catch(() => ({ data: [] }));
             setChats(chatsRes.data);
 
             const usersRes = await adminApi.get("/users");
             setUsers(usersRes.data);
+
+            const enrichedProperties = allProperties.map(p => {
+                const agent = usersRes.data.find(u => u.id == p.agentId);
+                return {
+                    ...p,
+                    agentName: agent?.name || p.agentName || "N/A"
+                };
+            }).sort((a, b) => b.id - a.id);
+            setProperties(enrichedProperties);
 
             const allApptsRes = await adminApi.get("/appointments").catch(() => ({ data: [] }));
             setAppointments(allApptsRes.data || []);
@@ -76,7 +84,7 @@ function AdminDashboard() {
             setDeletedUsers(deletedRes.data || []);
 
             const existingDeals = rawDeals.map(deal => {
-                const prop = allProperties.find(p => p.id === deal.propertyId);
+                const prop = enrichedProperties.find(p => p.id == deal.propertyId);
                 const finalPrice = deal.finalizePrice || prop?.price || 0;
                 const pPurpose = (prop?.purpose || '').toLowerCase();
                 const isRent = pPurpose.includes('rent');
@@ -84,13 +92,17 @@ function AdminDashboard() {
                 // Fallback to finding feedback in chats if property cache is empty
                 let computedReview = prop?.review;
                 if (!computedReview) {
-                    const fbMsg = chatsRes.data.find(c => c.propertyId === deal.propertyId && c.message?.startsWith('⭐ FEEDBACK:'));
+                    const fbMsg = chatsRes.data.find(c => c.propertyId == deal.propertyId && c.message?.startsWith('⭐ FEEDBACK:'));
                     if (fbMsg) computedReview = fbMsg.message.includes('Positive') ? 'Positive' : 'Negative';
                 }
 
+                const agent = usersRes.data.find(u => u.id == deal.agentId);
+
                 return {
                     ...deal,
+                    displayedId: prop?.id || deal.propertyId, // Prefer Property ID for identification
                     propertyName: prop?.title || `Property #${deal.propertyId}`,
+                    agentName: agent?.name || `Agent #${deal.agentId}`,
                     finalizePrice: finalPrice,
                     commission: finalPrice * 0.01,
                     review: computedReview
@@ -98,7 +110,7 @@ function AdminDashboard() {
             });
 
             const dealPropertyIds = new Set(existingDeals.map(d => d.propertyId));
-            const manualSold = allProperties
+            const manualSold = enrichedProperties
                 .filter(p => p.status === 'SOLD' && !dealPropertyIds.has(p.id))
                 .map(p => {
                     const price = p.price || 0;
@@ -106,34 +118,35 @@ function AdminDashboard() {
                     // Fallback to finding feedback in chats if property cache is empty
                     let computedReview = p.review;
                     if (!computedReview) {
-                        const fbMsg = chatsRes.data.find(c => c.propertyId === p.id && c.message?.startsWith('⭐ FEEDBACK:'));
+                        const fbMsg = chatsRes.data.find(c => c.propertyId == p.id && c.message?.startsWith('⭐ FEEDBACK:'));
                         if (fbMsg) computedReview = fbMsg.message.includes('Positive') ? 'Positive' : 'Negative';
                     }
 
                     return {
-                        id: `PROP-${p.id}`,
+                        id: `${p.id}`,
+                        displayedId: p.id,
                         propertyId: p.id,
                         buyerName: p.buyerName || 'N/A',
                         agentName: p.agentName || 'N/A',
                         propertyName: p.title || 'N/A',
                         finalizePrice: price,
-                        commission: price * 0.01,
+                        commission: 0, // Direct sales via agent carry no platform commission
                         review: computedReview,
-                        updatedAt: new Date().toISOString()
+                        updatedAt: p.soldAt || new Date().toISOString()
                     };
                 });
 
-            const allSold = [...existingDeals, ...manualSold];
+            const allSold = [...existingDeals, ...manualSold].map(d => ({ ...d, isSold: true }));
             setSoldDeals(allSold);
 
             const totalCommission = allSold.reduce((acc, d) => acc + (d.commission || 0), 0);
             const totalSales = allSold.reduce((acc, d) => acc + (d.finalizePrice || 0), 0);
 
             setStats({
-                totalProperties: allProperties.length,
+                totalProperties: enrichedProperties.length,
                 totalChats: chatsRes.data.length,
                 totalUsers: usersRes.data.length,
-                activeListings: allProperties.filter(p => p.active).length,
+                activeListings: enrichedProperties.filter(p => p.active).length,
                 totalCommission,
                 totalSales
             });
@@ -206,7 +219,7 @@ function AdminDashboard() {
     const handleViewChat = async (chat) => {
         try {
             const response = await chatApi.get(
-                `/conversation?propertyId=${chat.propertyId}&buyerId=${chat.buyerId}&agentId=${chat.agentId}`
+                `/messages?propertyId=${chat.propertyId}&buyerId=${chat.buyerId}&agentId=${chat.agentId}`
             );
             setChatMessages(response.data);
             setSelectedChat(chat);
@@ -216,7 +229,7 @@ function AdminDashboard() {
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !selectedChat) return;
         try {
-            await chatApi.post("/send", {
+            await chatApi.post("/messages", {
                 propertyId: selectedChat.propertyId,
                 buyerId: selectedChat.buyerId,
                 agentId: selectedChat.agentId,
@@ -224,7 +237,7 @@ function AdminDashboard() {
                 message: newMessage
             });
             const response = await chatApi.get(
-                `/conversation?propertyId=${selectedChat.propertyId}&buyerId=${selectedChat.buyerId}&agentId=${selectedChat.agentId}`
+                `/messages?propertyId=${selectedChat.propertyId}&buyerId=${selectedChat.buyerId}&agentId=${selectedChat.agentId}`
             );
             setChatMessages(response.data);
             setNewMessage("");
@@ -234,7 +247,7 @@ function AdminDashboard() {
     const handleResolveChat = async () => {
         if (!selectedChat || !window.confirm("Mark this conversation as resolved?")) return;
         try {
-            await chatApi.post("/send", {
+            await chatApi.post("/messages", {
                 propertyId: selectedChat.propertyId,
                 buyerId: selectedChat.buyerId,
                 agentId: selectedChat.agentId,
@@ -242,7 +255,7 @@ function AdminDashboard() {
                 message: "✅ This issue has been marked as resolved."
             });
             const response = await chatApi.get(
-                `/conversation?propertyId=${selectedChat.propertyId}&buyerId=${selectedChat.buyerId}&agentId=${selectedChat.agentId}`
+                `/messages?propertyId=${selectedChat.propertyId}&buyerId=${selectedChat.buyerId}&agentId=${selectedChat.agentId}`
             );
             setChatMessages(response.data);
             fetchAllData();
@@ -305,6 +318,7 @@ function AdminDashboard() {
                 buyerName: buyer?.name || `Buyer ${chat.buyerId}`,
                 agentId: chat.agentId,
                 agentName: agent?.name || `Agent ${chat.agentId}`,
+                isSold: property?.status === 'SOLD',
                 id: chat.id,
                 latestCreatedAt: 0,
                 lastRequestTime: 0,
@@ -897,13 +911,13 @@ function AdminDashboard() {
                                         <table>
                                             <thead>
                                                 <tr>
-                                                    <th>ID</th><th>Property</th><th>Buyer</th><th>Agent</th><th>Final Price</th><th>Commission</th><th>Review</th><th>Date</th>
+                                                    <th>ID</th><th>Property</th><th>Buyer</th><th>Agent</th><th>Final Price</th><th>Commission</th><th>Review</th><th>Date</th><th>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {soldDeals.map((deal) => (
-                                                    <tr key={deal.id}>
-                                                        <td>{deal.id}</td>
+                                                {soldDeals.map((deal, idx) => (
+                                                    <tr key={`${deal.id}-${deal.propertyId}-${idx}`}>
+                                                        <td>{deal.displayedId}</td>
                                                         <td>{deal.propertyName || deal.propertyId}</td>
                                                         <td>{deal.buyerName || deal.buyerId}</td>
                                                         <td>{deal.agentName || deal.agentId}</td>
@@ -925,6 +939,13 @@ function AdminDashboard() {
                                                             )}
                                                         </td>
                                                         <td>{new Date(deal.updatedAt).toLocaleDateString()}</td>
+                                                        <td className="action-btns">
+                                                            {deal.buyerId && deal.agentId && (
+                                                                <button className="reply-btn" onClick={() => handleViewChat(deal)} title="View Conversation">
+                                                                    <FiMessageCircle /> Chat
+                                                                </button>
+                                                            )}
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -974,7 +995,7 @@ function AdminDashboard() {
                                             <div className="agent-chart-container">
                                                 <h3>📊 Performance Trend</h3>
                                                 <div style={{ height: '350px', width: '100%' }}>
-                                                    <ResponsiveContainer width="100%" height="100%">
+                                                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                                                         <AreaChart data={agentAnalysis.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                                             <defs>
                                                                 <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
@@ -1173,7 +1194,7 @@ function AdminDashboard() {
                         <div className="chat-modal-header">
                             <div>
                                 <h2>💬 Conversation</h2>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                                     {selectedChat.propertyName} · {selectedChat.buyerName} ↔ {selectedChat.agentName}
                                 </p>
                             </div>
@@ -1184,39 +1205,65 @@ function AdminDashboard() {
 
                         <div className="chat-messages">
                             {chatMessages.length === 0 ? (
-                                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px' }}>No messages yet</p>
+                                <div className="no-messages">
+                                    <p>No messages in this conversation yet.</p>
+                                </div>
                             ) : (
-                                chatMessages.map((msg, i) => (
-                                    <div key={i} className={`chat-bubble-wrap ${msg.sender === 'BUYER' ? 'left' : 'right'}`}>
-                                        <div className={`chat-bubble ${msg.sender?.toLowerCase()}`}>
+                                chatMessages.map((msg, i) => {
+                                    const isMe = msg.sender === 'ADMIN';
+                                    const senderClass = msg.sender?.toLowerCase();
+
+                                    return (
+                                        <div key={i} className={`chat-bubble-wrap ${isMe ? 'right' : 'left'}`}>
                                             <div className="chat-sender">
-                                                {msg.sender === 'BUYER' ? '👤 Buyer' : msg.sender === 'ADMIN' ? '🛡️ Admin' : '🏠 Agent'}
+                                                {msg.sender === 'BUYER' ? <><FiUser /> Buyer</> :
+                                                    msg.sender === 'ADMIN' ? <><FiShield /> Admin</> :
+                                                        <><FiHome /> Agent</>}
                                             </div>
-                                            <div>{msg.message}</div>
-                                            <div className="chat-time">
-                                                {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ''}
+                                            <div className={`chat-bubble ${senderClass}`}>
+                                                <div className="msg-content">{msg.message}</div>
+                                                <div className="chat-time">
+                                                    {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
 
-                        <div className="chat-input-wrap">
-                            <input
-                                type="text"
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                                placeholder="Type your message..."
-                            />
-                            <button className="send-btn" onClick={handleSendMessage}>
-                                <FiSend /> Send
-                            </button>
-                        </div>
+                        {selectedChat.isSold ? (
+                            <div className="chat-sold-overlay" style={{
+                                padding: '1.5rem',
+                                textAlign: 'center',
+                                background: 'rgba(0,0,0,0.1)',
+                                borderTop: '1px solid var(--border-light)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center'
+                            }}>
+                                <FiLock size={20} style={{ marginBottom: '0.5rem', color: '#64748b' }} />
+                                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Messaging disabled for sold properties</p>
+                            </div>
+                        ) : (
+                            <div className="chat-input-wrap">
+                                <input
+                                    type="text"
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                                    placeholder="Write a response as Admin..."
+                                />
+                                <button className="send-btn" onClick={handleSendMessage}>
+                                    <FiSend /> Send
+                                </button>
+                            </div>
+                        )}
 
                         <div className="chat-modal-footer">
-                            <button className="resolve-btn" onClick={handleResolveChat}>✅ Mark as Resolved</button>
+                            {!selectedChat.isSold && (
+                                <button className="resolve-btn" onClick={handleResolveChat}>✅ Mark as Resolved</button>
+                            )}
                             <button className="btn-cancel" onClick={() => { setSelectedChat(null); setChatMessages([]); }}>Close</button>
                         </div>
                     </div>

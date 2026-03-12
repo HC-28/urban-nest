@@ -370,8 +370,8 @@ export default function Properties() {
           <div className="recently-viewed-section">
             <h3>Recently Viewed</h3>
             <div className="recently-viewed-grid">
-              {recentlyViewed.map((p) => (
-                <div key={p.id} className="recently-viewed-card" onClick={() => navigate(`/property/${p.id}`)}>
+              {recentlyViewed.map((p, idx) => (
+                <div key={`rv-${p.id}-${idx}`} className="recently-viewed-card" onClick={() => navigate(`/property/${p.id}`)}>
                   <div className="rv-image">
                     {p.photo ? <img src={p.photo} alt={p.title} /> : <div className="rv-placeholder">🏠</div>}
                   </div>
@@ -400,8 +400,8 @@ export default function Properties() {
             {paginatedProperties.length > 0 ? (
               <>
                 <div className="properties-grid">
-                  {paginatedProperties.map((p) => (
-                    <PropertyCard key={p.id} property={p} viewMode="grid" formatPrice={formatPrice} />
+                  {paginatedProperties.map((p, idx) => (
+                    <PropertyCard key={`prop-${p.id}-${idx}`} property={p} viewMode="grid" formatPrice={formatPrice} />
                   ))}
                 </div>
 

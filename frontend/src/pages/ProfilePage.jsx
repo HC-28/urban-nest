@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { adminApi } from "../api/api";
 import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { userApi, propertyApi, favoritesApi } from "../api/api";
+import { userApi, propertyApi, favoritesApi, analyticsApi } from "../api/api";
 import toast from "react-hot-toast";
-import { FiLock, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiLock, FiEye, FiEyeOff, FiShield, FiUsers, FiHome, FiTrendingUp, FiCheckCircle, FiEdit2 } from "react-icons/fi";
 import "../styles/Profile.css";
 import {
     FiUser,
@@ -38,6 +39,14 @@ function ProfilePage() {
     const [showCurrentPw, setShowCurrentPw] = useState(false);
     const [showNewPw, setShowNewPw] = useState(false);
 
+    // Admin stats
+    const [adminStats, setAdminStats] = useState({ totalProperties: 0, totalUsers: 0, propertiesSold: 0 });
+
+    // Admin inline-name edit
+    const [adminEditingName, setAdminEditingName] = useState(false);
+    const [adminNewName, setAdminNewName] = useState(user?.name || "");
+    const [adminNameLoading, setAdminNameLoading] = useState(false);
+
     const [formData, setFormData] = useState({
         name: user?.name || "",
         phone: user?.phone || "",
@@ -55,12 +64,37 @@ function ProfilePage() {
             return;
         }
 
+        // Fetch admin stats once on mount
+        if (user.role?.toUpperCase() === "ADMIN") {
+            adminApi.get("/stats").then(res => {
+                setAdminStats({
+                    totalProperties: res.data.totalProperties ?? 0,
+                    totalUsers: res.data.totalUsers ?? 0,
+                    propertiesSold: res.data.propertiesSold ?? 0,
+                });
+            }).catch(() => { });
+        }
+
         if (activeTab === "listings" && user.role?.toUpperCase() === "AGENT") {
             fetchMyProperties();
         } else if (activeTab === "favorites") {
             fetchFavorites();
         }
     }, [activeTab, user, navigate]);
+
+    const handleAdminSaveName = async () => {
+        if (!adminNewName.trim()) return;
+        setAdminNameLoading(true);
+        try {
+            await userApi.put("/me/profile", { name: adminNewName.trim() });
+            const updated = { ...user, name: adminNewName.trim() };
+            localStorage.setItem("user", JSON.stringify(updated));
+            setUser(updated);
+            setAdminEditingName(false);
+            toast.success("Name updated!");
+        } catch { toast.error("Failed to update name"); }
+        finally { setAdminNameLoading(false); }
+    };
 
     const fetchMyProperties = async () => {
         try {
@@ -166,7 +200,185 @@ function ProfilePage() {
 
     if (!user) return null;
 
+    const isAdmin = user.role?.toUpperCase() === "ADMIN";
     const isAgent = user.role?.toUpperCase() === "AGENT";
+
+    // ===== ADMIN PROFILE PAGE =====
+    if (isAdmin) {
+        return (
+            <div className="profile-page">
+                <Navbar />
+                <div style={{ maxWidth: 900, margin: "100px auto 60px", padding: "0 20px" }}>
+
+                    {/* Back link */}
+                    <button
+                        onClick={() => navigate("/admin")}
+                        style={{ background: "none", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: "0.95rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 6, marginBottom: 28, padding: 0 }}
+                    >
+                        <FiArrowLeft /> Back to Admin Dashboard
+                    </button>
+
+                    {/* Main Card */}
+                    <div style={{ background: "linear-gradient(135deg, #0f1a2e 0%, #0c1526 100%)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 24px 60px rgba(0,0,0,0.5)", overflow: "hidden" }}>
+
+                        {/* Hero Banner */}
+                        <div style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #162d4f 50%, #0f2040 100%)", padding: "40px 40px 0", position: "relative", overflow: "hidden" }}>
+                            <div style={{ position: "absolute", top: 0, right: 0, width: 300, height: 300, background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)", borderRadius: "50%", transform: "translate(80px,-80px)" }} />
+                            <div style={{ position: "absolute", bottom: 0, left: "30%", width: 200, height: 200, background: "radial-gradient(circle, rgba(99,160,255,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
+
+                            {/* Avatar + Info Row */}
+                            <div style={{ display: "flex", alignItems: "flex-end", gap: 28, position: "relative", zIndex: 1 }}>
+                                {/* Avatar */}
+                                <div style={{ position: "relative", flexShrink: 0 }}>
+                                    <img
+                                        src={user.profilePicture || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect fill='%231e3a5f' width='120' height='120'/%3E%3Ctext fill='%2360a5fa' font-family='sans-serif' font-size='48' dy='18' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3E" + (user.name?.[0]?.toUpperCase() || "A") + "%3C/text%3E%3C/svg%3E"}
+                                        alt={user.name}
+                                        style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "cover", border: "4px solid rgba(59,130,246,0.5)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)", display: "block" }}
+                                        onError={(e) => { e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect fill='%231e3a5f' width='120' height='120'/%3E%3Ctext fill='%2360a5fa' font-family='sans-serif' font-size='48' dy='18' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E"; }}
+                                    />
+                                    <div style={{ position: "absolute", bottom: 4, right: 4, background: "#1d4ed8", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #0f1a2e" }}>
+                                        <FiShield size={14} color="white" />
+                                    </div>
+                                </div>
+
+                                {/* Name + Email */}
+                                <div style={{ paddingBottom: 20 }}>
+                                    {adminEditingName ? (
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                                            <input
+                                                autoFocus
+                                                value={adminNewName}
+                                                onChange={e => setAdminNewName(e.target.value)}
+                                                style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(59,130,246,0.5)", borderRadius: 8, padding: "6px 12px", color: "white", fontSize: "1.3rem", fontWeight: 700, outline: "none", width: 220 }}
+                                                onKeyDown={e => { if (e.key === "Enter") handleAdminSaveName(); if (e.key === "Escape") setAdminEditingName(false); }}
+                                            />
+                                            <button onClick={handleAdminSaveName} disabled={adminNameLoading} style={{ background: "#2563eb", border: "none", borderRadius: 6, padding: "6px 14px", color: "white", fontWeight: 600, cursor: "pointer", fontSize: "0.85rem" }}>{adminNameLoading ? "Saving..." : "Save"}</button>
+                                            <button onClick={() => setAdminEditingName(false)} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 6, padding: "6px 12px", color: "#94a3b8", cursor: "pointer", fontSize: "0.85rem" }}>Cancel</button>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                                            <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "white", margin: 0 }}>{user.name}</h1>
+                                            <button onClick={() => { setAdminNewName(user.name); setAdminEditingName(true); }} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#94a3b8" }}>
+                                                <FiEdit2 size={13} />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <p style={{ color: "rgba(255,255,255,0.6)", margin: "0 0 10px", fontSize: "0.95rem" }}>{user.email}</p>
+                                    <span style={{ background: "rgba(59,130,246,0.2)", color: "#60a5fa", border: "1px solid rgba(59,130,246,0.35)", borderRadius: 20, padding: "3px 14px", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Administrator</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Stats Row */}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                            {[
+                                { icon: <FiHome size={20} color="#60a5fa" />, label: "Total Properties", value: adminStats.totalProperties },
+                                { icon: <FiUsers size={20} color="#34d399" />, label: "Registered Users", value: adminStats.totalUsers },
+                                { icon: <FiCheckCircle size={20} color="#f59e0b" />, label: "Properties Sold", value: adminStats.propertiesSold },
+                            ].map((s, i) => (
+                                <div key={i} style={{ padding: "24px", textAlign: "center", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                                    <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>{s.icon}</div>
+                                    <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "white" }}>{s.value}</div>
+                                    <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: 0.5 }}>{s.label}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div style={{ padding: "28px 40px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                            <h3 style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Quick Actions</h3>
+                            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                                <button onClick={() => navigate("/admin")} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)", borderRadius: 10, padding: "12px 20px", color: "#60a5fa", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "rgba(59,130,246,0.2)"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "rgba(59,130,246,0.12)"}
+                                >
+                                    <FiShield size={16} /> Admin Dashboard
+                                </button>
+                                <button onClick={() => navigate("/admin#users")} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 10, padding: "12px 20px", color: "#34d399", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "rgba(52,211,153,0.18)"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "rgba(52,211,153,0.1)"}
+                                >
+                                    <FiUsers size={16} /> Manage Users
+                                </button>
+                                <button onClick={() => navigate("/admin#properties")} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, padding: "12px 20px", color: "#f59e0b", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "rgba(245,158,11,0.18)"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "rgba(245,158,11,0.1)"}
+                                >
+                                    <FiHome size={16} /> Manage Properties
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Change Password */}
+                        <div style={{ padding: "28px 40px 36px" }}>
+                            <h3 style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: 1, marginBottom: 20 }}>Security</h3>
+                            <div style={{ maxWidth: 420 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                                    <FiLock size={18} color="#60a5fa" />
+                                    <span style={{ color: "white", fontWeight: 600 }}>Change Password</span>
+                                </div>
+                                {passwordMessage.text && (
+                                    <div style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 16, background: passwordMessage.type === "success" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", color: passwordMessage.type === "success" ? "#34D399" : "#F87171", fontSize: "0.9rem" }}>
+                                        {passwordMessage.text}
+                                    </div>
+                                )}
+                                <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                    <div style={{ position: "relative" }}>
+                                        <input
+                                            type={showCurrentPw ? "text" : "password"}
+                                            placeholder="Current password"
+                                            value={passwordData.currentPassword}
+                                            onChange={e => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))}
+                                            required
+                                            style={{ width: "100%", padding: "12px 44px 12px 16px", background: "rgba(15,23,42,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#E2E8F0", fontSize: "0.95rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
+                                        />
+                                        <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748B", cursor: "pointer" }}>
+                                            {showCurrentPw ? <FiEyeOff /> : <FiEye />}
+                                        </button>
+                                    </div>
+                                    <div style={{ position: "relative" }}>
+                                        <input
+                                            type={showNewPw ? "text" : "password"}
+                                            placeholder="New password (min 6 chars)"
+                                            value={passwordData.newPassword}
+                                            onChange={e => setPasswordData(p => ({ ...p, newPassword: e.target.value }))}
+                                            required minLength={6}
+                                            style={{ width: "100%", padding: "12px 44px 12px 16px", background: "rgba(15,23,42,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#E2E8F0", fontSize: "0.95rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
+                                        />
+                                        <button type="button" onClick={() => setShowNewPw(!showNewPw)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748B", cursor: "pointer" }}>
+                                            {showNewPw ? <FiEyeOff /> : <FiEye />}
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        placeholder="Confirm new password"
+                                        value={passwordData.confirmPassword}
+                                        onChange={e => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))}
+                                        required minLength={6}
+                                        style={{ width: "100%", padding: "12px 16px", background: "rgba(15,23,42,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#E2E8F0", fontSize: "0.95rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
+                                    />
+                                    <button type="submit" disabled={changingPassword} style={{ background: "linear-gradient(135deg, #1d4ed8, #2563eb)", color: "white", border: "none", borderRadius: 10, padding: "12px 24px", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer", width: "fit-content", marginTop: 4, opacity: changingPassword ? 0.6 : 1, transition: "all 0.2s" }}>
+                                        {changingPassword ? "Changing..." : "Change Password"}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {/* Logout */}
+                        <div style={{ padding: "0 40px 36px" }}>
+                            <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "12px 24px", color: "#f87171", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s" }}
+                                onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.22)"}
+                                onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.12)"}
+                            >
+                                <FiLogOut size={16} /> Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <Footer />
+            </div>
+        );
+    }
 
     return (
         <div className="profile-page">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -10,6 +10,7 @@ import heroBg from "../assets/hero-bg.png";
 
 function PostProperty() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [step, setStep] = useState(1);
@@ -747,9 +748,20 @@ function PostProperty() {
           {step === 4 && (
             <div className="form-step">
               <h2>Property Photos</h2>
-              <div className={`image-upload-area ${uploadingImages ? 'uploading' : ''}`}>
-                <input type="file" id="images" multiple accept="image/*" onChange={handleImageUpload} hidden />
-                <label htmlFor="images" className="upload-label">
+              <div
+                className={`image-upload-area ${uploadingImages ? 'uploading' : ''}`}
+                onClick={() => !uploadingImages && fileInputRef.current?.click()}
+              >
+                <input
+                  type="file"
+                  id="images"
+                  ref={fileInputRef}
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  hidden
+                />
+                <div className="upload-label">
                   {uploadingImages ? (
                     <>
                       <div className="loader"></div>
@@ -762,7 +774,7 @@ function PostProperty() {
                       <small>Maximum 10 images. High-quality photos attract more buyers.</small>
                     </>
                   )}
-                </label>
+                </div>
               </div>
               {formData.images.length > 0 && (
                 <div className="uploaded-images">
@@ -778,8 +790,12 @@ function PostProperty() {
           )}
 
           <div className="form-navigation">
-            {step > 1 && <button type="button" className="nav-btn prev" onClick={prevStep}>Previous</button>}
-            {step < 4 ? <button type="button" className="nav-btn next" onClick={nextStep}>Next</button> : <button type="submit" className="nav-btn submit" disabled={loading}>{loading ? "Submitting..." : "Submit Property"}</button>}
+            {step > 1 && <button key="prev-btn" type="button" className="nav-btn prev" onClick={prevStep}>Previous</button>}
+            {step < 4 ? (
+              <button key="next-btn" type="button" className="nav-btn next" onClick={nextStep}>Next</button>
+            ) : (
+              <button key="submit-btn" type="submit" className="nav-btn submit" disabled={loading}>{loading ? "Submitting..." : "Submit Property"}</button>
+            )}
           </div>
         </form>
       </div>

@@ -179,13 +179,14 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
           <span className="user-role-badge">{user.role}</span>
         </div>
 
-        <div className="drawer-stats">
-          {/* Same stats logic as before */}
-          <div className="stat-item">
-            <span className="stat-value">{user.role === 'AGENT' ? userStats.propertiesListed : favorites.length}</span>
-            <span className="stat-label">{user.role === 'AGENT' ? 'Listed' : 'Favorites'}</span>
+        {user.role !== 'ADMIN' && (
+          <div className="drawer-stats">
+            <div className="stat-item">
+              <span className="stat-value">{user.role === 'AGENT' ? userStats.propertiesListed : favorites.length}</span>
+              <span className="stat-label">{user.role === 'AGENT' ? 'Listed' : 'Favorites'}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="drawer-menu">
           {!isOnDashboard && user.role !== "ADMIN" && <button onClick={() => { navigate("/dashboard"); onClose(); }}><FiGrid size={16} /> Dashboard</button>}
@@ -196,51 +197,53 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
           {user.role !== "ADMIN" && <button onClick={() => { navigate(user.role === 'AGENT' ? "/agent/chats" : "/chats"); onClose(); }}><FiMessageCircle size={16} /> Chats</button>}
         </div>
 
-        <div className="drawer-content">
-          <h4>{user.role === 'AGENT' ? 'Recent Activity' : 'My Favourites'}</h4>
-          <div className="drawer-favorites-list">
-            {loadingFavs ? <p>Loading...</p> :
-              favorites.length > 0 ? (
-                favorites.map(p => (
-                  <div key={p.id} className="drawer-fav-item" onClick={() => { navigate(`/property/${p.id}`); onClose(); }}>
-                    <div style={{ position: 'relative' }}>
-                      <img src={p.photos ? p.photos[0] : ""} alt="prop" className="fav-thumb" onError={(e) => e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'%3E%3Crect fill='%23e2e8f0' width='50' height='50'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='8' dy='3' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EIMG%3C/text%3E%3C/svg%3E"} />
-                      <button
-                        className="fav-toggle-mini"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUnfav(p.id);
-                          favoritesApi.delete(`/?userId=${user.id}&propertyId=${p.id}`);
-                        }}
-                        style={{
-                          position: 'absolute',
-                          top: '-5px',
-                          right: '-5px',
-                          background: 'var(--bg-card)',
-                          border: '1px solid var(--border-light)',
-                          borderRadius: '50%',
-                          width: '20px',
-                          height: '20px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                          fontSize: '10px'
-                        }}
-                      >
-                        ❤️
-                      </button>
+        {user.role !== 'ADMIN' && (
+          <div className="drawer-content">
+            <h4>{user.role === 'AGENT' ? 'Recent Activity' : 'My Favourites'}</h4>
+            <div className="drawer-favorites-list">
+              {loadingFavs ? <p>Loading...</p> :
+                favorites.length > 0 ? (
+                  favorites.map(p => (
+                    <div key={p.id} className="drawer-fav-item" onClick={() => { navigate(`/property/${p.id}`); onClose(); }}>
+                      <div style={{ position: 'relative' }}>
+                        <img src={p.photos ? p.photos[0] : ""} alt="prop" className="fav-thumb" onError={(e) => e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'%3E%3Crect fill='%23e2e8f0' width='50' height='50'/%3E%3Ctext fill='%2394a3b8' font-family='sans-serif' font-size='8' dy='3' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EIMG%3C/text%3E%3C/svg%3E"} />
+                        <button
+                          className="fav-toggle-mini"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUnfav(p.id);
+                            favoritesApi.delete(`/?userId=${user.id}&propertyId=${p.id}`);
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: '-5px',
+                            right: '-5px',
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border-light)',
+                            borderRadius: '50%',
+                            width: '20px',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                            fontSize: '10px'
+                          }}
+                        >
+                          ❤️
+                        </button>
+                      </div>
+                      <div className="fav-info">
+                        <span className="fav-title">{p.title}</span>
+                        <span className="fav-price">{formatPrice(p.price)}</span>
+                      </div>
                     </div>
-                    <div className="fav-info">
-                      <span className="fav-title">{p.title}</span>
-                      <span className="fav-price">{formatPrice(p.price)}</span>
-                    </div>
-                  </div>
-                ))
-              ) : <p className="no-favs">No favorites yet.</p>
-            }
+                  ))
+                ) : <p className="no-favs">No favorites yet.</p>
+              }
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="drawer-footer">
           <button className="logout-btn-drawer" onClick={handleLogout}><FiLogOut size={16} /> Logout</button>

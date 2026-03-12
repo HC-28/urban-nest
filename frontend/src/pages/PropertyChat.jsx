@@ -236,7 +236,7 @@ export default function PropertyChat() {
             </div>
 
             {/* ================= INPUT AREA ================= */}
-            {property?.sold ? (
+            {property?.sold && currentUserRole !== "ADMIN" ? (
                 <div className="chat-sold-container">
                     <div className="chat-sold-banner">
                         <div className="sold-icon">🏠</div>

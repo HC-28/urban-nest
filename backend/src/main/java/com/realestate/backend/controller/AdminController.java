@@ -54,6 +54,28 @@ public class AdminController {
     private PropertyViewRepository propertyViewRepository;
 
     // ============================================================
+    // STATS
+    // ============================================================
+
+    /** GET /api/admin/stats — Quick platform stats for admin profile */
+    @GetMapping("/stats")
+    public ResponseEntity<?> getAdminStats() {
+        try {
+            long totalProperties = propertyRepository.count();
+            long totalUsers = userRepository.count();
+            long propertiesSold = propertyRepository.countByIsSoldTrue();
+            return ResponseEntity.ok(Map.of(
+                    "totalProperties", totalProperties,
+                    "totalUsers", totalUsers,
+                    "propertiesSold", propertiesSold));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Server error"));
+        }
+    }
+
+    // ============================================================
     // USER MANAGEMENT
     // ============================================================
 

@@ -368,8 +368,8 @@ export default function Home() {
                         <p>Properties you checked out lately</p>
                     </div>
                     <div className="property-grid">
-                        {recentProperties.map((property) => (
-                            <PropertyCard key={property.id} property={property} formatPrice={formatPrice} />
+                        {recentProperties.map((property, idx) => (
+                            <PropertyCard key={`recent-${property.id}-${idx}`} property={property} formatPrice={formatPrice} />
                         ))}
                     </div>
                 </section>
@@ -390,7 +390,7 @@ export default function Home() {
                         <p>Loading...</p>
                     ) : featuredProperties.length > 0 ? (
                         featuredProperties.map((property, i) => (
-                            <PropertyCard key={i} property={property} formatPrice={formatPrice} />
+                            <PropertyCard key={`featured-${property.id}-${i}`} property={property} formatPrice={formatPrice} />
                         ))
                     ) : (
                         <div style={{

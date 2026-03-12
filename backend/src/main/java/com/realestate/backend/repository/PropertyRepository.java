@@ -64,4 +64,7 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
         // Get all distinct cities that have active properties
         @Query("SELECT DISTINCT p.city FROM Property p WHERE p.isActive = true AND p.isSold = false AND p.city IS NOT NULL AND p.city != ''")
         List<String> findDistinctActiveCities();
+
+        // Count sold properties for admin stats
+        long countByIsSoldTrue();
 }
