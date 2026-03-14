@@ -48,6 +48,8 @@ authApi.verifyOtp = (email, otp) => authApi.post("/verify-otp", { email, otp });
 export const userApi = createApi("/users");
 export const adminApi = createApi("/admin");
 export const propertyApi = createApi("/properties", { timeout: 60000 }); // 60s for images
+propertyApi.getFeatured = () => propertyApi.get("/featured");
+propertyApi.getTrending = () => propertyApi.get("/trending");
 export const agentsApi = createApi("/agents");
 export const favoritesApi = createApi("/favorites");
 export const chatApi = createApi("/chat", { timeout: 30000 }); // 30s for chat attachments
