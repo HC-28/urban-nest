@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class BackendApplication {
 
 	public static void main(String[] args) {
+		// Triggering redeploy for fixed Docker configuration
 		SpringApplication.run(BackendApplication.class, args);
 	}
 }
