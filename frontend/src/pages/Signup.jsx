@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/Auth.css";
 import heroBg from "../assets/hero-bg.png";
+import { GoogleLogin } from "@react-oauth/google";
+import toast from "react-hot-toast";
 import { authApi } from "../api/api";
 
 function Signup() {
