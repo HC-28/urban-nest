@@ -183,7 +183,6 @@ function Signup() {
             theme="filled_blue"
             shape="pill"
             text="signup_with"
-            width="100%"
           />
         </div>
 

@@ -170,7 +170,6 @@ function Login() {
                 theme="filled_blue"
                 shape="pill"
                 text="signin_with"
-                width="100%"
             />
         </div>
 
