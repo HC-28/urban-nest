@@ -64,7 +64,7 @@ function PropertyDetail() {
                 ? p
                 : `${IMAGE_URL}${encodeURIComponent(p)}`
             )
-            : ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200"],
+            : ["/property-placeholder.jpg"],
 
 
           amenities: [

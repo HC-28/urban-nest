@@ -72,6 +72,24 @@ function Signup() {
     }
   };
 
+  const handleGoogleSuccess = async (response) => {
+    setLoading(true);
+    try {
+      const res = await authApi.googleLogin(response.credential);
+      const loggedUser = res.data;
+      localStorage.setItem("token", loggedUser.token);
+      delete loggedUser.token;
+      localStorage.setItem("user", JSON.stringify(loggedUser));
+      window.dispatchEvent(new Event("storage"));
+      toast.success("Registration successful!");
+      navigate("/");
+    } catch (err) {
+      toast.error("Google signup failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (success) {
     return (
       <div className="auth-page" style={{ backgroundImage: `url(${heroBg})` }}>
@@ -156,6 +174,18 @@ function Signup() {
             {loading ? "Creating Account..." : "Sign Up"}
           </button>
         </form>
+
+        <div className="auth-divider"><span>OR</span></div>
+        <div className="google-auth-container">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => toast.error("Google Signup failed")}
+            theme="filled_blue"
+            shape="pill"
+            text="signup_with"
+            width="100%"
+          />
+        </div>
 
         <div className="auth-footer">
           <p>Already have an account? <Link to="/login">Login</Link></p>

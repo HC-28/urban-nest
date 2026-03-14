@@ -295,6 +295,7 @@ function Hero({ onSearch }) {
 export default function Home() {
     const navigate = useNavigate();
     const [featuredProperties, setFeaturedProperties] = useState([]);
+    const [trendingProperties, setTrendingProperties] = useState([]);
     const [recentProperties, setRecentProperties] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -312,8 +313,15 @@ export default function Home() {
     useEffect(() => {
         const fetchProperties = async () => {
             try {
-                const { data: featured } = await propertyApi.get("/featured");
+                const { data: featured } = await propertyApi.getFeatured();
                 setFeaturedProperties(featured);
+
+                try {
+                    const { data: trending } = await propertyApi.getTrending();
+                    setTrendingProperties(trending);
+                } catch (err) {
+                    console.error("Failed to fetch trending properties", err);
+                }
 
                 if (user?.id) {
                     try {
@@ -370,6 +378,25 @@ export default function Home() {
                     <div className="property-grid">
                         {recentProperties.map((property, idx) => (
                             <PropertyCard key={`recent-${property.id}-${idx}`} property={property} formatPrice={formatPrice} />
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {trendingProperties.length > 0 && (
+                <section className="featured-section trending-section" style={{ background: 'linear-gradient(to bottom, transparent, rgba(59, 130, 246, 0.05))', padding: '60px 0' }}>
+                    <div className="section-header">
+                        <div>
+                            <h2>🔥 Trending Properties</h2>
+                            <p>Most popular listings in the market right now</p>
+                        </div>
+                        <button className="view-all-link" onClick={() => navigate("/properties")}>
+                            View All <FiArrowRight />
+                        </button>
+                    </div>
+                    <div className="featured-grid">
+                        {trendingProperties.map((property, i) => (
+                            <PropertyCard key={`trending-${property.id}-${i}`} property={property} formatPrice={formatPrice} />
                         ))}
                     </div>
                 </section>

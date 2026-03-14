@@ -9,7 +9,7 @@
 .agent-profile-header {
   position: relative;
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8)),
-    url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+    url('/agent-profile-bg.jpg');
   background-size: cover;
   background-position: center;
   padding: 80px 20px;

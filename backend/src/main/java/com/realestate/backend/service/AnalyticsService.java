@@ -289,26 +289,36 @@ public class AnalyticsService {
                 .collect(Collectors.toList());
 
         if (!prices.isEmpty()) {
-            double minLog = Math.log(prices.stream().min(Double::compare).get());
-            double maxLog = Math.log(prices.stream().max(Double::compare).get());
-            double range = maxLog - minLog;
+            double minPrice = prices.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
+            double maxPrice = prices.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
 
-            if (range > 0) {
-                for (PincodeScore score : scores) {
-                    if (score.getPriceScore() != null && score.getPriceScore() > 0) {
-                        double logPrice = Math.log(score.getPriceScore());
-                        double normalized = ((logPrice - minLog) / range) * 100.0;
-                        // Guard against NaN/Infinity
-                        if (Double.isNaN(normalized) || Double.isInfinite(normalized)) {
-                            normalized = 50.0;
+            if (minPrice > 0 && maxPrice > 0) {
+                double minLog = Math.log(minPrice);
+                double maxLog = Math.log(maxPrice);
+                double range = maxLog - minLog;
+
+                if (range > 0) {
+                    for (PincodeScore score : scores) {
+                        if (score.getPriceScore() != null && score.getPriceScore() > 0) {
+                            double logPrice = Math.log(score.getPriceScore());
+                            double normalized = ((logPrice - minLog) / range) * 100.0;
+                            // Guard against NaN/Infinity
+                            if (Double.isNaN(normalized) || Double.isInfinite(normalized)) {
+                                normalized = 50.0;
+                            }
+                            score.setPriceScore(normalized);
+                        } else {
+                            score.setPriceScore(50.0); // Default for missing price data
                         }
-                        score.setPriceScore(normalized);
-                    } else {
-                        score.setPriceScore(50.0); // Default for missing price data
+                    }
+                } else {
+                    // All prices the same — set to 50
+                    for (PincodeScore score : scores) {
+                        score.setPriceScore(50.0);
                     }
                 }
             } else {
-                // All prices the same — set to 50
+                // No valid non-zero prices at all — set all to 50
                 for (PincodeScore score : scores) {
                     score.setPriceScore(50.0);
                 }

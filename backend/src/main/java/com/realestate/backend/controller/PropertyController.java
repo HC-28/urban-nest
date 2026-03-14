@@ -185,6 +185,24 @@ public class PropertyController {
         }
     }
 
+    /** GET /api/properties/trending — Trending properties based on views */
+    @GetMapping(value = "/trending", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getTrendingProperties() {
+        try {
+            // Simply use top 6 properties by views as trending
+            List<Property> trending = propertyRepository.findByIsActiveTrueAndIsSoldFalse().stream()
+                    .sorted(Comparator.comparingInt(Property::getViews).reversed())
+                    .limit(6)
+                    .toList();
+            return ResponseEntity.ok(trending);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Server error"));
+        }
+    }
+
     /** GET /api/properties/agent/{agentId} — Properties by agent (for dashboard) */
     @GetMapping(value = "/agent/{agentId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional(readOnly = true)

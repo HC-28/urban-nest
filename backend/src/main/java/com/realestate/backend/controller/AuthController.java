@@ -3,6 +3,9 @@ package com.realestate.backend.controller;
 import com.realestate.backend.entity.AppUser;
 import com.realestate.backend.repository.UserRepository;
 import com.realestate.backend.security.JwtUtil;
+import com.realestate.backend.service.GoogleAuthService;
+import com.realestate.backend.service.OtpService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -32,11 +35,99 @@ public class AuthController {
     @Autowired
     private com.realestate.backend.service.EmailService emailService;
 
+    @Autowired
+    private GoogleAuthService googleAuthService;
+
+    @Autowired
+    private OtpService otpService;
+
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     private boolean isValidEmail(String email) {
         return email != null && (email.matches("^[a-zA-Z0-9._%+-]+@gmail\\.com$") ||
                 email.matches("^[a-zA-Z0-9._%+-]+@urbannest\\.com$"));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> payload) {
+        try {
+            String idToken = payload.get("token");
+            GoogleIdToken.Payload googleUser = googleAuthService.verifyToken(idToken);
+            
+            if (googleUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid Google Token"));
+            }
+
+            String email = googleUser.getEmail();
+            String name = (String) googleUser.get("name");
+
+            AppUser user = userRepository.findByEmail(email).orElseGet(() -> {
+                AppUser newUser = new AppUser();
+                newUser.setEmail(email);
+                newUser.setName(name);
+                newUser.setRole("BUYER");
+                newUser.setEmailVerified(true);
+                newUser.setVerified(true);
+                newUser.setPassword(encoder.encode(UUID.randomUUID().toString()));
+                return userRepository.save(newUser);
+            });
+
+            String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
+            return ResponseEntity.ok(prepareUserResponse(user, token));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Google auth failed"));
+        }
+    }
+
+    @PostMapping("/request-otp")
+    public ResponseEntity<?> requestOtp(@RequestParam String email) {
+        try {
+            if (!isValidEmail(email)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid email domain"));
+            }
+            String otp = otpService.generateOtp(email);
+            emailService.sendHtmlEmail(email, "Your Login OTP", "Your login code is: <b>" + otp + "</b>. It expires in 5 minutes.");
+            return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Could not send OTP"));
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        String code = payload.get("otp");
+
+        if (otpService.validateOtp(email, code)) {
+            AppUser user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
+            }
+            String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
+            return ResponseEntity.ok(prepareUserResponse(user, token));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired OTP"));
+    }
+
+    private Map<String, Object> prepareUserResponse(AppUser dbUser, String token) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("id", dbUser.getId());
+        response.put("name", dbUser.getName());
+        response.put("email", dbUser.getEmail());
+        response.put("role", dbUser.getRole());
+        response.put("profilePicture", dbUser.getProfilePicture());
+        response.put("city", dbUser.getCity());
+        response.put("phone", dbUser.getPhone());
+        response.put("pincode", dbUser.getPincode());
+        response.put("bio", dbUser.getBio());
+        response.put("agencyName", dbUser.getAgencyName());
+        response.put("experience", dbUser.getExperience());
+        response.put("specialties", dbUser.getSpecialties());
+        response.put("verified", dbUser.isVerified());
+        response.put("deletionRequested", dbUser.isDeletionRequested());
+        return response;
     }
 
     /**

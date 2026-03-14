@@ -3,6 +3,8 @@ package com.realestate.backend.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -243,6 +245,20 @@ public class EmailService {
             mailSender.send(msg);
         } catch (Exception e) {
             System.err.println("⚠️ [EmailService] Failed to send contact query email: " + e.getMessage());
+        }
+    }
+
+    public void sendHtmlEmail(String to, String subject, String htmlContent) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+            helper.setFrom(FROM);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+            mailSender.send(mimeMessage);
+        } catch (Exception e) {
+            System.err.println("⚠️ [EmailService] Failed to send HTML email: " + e.getMessage());
         }
     }
 }

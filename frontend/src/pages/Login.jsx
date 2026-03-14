@@ -2,18 +2,59 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { authApi } from "../api/api";
-import "../styles/Auth.css"; // We'll create/update this shared CSS
+import { GoogleLogin } from "@react-oauth/google";
+import toast from "react-hot-toast";
+import "../styles/Auth.css";
 import heroBg from "../assets/hero-bg.png";
-import logo from "../assets/logo.png";
 
 function Login() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [activeTab, setActiveTab] = useState("password");
+  const [formData, setFormData] = useState({ email: "", password: "", otp: "" });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const requestOtp = async () => {
+    if (!formData.email) {
+        toast.error("Please enter your email first");
+        return;
+    }
+    setLoading(true);
+    try {
+        await authApi.requestOtp(formData.email);
+        setOtpSent(true);
+        toast.success("OTP sent to your email!");
+    } catch (err) {
+        toast.error(err.response?.data?.error || "Failed to send OTP");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (response) => {
+    try {
+      const res = await authApi.googleLogin(response.credential);
+      handleLoginSuccess(res.data);
+    } catch (err) {
+      toast.error("Google login failed");
+    }
+  };
+
+  const handleLoginSuccess = (user) => {
+    localStorage.setItem("token", user.token);
+    delete user.token;
+    localStorage.setItem("user", JSON.stringify(user));
+    window.dispatchEvent(new Event("storage"));
+    
+    if (user.role === "ADMIN") navigate("/admin");
+    else if (user.role === "AGENT") navigate("/dashboard");
+    else navigate("/");
+    toast.success("Welcome back!");
   };
 
   const handleSubmit = async (e) => {
@@ -21,28 +62,16 @@ function Login() {
     setLoading(true);
     setError(null);
     try {
-      const res = await authApi.post("/login", formData);
-      const loggedInUser = res.data;
-
-      // Store JWT token and user data separately
-      localStorage.setItem("token", loggedInUser.token);
-      delete loggedInUser.token; // Don't persist token in user object
-      localStorage.setItem("user", JSON.stringify(loggedInUser));
-      window.dispatchEvent(new Event("storage"));
-
-      // Redirect based on role — admin is silently sent to admin dashboard
-      if (loggedInUser.role === "ADMIN") {
-        navigate("/admin");
-      } else if (loggedInUser.role === "AGENT") {
-        navigate("/dashboard");
+      let res;
+      if (activeTab === "password") {
+        res = await authApi.post("/login", formData);
       } else {
-        navigate("/");
+        res = await authApi.verifyOtp(formData.email, formData.otp);
       }
-
+      handleLoginSuccess(res.data);
     } catch (err) {
-      const errorData = err.response?.data;
-      const errorMsg = errorData?.error || errorData || "Login failed";
-      setError(errorMsg);
+      setError(err.response?.data?.error || "Login failed");
+      toast.error(err.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -56,28 +85,27 @@ function Login() {
 
       <div className="auth-card glass-strong arrow-border">
         <div className="auth-header">
-          {/* Logo or Icon could go here */}
           <div className="auth-logo-icon">🏠</div>
           <h2>Welcome Back</h2>
           <p>Login to access your personalized dashboard</p>
         </div>
 
+        <div className="auth-tabs">
+            <button 
+                className={activeTab === 'password' ? 'active' : ''} 
+                onClick={() => { setActiveTab('password'); setError(null); }}
+            >Password</button>
+            <button 
+                className={activeTab === 'otp' ? 'active' : ''} 
+                onClick={() => { setActiveTab('otp'); setError(null); }}
+            >Email OTP</button>
+        </div>
+
         {error && (
           <div className={`auth-error ${isPendingApproval ? 'auth-pending-approval' : ''}`}>
-            {isPendingApproval ? (
-              <>
-                <span style={{ fontSize: '1.3rem' }}>⏳</span>
-                <div>
-                  <strong>Account Pending Approval</strong>
-                  <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.9 }}>
-                    Your agent account is awaiting verification by an admin. You will be able to log in once approved.
-                  </p>
-                </div>
-              </>
-            ) : error}
+             {isPendingApproval ? "Account Pending Approval" : error}
           </div>
         )}
-
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -92,22 +120,59 @@ function Login() {
             />
           </div>
 
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-            />
-          </div>
+          {activeTab === 'password' ? (
+            <div className="form-group">
+                <label>Password</label>
+                <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+                />
+            </div>
+          ) : (
+            <div className="form-group">
+                <label>Verification Code</label>
+                <div className="otp-input-wrapper">
+                    <input
+                        type="text"
+                        name="otp"
+                        value={formData.otp}
+                        onChange={handleChange}
+                        placeholder="6-digit OTP"
+                        required={otpSent}
+                        disabled={!otpSent}
+                    />
+                    {!otpSent ? (
+                        <button type="button" onClick={requestOtp} disabled={loading} className="send-otp-btn">
+                            Send OTP
+                        </button>
+                    ) : (
+                        <button type="button" onClick={requestOtp} className="resend-otp-btn">Resend</button>
+                    )}
+                </div>
+            </div>
+          )}
 
-          <button type="submit" className="auth-btn glow-amber" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+          <button type="submit" className="auth-btn glow-amber" disabled={loading || (activeTab === 'otp' && !otpSent)}>
+            {loading ? "Verifying..." : "Login"}
           </button>
         </form>
+
+        <div className="auth-divider"><span>OR</span></div>
+        
+        <div className="google-auth-container">
+            <GoogleLogin 
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error("Google Login failed")}
+                theme="filled_blue"
+                shape="pill"
+                text="signin_with"
+                width="100%"
+            />
+        </div>
 
         <div className="auth-footer">
           <p>Don't have an account? <Link to="/signup">Sign up</Link></p>

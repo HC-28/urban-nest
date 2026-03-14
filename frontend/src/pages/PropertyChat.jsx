@@ -177,7 +177,12 @@ export default function PropertyChat() {
                                 className="report-btn"
                                 title="Report an issue to Admin"
                             >
-                                ⚠️ Report
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                                Report
                             </button>
                         </>
                     )}
@@ -305,7 +310,11 @@ export default function PropertyChat() {
             ) : (
                 <div className="chat-input-wrapper">
                     <div className="chat-input-container">
-                        <button className="icon-btn" title="Attach file">📎</button>
+                        <button className="icon-btn" title="Attach file">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                            </svg>
+                        </button>
                         <input
                             value={text}
                             onChange={e => setText(e.target.value)}
@@ -313,7 +322,14 @@ export default function PropertyChat() {
                             onKeyDown={e => e.key === "Enter" && sendMessage()}
                         />
                         <div className="actions">
-                            <button className="icon-btn" title="Emojis">😊</button>
+                            <button className="icon-btn" title="Emojis">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                                </svg>
+                            </button>
                             <button className="send-btn" onClick={sendMessage} title="Send Message">
                                 <svg
                                     width="20"

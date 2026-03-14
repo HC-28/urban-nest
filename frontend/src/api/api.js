@@ -42,6 +42,9 @@ function createApi(path, options = {}) {
 
 // ---------------- API Instances ----------------
 export const authApi = createApi("/auth");
+authApi.googleLogin = (token) => authApi.post("/google", { token });
+authApi.requestOtp = (email) => authApi.post(`/request-otp?email=${email}`);
+authApi.verifyOtp = (email, otp) => authApi.post("/verify-otp", { email, otp });
 export const userApi = createApi("/users");
 export const adminApi = createApi("/admin");
 export const propertyApi = createApi("/properties", { timeout: 60000 }); // 60s for images

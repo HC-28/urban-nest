@@ -279,3 +279,97 @@
     font-size: 1.6rem;
   }
 }
+
+/* ─── Auth Tabs (OTP/Password) ─── */
+.auth-tabs {
+    display: flex;
+    background: rgba(15, 23, 42, 0.4);
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.auth-tabs button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: none;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.auth-tabs button.active {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ─── OTP Input Wrapper ─── */
+.otp-input-wrapper {
+    display: flex;
+    gap: 12px;
+}
+
+.otp-input-wrapper input {
+    flex: 1;
+}
+
+.send-otp-btn, .resend-otp-btn {
+    padding: 0 20px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.send-otp-btn:hover:not(:disabled), .resend-otp-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #60a5fa;
+}
+
+.send-otp-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ─── Google Auth Contatiner ─── */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 24px 0;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.auth-divider::before, .auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.auth-divider::before { margin-right: 1.5rem; }
+.auth-divider::after { margin-left: 1.5rem; }
+
+.google-auth-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.google-auth-container iframe {
+    width: 100% !important;
+    margin: 0 auto !important;
+}

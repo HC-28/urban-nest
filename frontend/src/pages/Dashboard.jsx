@@ -51,8 +51,12 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [myProperties, setMyProperties] = useState([]);
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
-  const [editingProperty, setEditingProperty] = useState(null);
   const [editForm, setEditForm] = useState({});
+
+  // Pagination & Filtering
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Sold Modal State
   const [showSoldModal, setShowSoldModal] = useState(false);
@@ -139,6 +143,24 @@ function Dashboard() {
       setMyProperties([]);
       setLoading(false);
     }
+  };
+
+  // Filter properties logic
+  const filteredProperties = myProperties.filter(p =>
+    p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProperties = filteredProperties.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 300, behavior: "smooth" });
   };
 
   const handleDelete = async (propertyId) => {
@@ -424,9 +446,22 @@ function Dashboard() {
                 <div className="my-properties-section">
                   <div className="section-header">
                     <h2>My Properties</h2>
-                    <button className="add-property-btn" onClick={() => navigate("/post-property")}>
-                      <FiPlus /> Add New
-                    </button>
+                    <div className="table-controls">
+                      <div className="search-bar">
+                        <input
+                          type="text"
+                          placeholder="Search your properties..."
+                          value={searchTerm}
+                          onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                        />
+                      </div>
+                      <button className="add-property-btn" onClick={() => navigate("/post-property")}>
+                        <FiPlus /> Add New
+                      </button>
+                    </div>
                   </div>
 
                   {loading ? (
@@ -441,93 +476,126 @@ function Dashboard() {
                       <h3>No Properties Yet</h3>
                     </div>
                   ) : (
-                    <div className="properties-table-container">
-                      <table className="properties-table">
-                        <thead>
-                          <tr>
-                            <th>Property</th>
-                            <th>Purpose</th>
-                            <th>Area</th>
-                            <th>City</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {myProperties.map(property => (
-                            <tr key={property.id} className={!property.active ? 'inactive-row' : ''}>
-                              {editingProperty === property.id ? (
-                                <td colSpan="6">
-                                  <div className="inline-edit-form">
-                                    <input type="text" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} placeholder="Title" style={{ flex: 1 }} />
-                                    <select
-                                      value={editForm.purpose}
-                                      onChange={e => setEditForm({ ...editForm, purpose: e.target.value })}
-                                      style={{ width: '130px', background: '#060d18', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '8px' }}
-                                    >
-                                      <option value="For Sale">For Sale</option>
-                                      <option value="For Rent">For Rent</option>
-                                      <option value="Commercial">Commercial</option>
-                                      <option value="Project">Project</option>
-                                    </select>
-                                    <input type="number" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} placeholder="Price" style={{ width: '140px' }} />
-                                    <div className="edit-actions">
-                                      <button className="save-btn" onClick={() => handleSaveEdit(property.id)}>Save</button>
-                                      <button className="cancel-btn" onClick={handleCancelEdit}>Cancel</button>
-                                    </div>
-                                  </div>
-                                </td>
-                              ) : (
-                                <>
-                                  <td>
-                                    <div className="property-info">
-                                      <img
-                                        src={getFirstImage(property.photos, "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100")}
-                                        alt="Property"
-                                        className="property-thumb"
-                                        style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
-                                      />
-                                      <div>
-                                        <div className="property-title">{property.title}</div>
-                                        <div className="property-meta">
-                                          {property.type} • {formatPrice(property.price)}
-                                        </div>
+                    <>
+                      <div className="properties-table-container">
+                        <table className="properties-table">
+                          <thead>
+                            <tr>
+                              <th>Property</th>
+                              <th>Purpose</th>
+                              <th>Area</th>
+                              <th>City</th>
+                              <th>Status</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {currentProperties.map(property => (
+                              <tr key={property.id} className={!property.active ? 'inactive-row' : ''}>
+                                {editingProperty === property.id ? (
+                                  <td colSpan="6">
+                                    <div className="inline-edit-form">
+                                      <input type="text" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} placeholder="Title" style={{ flex: 1 }} />
+                                      <select
+                                        value={editForm.purpose}
+                                        onChange={e => setEditForm({ ...editForm, purpose: e.target.value })}
+                                        style={{ width: '130px', background: '#060d18', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '8px' }}
+                                      >
+                                        <option value="For Sale">For Sale</option>
+                                        <option value="For Rent">For Rent</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Project">Project</option>
+                                      </select>
+                                      <input type="number" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} placeholder="Price" style={{ width: '140px' }} />
+                                      <div className="edit-actions">
+                                        <button className="save-btn" onClick={() => handleSaveEdit(property.id)}>Save</button>
+                                        <button className="cancel-btn" onClick={handleCancelEdit}>Cancel</button>
                                       </div>
                                     </div>
                                   </td>
-                                  <td><span className="status-badge" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}>{property.purpose}</span></td>
-                                  <td><span style={{ color: '#cbd5e1', fontWeight: '600' }}>{property.area} sq.ft</span></td>
-                                  <td><span style={{ color: '#cbd5e1', fontWeight: '600' }}>{property.city}</span></td>
-                                  <td>
-                                    {property.sold ? (
-                                      <span className="status-badge sold">SOLD</span>
-                                    ) : (
-                                      <span className={`status-badge ${property.active ? 'active' : 'inactive'}`}>
-                                        {property.active ? 'Active' : 'Unlisted'}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="actions-cell">
-                                    {!property.sold && (
-                                      <>
-                                        <button className="action-icon edit" onClick={() => handleEdit(property)}><FiEdit2 /></button>
-                                        <button className="action-icon toggle" title={property.active ? "Unlist Property" : "Relist Property"} onClick={() => handleToggleActive(property)}>
-                                          {property.active ? <FiEyeOff /> : <FiEye />}
-                                        </button>
-                                        <button className="action-icon success" title="Mark as Sold" onClick={() => handleMarkSoldInit(property)} style={{ color: '#10b981' }}>
-                                          <FiCheckCircle />
-                                        </button>
-                                        <button className="action-icon delete" onClick={() => handleDelete(property.id)}><FiTrash2 /></button>
-                                      </>
-                                    )}
-                                  </td>
-                                </>
-                              )}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                                ) : (
+                                  <>
+                                    <td>
+                                      <div className="property-info">
+                                        <img
+                                          src={getFirstImage(property.photos, "/property-placeholder.jpg")}
+                                          alt="Property"
+                                          className="property-thumb"
+                                          style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
+                                        />
+                                        <div>
+                                          <div className="property-title">{property.title}</div>
+                                          <div className="property-meta">
+                                            {property.type} • {formatPrice(property.price)}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td><span className="status-badge" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}>{property.purpose}</span></td>
+                                    <td><span style={{ color: '#cbd5e1', fontWeight: '600' }}>{property.area} sq.ft</span></td>
+                                    <td><span style={{ color: '#cbd5e1', fontWeight: '600' }}>{property.city}</span></td>
+                                    <td>
+                                      {property.sold ? (
+                                        <span className="status-badge sold">SOLD</span>
+                                      ) : (
+                                        <span className={`status-badge ${property.active ? 'active' : 'inactive'}`}>
+                                          {property.active ? 'Active' : 'Unlisted'}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="actions-cell">
+                                      {!property.sold && (
+                                        <>
+                                          <button className="action-icon edit" onClick={() => handleEdit(property)}><FiEdit2 /></button>
+                                          <button className="action-icon toggle" title={property.active ? "Unlist Property" : "Relist Property"} onClick={() => handleToggleActive(property)}>
+                                            {property.active ? <FiEyeOff /> : <FiEye />}
+                                          </button>
+                                          <button className="action-icon success" title="Mark as Sold" onClick={() => handleMarkSoldInit(property)} style={{ color: '#10b981' }}>
+                                            <FiCheckCircle />
+                                          </button>
+                                          <button className="action-icon delete" onClick={() => handleDelete(property.id)}><FiTrash2 /></button>
+                                        </>
+                                      )}
+                                    </td>
+                                  </>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Pagination Controls */}
+                      {totalPages > 1 && (
+                        <div className="dashboard-pagination">
+                          <button
+                            className="page-btn"
+                            disabled={currentPage === 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
+                          >
+                            Previous
+                          </button>
+                          <div className="page-numbers">
+                            {[...Array(totalPages)].map((_, i) => (
+                              <button
+                                key={i + 1}
+                                className={`page-num ${currentPage === i + 1 ? 'active' : ''}`}
+                                onClick={() => handlePageChange(i + 1)}
+                              >
+                                {i + 1}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            className="page-btn"
+                            disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -669,7 +737,7 @@ function Dashboard() {
                     <div key={p.id} className="bought-card-v2">
                       <div className="bought-card-img">
                         <img
-                          src={getFirstImage(p.propertyImage, "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400")}
+                          src={getFirstImage(p.propertyImage, "/property-placeholder.jpg")}
                           alt={p.propertyTitle || "Property"}
                         />
                         <span className="purchased-badge"><FiCheckCircle /> Purchased</span>
@@ -719,7 +787,7 @@ function Dashboard() {
                           <td>
                             <div className="property-info">
                               <img
-                                src={getFirstImage(p.photos, "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100")}
+                                src={getFirstImage(p.photos, "/property-placeholder.jpg")}
                                 alt="Property"
                                 className="property-thumb"
                                 style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
