@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { HelmetProvider } from "react-helmet-async";
 import "./index.css"; // Global styles
 import 'leaflet/dist/leaflet.css';
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
