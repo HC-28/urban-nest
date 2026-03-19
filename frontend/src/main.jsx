@@ -13,7 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
       <HelmetProvider>
-        <GoogleOAuthProvider clientId="4343419613-392i840ouh0v3g1fmvq22v1cjm7dp85i.apps.googleusercontent.com">
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
           <BrowserRouter>
             <App />
             <Toaster
