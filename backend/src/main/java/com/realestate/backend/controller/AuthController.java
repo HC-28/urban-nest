@@ -52,6 +52,7 @@ public class AuthController {
     public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> payload) {
         try {
             String idToken = payload.get("token");
+            String requestedRole = payload.getOrDefault("role", "BUYER");
             GoogleIdToken.Payload googleUser = googleAuthService.verifyToken(idToken);
             
             if (googleUser == null) {
@@ -65,9 +66,14 @@ public class AuthController {
                 AppUser newUser = new AppUser();
                 newUser.setEmail(email);
                 newUser.setName(name);
-                newUser.setRole("BUYER");
+                newUser.setRole(requestedRole.toUpperCase());
                 newUser.setEmailVerified(true);
-                newUser.setVerified(true);
+                // Agents still need manual verification if that's the policy
+                if ("AGENT".equalsIgnoreCase(requestedRole)) {
+                    newUser.setVerified(false);
+                } else {
+                    newUser.setVerified(true);
+                }
                 newUser.setPassword(encoder.encode(UUID.randomUUID().toString()));
                 return userRepository.save(newUser);
             });
@@ -110,6 +116,51 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired OTP"));
     }
 
+    @PostMapping("/register-otp")
+    public ResponseEntity<?> requestRegisterOtp(@RequestParam String email) {
+        if (!isValidEmail(email)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid email domain"));
+        }
+        if (userRepository.findByEmail(email).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email already exists"));
+        }
+        String otp = otpService.generateOtp(email);
+        emailService.sendHtmlEmail(email, "Your Registration OTP", "Welcome to Urban Nest! Your registration code is: <b>" + otp + "</b>. It expires in 5 minutes.");
+        return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
+    }
+
+    @PostMapping("/reset-password-otp")
+    public ResponseEntity<?> requestResetPasswordOtp(@RequestParam String email) {
+        if (!isValidEmail(email)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid email domain"));
+        }
+        if (userRepository.findByEmail(email).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User with this email not found"));
+        }
+        String otp = otpService.generateOtp(email);
+        emailService.sendHtmlEmail(email, "Your Password Reset OTP", "You requested a password reset. Your code is: <b>" + otp + "</b>. It expires in 5 minutes.");
+        return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
+    }
+
+    @PostMapping("/reset-password-verify")
+    public ResponseEntity<?> resetPasswordVerify(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        String code = payload.get("otp");
+        String newPassword = payload.get("newPassword");
+
+        if (otpService.validateOtp(email, code)) {
+            Optional<AppUser> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isPresent()) {
+                AppUser user = userOpt.get();
+                user.setPassword(encoder.encode(newPassword));
+                userRepository.save(user);
+                return ResponseEntity.ok(Map.of("message", "Password reset successfully! You can now log in."));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired OTP"));
+    }
+
     private Map<String, Object> prepareUserResponse(AppUser dbUser, String token) {
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
@@ -132,60 +183,52 @@ public class AuthController {
 
     /**
      * POST /api/auth/register
-     * Register a new user (BUYER or AGENT). ADMIN creation is blocked.
+     * Register a new user (BUYER or AGENT). OTP required.
      */
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> signup(@RequestBody AppUser user) {
+    public ResponseEntity<?> signup(@RequestBody Map<String, Object> payload) {
         try {
-            if (user == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid request body"));
+            String email = (String) payload.get("email");
+            String otp = (String) payload.get("otp");
+
+            if (!otpService.validateOtp(email, otp)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired OTP"));
             }
 
-            if (!isValidEmail(user.getEmail())) {
+            if (!isValidEmail(email)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "Only valid Gmail or UrbanNest addresses are allowed"));
             }
 
-            if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("error", "Email already exists"));
+            if (userRepository.findByEmail(email).isPresent()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email already exists"));
             }
 
-            // Block ADMIN creation via the public signup endpoint
-            if ("ADMIN".equalsIgnoreCase(user.getRole())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Invalid role"));
-            }
+            AppUser user = new AppUser();
+            user.setEmail(email);
+            user.setName((String) payload.get("name"));
+            user.setPassword(encoder.encode((String) payload.get("password")));
+            user.setRole((String) payload.get("role"));
+            user.setCity((String) payload.get("city"));
+            user.setPhone((String) payload.get("phone"));
+            user.setPincode((String) payload.get("pincode"));
+            user.setProfilePicture((String) payload.get("profilePicture"));
+            user.setAgencyName((String) payload.get("agencyName"));
 
-            // Hash password before saving
-            user.setPassword(encoder.encode(user.getPassword()));
-
-            // Auto-verify email
+            // Verification status
             user.setEmailVerified(true);
-            user.setVerificationToken(null);
-
-            // Admin approval (verified flag)
             if ("AGENT".equalsIgnoreCase(user.getRole())) {
                 user.setVerified(false);
             } else {
                 user.setVerified(true);
-            }
-
-            // Send Welcome Email
-            if ("AGENT".equalsIgnoreCase(user.getRole())) {
-                // Agents still need admin approval, but verification is done
-            } else {
-                emailService.sendBuyerWelcomeEmail(user.getEmail(), user.getName());
+                emailService.sendBuyerWelcomeEmail(email, user.getName());
             }
 
             userRepository.save(user);
-
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of("message", "Registration successful! You can now log in."));
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Registration successful!"));
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Server error during registration"));
         }
     }
 

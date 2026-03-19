@@ -33,13 +33,8 @@ public class DebugController {
                         .collect(Collectors.toList()));
     }
 
-    @GetMapping("/list-users")
-    public List<Map<String, Object>> listUsers() {
-        return userRepository.findAll().stream()
-                .map(u -> Map.of("id", (Object) u.getId(), "email", (Object) u.getEmail(), "role",
-                        (Object) u.getRole()))
-                .collect(Collectors.toList());
-    }
+    // Removed list-users for security
+
 
     @GetMapping("/reset-password")
     public Map<String, Object> resetPassword(@RequestParam String email, @RequestParam String password) {

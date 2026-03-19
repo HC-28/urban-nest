@@ -9,7 +9,7 @@ function createApi(path, options = {}) {
   const instance = axios.create({
     baseURL: `${BASE_URL}${path}`,
     headers: { "Content-Type": "application/json" },
-    timeout: options.timeout || 10000,
+    timeout: options.timeout || 60000,
   });
 
   // Automatically attach JWT token to every request
@@ -45,6 +45,9 @@ export const authApi = createApi("/auth");
 authApi.googleLogin = (token) => authApi.post("/google", { token });
 authApi.requestOtp = (email) => authApi.post(`/request-otp?email=${email}`);
 authApi.verifyOtp = (email, otp) => authApi.post("/verify-otp", { email, otp });
+authApi.registerOtp = (email) => authApi.post(`/register-otp?email=${email}`);
+authApi.resetPasswordOtp = (email) => authApi.post(`/reset-password-otp?email=${email}`);
+authApi.resetPasswordVerify = (email, otp, newPassword) => authApi.post("/reset-password-verify", { email, otp, newPassword });
 export const userApi = createApi("/users");
 export const adminApi = createApi("/admin");
 export const propertyApi = createApi("/properties", { timeout: 60000 }); // 60s for images

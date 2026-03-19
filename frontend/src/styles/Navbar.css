@@ -364,7 +364,17 @@
 
 @media (max-width: 600px) {
   .brand-title {
-    font-size: 18px;
+    font-size: 16px;
+    gap: 8px;
+  }
+
+  .header-inner {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .header-actions {
+    gap: 6px;
   }
 
   .header-actions .signup-link {
@@ -373,8 +383,17 @@
 
   .login-btn,
   .post-btn {
-    font-size: 13px;
-    padding: 9px 16px;
+    font-size: 12px;
+    padding: 8px 12px;
+    min-height: 38px;
+  }
+
+  .messages-btn,
+  .search-toggle-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    font-size: 16px;
   }
 }
 

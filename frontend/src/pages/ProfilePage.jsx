@@ -111,9 +111,31 @@ function ProfilePage() {
         }
     };
 
+    const [otpSent, setOtpSent] = useState(false);
+    const [otp, setOtp] = useState("");
+
+    const requestChangePasswordOtp = async () => {
+        setPasswordMessage({ type: "", text: "" });
+        setChangingPassword(true);
+        try {
+            await authApi.requestOtp(user.email);
+            setOtpSent(true);
+            toast.success("Verification code sent to your email!");
+        } catch (err) {
+            setPasswordMessage({ type: "error", text: "Failed to send verification code" });
+        } finally {
+            setChangingPassword(false);
+        }
+    };
+
     const handleChangePassword = async (e) => {
         e.preventDefault();
         setPasswordMessage({ type: "", text: "" });
+
+        if (!otpSent) {
+            await requestChangePasswordOtp();
+            return;
+        }
 
         if (passwordData.newPassword.length < 6) {
             setPasswordMessage({ type: "error", text: "New password must be at least 6 characters" });
@@ -129,9 +151,12 @@ function ProfilePage() {
             await userApi.put("/me/password", {
                 currentPassword: passwordData.currentPassword,
                 newPassword: passwordData.newPassword,
+                otp: otp
             });
             setPasswordMessage({ type: "success", text: "Password changed successfully!" });
             setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+            setOtp("");
+            setOtpSent(false);
         } catch (err) {
             const msg = err.response?.data?.error || err.response?.data || "Failed to change password";
             setPasswordMessage({ type: "error", text: typeof msg === 'string' ? msg : "Failed to change password" });
@@ -682,14 +707,40 @@ function ProfilePage() {
                                                 placeholder="Re-enter new password"
                                             />
                                         </div>
+
+                                        {otpSent && (
+                                            <div style={{ position: 'relative' }}>
+                                                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Verification Code</label>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <input
+                                                        type="text"
+                                                        value={otp}
+                                                        onChange={(e) => setOtp(e.target.value)}
+                                                        required
+                                                        style={{ flex: 1, padding: '12px 16px', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#E2E8F0', fontSize: '0.95rem', fontFamily: 'inherit' }}
+                                                        placeholder="6-digit OTP"
+                                                    />
+                                                    <button type="button" onClick={requestChangePasswordOtp} style={{ padding: '0 15px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', color: '#60a5fa', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>
+                                                        Resend
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <button
                                             type="submit"
                                             disabled={changingPassword}
                                             className="save-profile-btn"
                                             style={{ marginTop: '4px', width: 'fit-content' }}
                                         >
-                                            {changingPassword ? 'Changing...' : 'Change Password'}
+                                            {changingPassword ? 'Processing...' : (otpSent ? 'Confirm & Change' : 'Request Change OTP')}
                                         </button>
+                                        
+                                        {otpSent && (
+                                            <button type="button" onClick={() => setOtpSent(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
+                                                ← Edit Details
+                                            </button>
+                                        )}
                                     </form>
                                 </div>
 

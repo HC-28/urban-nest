@@ -261,4 +261,26 @@ public class EmailService {
             System.err.println("⚠️ [EmailService] Failed to send HTML email: " + e.getMessage());
         }
     }
+
+    /**
+     * Sends an OTP verification code.
+     */
+    public void sendOtp(String email, String otp) {
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(FROM);
+            msg.setTo(email);
+            msg.setSubject("[" + APP_NAME + "] Your Verification Code");
+            msg.setText(
+                    "Hello,\n\n" +
+                            "Your verification code for " + APP_NAME + " is:\n\n" +
+                            "👉 " + otp + "\n\n" +
+                            "This code will expire in 5 minutes.\n\n" +
+                            "If you did not request this code, please ignore this email.\n\n" +
+                            "Best regards,\n" + APP_NAME + " Team");
+            mailSender.send(msg);
+        } catch (Exception e) {
+            System.err.println("⚠️ [EmailService] Failed to send OTP: " + e.getMessage());
+        }
+    }
 }

@@ -131,6 +131,11 @@ function Login() {
                 placeholder="••••••••"
                 required
                 />
+                <div style={{ textAlign: 'right', marginTop: '4px' }}>
+                  <Link to="/forgot-password" style={{ fontSize: '0.85rem', color: '#60a5fa', textDecoration: 'none' }}>
+                    Forgot Password?
+                  </Link>
+                </div>
             </div>
           ) : (
             <div className="form-group">

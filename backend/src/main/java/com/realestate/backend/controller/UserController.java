@@ -25,6 +25,9 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.realestate.backend.service.OtpService otpService;
+
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     /**
@@ -153,7 +156,7 @@ public class UserController {
 
     /**
      * PUT /api/users/me/password
-     * Change own password.
+     * Change own password. requires current password AND OTP.
      */
     @PutMapping(value = "/me/password", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
@@ -165,10 +168,15 @@ public class UserController {
 
             String currentPassword = request.get("currentPassword");
             String newPassword = request.get("newPassword");
+            String otp = request.get("otp");
 
-            if (currentPassword == null || newPassword == null) {
+            if (currentPassword == null || newPassword == null || otp == null) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Current password and new password are required"));
+                        .body(Map.of("error", "Current password, new password, and OTP code are required"));
+            }
+
+            if (!otpService.validateOtp(email, otp)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired OTP"));
             }
 
             if (newPassword.length() < 6) {

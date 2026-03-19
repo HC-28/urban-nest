@@ -22,6 +22,8 @@ function Signup() {
   const [previewImage, setPreviewImage] = useState(null);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const [otpStep, setOtpStep] = useState(false);
+  const [otp, setOtp] = useState("");
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
@@ -50,6 +52,20 @@ function Signup() {
     reader.readAsDataURL(file);
   };
 
+  const requestOtp = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await authApi.registerOtp(user.email);
+      setOtpStep(true);
+      toast.success("OTP sent to your email!");
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -60,10 +76,14 @@ function Signup() {
       return;
     }
 
-    setLoading(true);
+    if (!otpStep) {
+      await requestOtp();
+      return;
+    }
 
+    setLoading(true);
     try {
-      const res = await authApi.post("/register", user);
+      const res = await authApi.post("/register", { ...user, otp });
       setSuccess(true);
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
@@ -77,7 +97,10 @@ function Signup() {
   const handleGoogleSuccess = async (response) => {
     setLoading(true);
     try {
-      const res = await authApi.googleLogin(response.credential);
+      const res = await authApi.post("/google", { 
+        token: response.credential,
+        role: user.role 
+      });
       const loggedUser = res.data;
       localStorage.setItem("token", loggedUser.token);
       delete loggedUser.token;
@@ -122,59 +145,85 @@ function Signup() {
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
+          {!otpStep ? (
+            <>
+              <div className="form-group">
+                <input name="name" placeholder="Full Name" value={user.name} onChange={handleChange} required />
+              </div>
 
-          <div className="form-group">
-            <input name="name" placeholder="Full Name" value={user.name} onChange={handleChange} required />
-          </div>
+              <div className="form-group">
+                <input name="email" type="email" placeholder="Email Address" value={user.email} onChange={handleChange} required />
+              </div>
 
-          <div className="form-group">
-            <input name="email" type="email" placeholder="Email Address" value={user.email} onChange={handleChange} required />
-          </div>
+              <div className="form-group">
+                <input name="password" type="password" placeholder="Password" value={user.password} onChange={handleChange} required />
+              </div>
 
-          <div className="form-group">
-            <input name="password" type="password" placeholder="Password" value={user.password} onChange={handleChange} required />
-          </div>
+              <div className="form-group">
+                <select name="role" value={user.role} onChange={handleChange}>
+                  <option value="BUYER">I am a Buyer/Renter</option>
+                  <option value="AGENT">I am an Agent/Seller</option>
+                </select>
+              </div>
 
-          <div className="form-group">
-            <select name="role" value={user.role} onChange={handleChange}>
-              <option value="BUYER">I am a Buyer/Renter</option>
-              <option value="AGENT">I am an Agent/Seller</option>
-            </select>
-          </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="form-group">
+                  <input name="city" placeholder="City" value={user.city} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <input name="pincode" placeholder="Pincode" value={user.pincode} onChange={handleChange} maxLength="6" />
+                </div>
+              </div>
+              <div className="form-group">
+                <input name="phone" placeholder="Phone" value={user.phone} onChange={handleChange} />
+              </div>
 
-          {/* Additional fields grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {user.role === "AGENT" && (
+                <div className="form-group">
+                  <input name="agencyName" placeholder="Agency Name" value={user.agencyName || ""} onChange={handleChange} />
+                </div>
+              )}
+
+              <div className="form-group">
+                <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.9rem', border: '1px solid var(--border-light)' }}>
+                    {previewImage ? "✨ Change Photo" : "📷 Upload Photo"}
+                  </span>
+                  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                  {previewImage && <img src={previewImage} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />}
+                </label>
+              </div>
+            </>
+          ) : (
             <div className="form-group">
-              <input name="city" placeholder="City" value={user.city} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <input name="pincode" placeholder="Pincode" value={user.pincode} onChange={handleChange} maxLength="6" />
-            </div>
-          </div>
-          <div className="form-group">
-            <input name="phone" placeholder="Phone" value={user.phone} onChange={handleChange} />
-          </div>
-
-          {user.role === "AGENT" && (
-            <div className="form-group">
-              <input name="agencyName" placeholder="Agency Name" value={user.agencyName || ""} onChange={handleChange} />
+              <label>Verification Code</label>
+              <div className="otp-input-wrapper">
+                <input
+                  type="text"
+                  placeholder="Enter 6-digit OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                />
+                <button type="button" onClick={requestOtp} disabled={loading} className="resend-otp-btn">
+                  Resend
+                </button>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                We've sent a code to <b>{user.email}</b>
+              </p>
             </div>
           )}
 
-          {/* Profile Picture Upload */}
-          <div className="form-group">
-            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.9rem', border: '1px solid var(--border-light)' }}>
-                {previewImage ? "✨ Change Photo" : "📷 Upload Photo"}
-              </span>
-              <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-              {previewImage && <img src={previewImage} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />}
-            </label>
-          </div>
-
           <button type="submit" className="auth-btn glow-amber" disabled={loading}>
-            {loading ? "Creating Account..." : "Sign Up"}
+            {loading ? "Please wait..." : otpStep ? "Verify & Register" : "Sign Up"}
           </button>
+          
+          {otpStep && (
+            <button type="button" className="auth-link-btn" onClick={() => setOtpStep(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '10px', cursor: 'pointer' }}>
+              ← Edit Registration Details
+            </button>
+          )}
         </form>
 
         <div className="auth-divider"><span>OR</span></div>
