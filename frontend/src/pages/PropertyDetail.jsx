@@ -5,7 +5,6 @@ import Footer from "../components/Footer";
 import MapModal from "../components/MapModal";
 import AppointmentActionPanel from "../components/AppointmentActionPanel";
 import "../styles/PropertyDetail.css";
-import { FiEye, FiHeart, FiShare2, FiHome, FiMaximize, FiCalendar, FiMapPin, FiUser, FiInfo, FiCheck, FiMail, FiPhone, FiX, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { propertyApi, favoritesApi, userApi, chatApi, slotsApi, appointmentApi, BASE_URL, IMAGE_URL } from "../api/api";
 import { formatPrice } from "../utils/priceUtils";
 import { parsePropertyImages } from "../utils/imageUtils";
@@ -13,10 +12,108 @@ import { addToRecentlyViewed } from "../utils/recentlyViewed";
 import toast from "react-hot-toast";
 import { Helmet } from "react-helmet-async";
 
+/* ─── SVG Icons ─── */
+const EyeIcon = ({ className }) => (
+  <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </svg>
+);
+
+const HeartIcon = ({ className }) => (
+  <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+  </svg>
+);
+
+const ShareIcon = ({ className, style }) => (
+  <svg className={className} style={style} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="18" cy="5" r="3"></circle>
+    <circle cx="6" cy="12" r="3"></circle>
+    <circle cx="18" cy="19" r="3"></circle>
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+  </svg>
+);
+
+const HomeIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+  </svg>
+);
+
+const MaximizeIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+  </svg>
+);
+
+const CalendarIcon = ({ className, style, size = 18 }) => (
+  <svg className={className} style={style} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
+
+const MapPinIcon = ({ className }) => (
+  <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+    <circle cx="12" cy="10" r="3"></circle>
+  </svg>
+);
+
+const UserIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
+
+const MailIcon = ({ className }) => (
+  <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+    <polyline points="22,6 12,13 2,6"></polyline>
+  </svg>
+);
+
+const PhoneIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
+const ChevronLeftIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6"></polyline>
+  </svg>
+);
+
+const ChevronRightIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </svg>
+);
+
 function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation(); // Added useLocation
+  const location = useLocation();
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +132,6 @@ function PropertyDetail() {
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-
   /* ================= FETCH PROPERTY ================= */
   useEffect(() => {
     const fetchProperty = async () => {
@@ -50,7 +146,6 @@ function PropertyDetail() {
           description:
             data.description ||
             `Beautiful ${data.bhk} BHK ${data.type}. This property offers ${data.area} sq.ft.`,
-          // Convert price from rupees to lakhs
           priceRaw: data.price,
           price: Math.round(data.price / 100000),
           pricePerSqft: data.area ? Math.round(data.price / data.area) : 0,
@@ -65,8 +160,6 @@ function PropertyDetail() {
                 : `${IMAGE_URL}${encodeURIComponent(p)}`
             )
             : ["/property-placeholder.jpg"],
-
-
           amenities: [
             "Parking",
             "Security",
@@ -74,7 +167,7 @@ function PropertyDetail() {
             "Lift",
             "Water Supply"
           ],
-          agentId: data.agentId, // ✅ FIX
+          agentId: data.agentId,
           agent: {
             name: data.agentName || "Agent",
             email: data.agentEmail || "agent@email.com"
@@ -90,10 +183,8 @@ function PropertyDetail() {
           pinCode: data.pinCode
         };
 
-        // Create initial property data
         let propertyData = { ...transformedProperty };
 
-        // Attempt to fetch latest agent info if agentId exists
         if (data.agentId) {
           try {
             const agentRes = await userApi.get(`/${data.agentId}`);
@@ -108,13 +199,8 @@ function PropertyDetail() {
         }
 
         setProperty(propertyData);
-
-        // Track in recently viewed
         addToRecentlyViewed(data);
 
-        // Note: view tracking is handled server-side in getPropertyById
-
-        // Check if saved
         if (user) {
           try {
             const res = await favoritesApi.get("/status", {
@@ -135,15 +221,15 @@ function PropertyDetail() {
     };
 
     fetchProperty();
-  }, [id, user]); // Added user to dependency array
+  }, [id, user]);
 
   /* ================= HANDLE AUTO-CHAT ================= */
   useEffect(() => {
-    const params = new URLSearchParams(location.search); // Changed window.location.search to location.search
+    const params = new URLSearchParams(location.search);
     if (params.get("chat") === "true") {
       setShowChat(true);
     }
-  }, [location.search]); // Added location.search to dependency array
+  }, [location.search]);
 
   /* ================= FETCH CHAT HISTORY ================= */
   useEffect(() => {
@@ -154,7 +240,7 @@ function PropertyDetail() {
 
     const fetchChats = async () => {
       try {
-        const res = await chatApi.get(`/ messages`, {
+        const res = await chatApi.get(`/messages`, {
           params: { propertyId: property.id, buyerId: user.id, agentId: property.agentId }
         });
 
@@ -164,8 +250,7 @@ function PropertyDetail() {
           setChatMessages([]);
         }
 
-        // Mark AGENT messages as SEEN
-        await chatApi.post(`/ seen`, {
+        await chatApi.post(`/seen`, {
           propertyId: property.id,
           buyerId: user.id,
           agentId: property.agentId,
@@ -180,7 +265,6 @@ function PropertyDetail() {
     fetchChats();
   }, [showChat, property, user]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (chatMessagesRef.current) {
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
@@ -227,7 +311,6 @@ function PropertyDetail() {
     }
   };
 
-  /* ================= HELPERS ================= */
   const nextImage = () =>
     setCurrentImageIndex(i =>
       i === property.images.length - 1 ? 0 : i + 1
@@ -269,7 +352,7 @@ function PropertyDetail() {
       try {
         await navigator.share({
           title: property.title,
-          text: `Check out this property: ${property.title} `,
+          text: `Check out this property: ${property.title}`,
           url: window.location.href,
         });
       } catch (err) {
@@ -285,9 +368,6 @@ function PropertyDetail() {
     }
   };
 
-
-
-  /* ================= SEND MESSAGE ================= */
   const sendMessage = async () => {
     if (!user) {
       toast.error("Please login first to chat");
@@ -315,7 +395,7 @@ function PropertyDetail() {
     };
 
     try {
-      const res = await chatApi.post(`/ messages`, payload);
+      const res = await chatApi.post(`/messages`, payload);
       setChatMessages(prev => [...prev, res.data]);
       setChatMessage("");
     } catch (err) {
@@ -324,22 +404,6 @@ function PropertyDetail() {
     }
   };
 
-  const fetchChatHistory = async () => {
-    if (!user || user.role !== "BUYER") return;
-
-    try {
-      const res = await chatApi.get(`/ messages`, {
-        params: { propertyId: property.id, buyerId: user.id, agentId: property.agentId }
-      });
-      setChatMessages(res.data);
-    } catch (err) {
-      console.error("Failed to load chat history", err);
-    }
-  };
-
-
-
-  /* ================= HELPERS ================= */
   const formatTime = (time) => {
     if (!time) return "";
     const date = new Date(time);
@@ -349,7 +413,6 @@ function PropertyDetail() {
     });
   };
 
-  /* ================= UI STATES ================= */
   if (loading) {
     return (
       <div className="property-detail-page">
@@ -377,7 +440,6 @@ function PropertyDetail() {
     );
   }
 
-  /* ================= MAIN UI ================= */
   return (
     <div className="property-detail-page">
       <Helmet>
@@ -386,21 +448,20 @@ function PropertyDetail() {
       </Helmet>
       <Navbar />
 
-      {/* Lightbox Modal */}
       {showLightbox && (
         <div className="lightbox-overlay animate-in" onClick={() => setShowLightbox(false)}>
           <button className="lightbox-close" onClick={() => setShowLightbox(false)}>
-            <FiX />
+            <CloseIcon />
           </button>
 
           <button className="lightbox-nav prev" onClick={(e) => { e.stopPropagation(); prevImage(); }}>
-            <FiChevronLeft />
+            <ChevronLeftIcon />
           </button>
 
           <img src={property.images[currentImageIndex]} alt="Fullscreen view" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
 
           <button className="lightbox-nav next" onClick={(e) => { e.stopPropagation(); nextImage(); }}>
-            <FiChevronRight />
+            <ChevronRightIcon />
           </button>
 
           <div className="lightbox-counter">
@@ -410,7 +471,6 @@ function PropertyDetail() {
       )}
 
       <div className="property-detail-container">
-        {/* Breadcrumb */}
         <div className="breadcrumb">
           <span onClick={() => navigate("/")}>Home</span>
           <span>/</span>
@@ -419,7 +479,6 @@ function PropertyDetail() {
           <span className="current">{property.title}</span>
         </div>
 
-        {/* Image Gallery */}
         <div className="property-gallery-container">
           <div className="main-carousel">
             <div className="carousel-track" style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}>
@@ -431,10 +490,10 @@ function PropertyDetail() {
             </div>
 
             <button className="carousel-control prev" onClick={prevImage} aria-label="Previous image">
-              <FiChevronLeft />
+              <ChevronLeftIcon />
             </button>
             <button className="carousel-control next" onClick={nextImage} aria-label="Next image">
-              <FiChevronRight />
+              <ChevronRightIcon />
             </button>
 
             <div className="carousel-indicator">
@@ -466,15 +525,11 @@ function PropertyDetail() {
 
         <div className="property-content">
           <div className="main-content">
-            {/* Header */}
             <div className="property-header">
               <div>
-                <div className="badges">
-                  {/* Badge logic removed from here as it is moved into the carousel area per UI design */}
-                </div>
                 <h1>{property.title}</h1>
                 <p className="location">
-                  <FiMapPin /> {property.address}
+                  <MapPinIcon /> {property.address}
                 </p>
               </div>
 
@@ -488,29 +543,27 @@ function PropertyDetail() {
               </div>
             </div>
 
-            {/* Quick Info */}
             <div className="quick-info">
-              <div className="info-item"><FiHome /> {property.bhk} BHK</div>
-              <div className="info-item"><FiMaximize /> {property.area} sq.ft</div>
-              <div className="info-item"><FiCalendar /> {property.age}</div>
+              <div className="info-item"><HomeIcon /> {property.bhk} BHK</div>
+              <div className="info-item"><MaximizeIcon /> {property.area} sq.ft</div>
+              <div className="info-item"><CalendarIcon /> {property.age}</div>
             </div>
 
-            {/* Property Stats Bar */}
             <div className="property-stats-bar">
               <div className="stat-item">
-                <FiEye className="stat-icon" />
+                <EyeIcon className="stat-icon" />
                 <span className="stat-value">{property.views}</span>
                 <span className="stat-label">Views</span>
               </div>
               <div className="stat-divider" />
               <div className="stat-item">
-                <FiHeart className="stat-icon" />
+                <HeartIcon className="stat-icon" />
                 <span className="stat-value">{property.favorites}</span>
                 <span className="stat-label">Favorites</span>
               </div>
               <div className="stat-divider" />
               <div className="stat-item">
-                <FiMail className="stat-icon" />
+                <MailIcon className="stat-icon" />
                 <span className="stat-value">{property.inquiries}</span>
                 <span className="stat-label">Inquiries</span>
               </div>
@@ -518,7 +571,7 @@ function PropertyDetail() {
                 <>
                   <div className="stat-divider" />
                   <div className="stat-item">
-                    <FiCalendar className="stat-icon" />
+                    <CalendarIcon className="stat-icon" />
                     <span className="stat-value">{new Date(property.listedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     <span className="stat-label">Listed</span>
                   </div>
@@ -526,27 +579,26 @@ function PropertyDetail() {
               )}
             </div>
 
-            {/* Actions */}
             <div className="action-buttons">
               <button
                 className={`action-btn ${isSaved ? "saved" : ""}`}
                 onClick={toggleSave}
               >
-                <FiHeart /> {isSaved ? "Saved" : "Save"}
+                <HeartIcon /> {isSaved ? "Saved" : "Save"}
               </button>
 
               <button
                 className="action-btn"
                 onClick={handleShare}
               >
-                <FiShare2 /> Share
+                <ShareIcon /> Share
               </button>
 
               <button
                 className="action-btn primary"
                 onClick={() => document.querySelector(".sidebar")?.scrollIntoView({ behavior: "smooth" })}
               >
-                <FiPhone /> Contact Agent
+                <PhoneIcon /> Contact Agent
               </button>
 
               <button
@@ -568,8 +620,6 @@ function PropertyDetail() {
                   }
 
                   setShowChat(true);
-                  // fetchChatHistory();
-
                 }}
               >
                 💬 Chat with Agent
@@ -586,33 +636,30 @@ function PropertyDetail() {
                 }}
                 disabled={property.sold}
               >
-                📅 {property.sold ? "Sold" : "Book Appointment"}
+                <CalendarIcon style={{ marginRight: '8px' }} /> {property.sold ? "Sold" : "Book Appointment"}
               </button>
 
               <button
                 className="action-btn"
                 onClick={() => setShowMap(true)}
               >
-                <FiMapPin /> Show in Map
+                <MapPinIcon /> Show in Map
               </button>
-
             </div>
 
-            {/* SLOTS BOX — Date-grouped Time Picker */}
             {showSlots && user?.role === "BUYER" && (
               <div className="slots-section animate-in">
                 <div className="slots-header">
-                  <h3><FiCalendar style={{ marginRight: '8px' }} /> Schedule a Visit</h3>
-                  <button className="slots-close" onClick={() => setShowSlots(false)}><FiX /></button>
+                  <h3><CalendarIcon style={{ marginRight: '8px' }} /> Schedule a Visit</h3>
+                  <button className="slots-close" onClick={() => setShowSlots(false)}><CloseIcon /></button>
                 </div>
                 {availableSlots.length === 0 ? (
                   <div className="slots-empty">
-                    <FiCalendar size={32} style={{ color: '#64748b', marginBottom: '8px' }} />
+                    <CalendarIcon size={32} style={{ color: '#64748b', marginBottom: '8px' }} />
                     <p>No available time slots for this property yet.</p>
                     <p style={{ fontSize: '13px', color: '#64748b' }}>The agent hasn't added viewing slots. Try contacting them via chat.</p>
                   </div>
                 ) : (() => {
-                  // Group slots by date
                   const grouped = {};
                   availableSlots.forEach(s => {
                     if (!grouped[s.slotDate]) grouped[s.slotDate] = [];
@@ -660,15 +707,14 @@ function PropertyDetail() {
               </div>
             )}
 
-            {/* CHAT BOX */}
             {showChat && user?.role === "BUYER" && (
               <div className="chat-box-compact animate-in">
                 <div className="chat-header">
                   <div className="agent-info-mini">
                     {property.agent.profilePicture ? (
-                      <img src={property.agent.profilePicture.startsWith('http') ? property.agent.profilePicture : `${IMAGE_URL}${property.agent.profilePicture} `} alt={property.agent.name} />
+                      <img src={property.agent.profilePicture.startsWith('http') ? property.agent.profilePicture : `${IMAGE_URL}${property.agent.profilePicture}`} alt={property.agent.name} />
                     ) : (
-                      <div className="chat-avatar-small"><FiUser /></div>
+                      <div className="chat-avatar-small"><UserIcon /></div>
                     )}
                     <div className="chat-status-info">
                       <h4>{property.agent.name}</h4>
@@ -676,7 +722,7 @@ function PropertyDetail() {
                     </div>
                   </div>
                   <button className="close-chat-btn" onClick={() => setShowChat(false)}>
-                    <FiX />
+                    <CloseIcon />
                   </button>
                 </div>
 
@@ -696,11 +742,10 @@ function PropertyDetail() {
                       return (
                         <div
                           key={i}
-                          className={`chat - message ${isSystem ? 'system-msg' : (msg.sender === "BUYER" ? "buyer" : "agent")} ${isAppointment ? "appointment-msg" : ""} `}
+                          className={`chat-message ${isSystem ? 'system-msg' : (msg.sender === "BUYER" ? "buyer" : "agent")} ${isAppointment ? "appointment-msg" : ""}`}
                         >
-                          <div className={`msg - bubble ${isAppointment ? "appointment" : ""} ${isSystem ? "system" : ""} `}>
+                          <div className={`msg-bubble ${isAppointment ? "appointment" : ""} ${isSystem ? "system" : ""}`}>
                             <div className="msg-text">
-                              {/* Handle bold markdown-ish text */}
                               {msg.message.split('**').map((part, idx) =>
                                 idx % 2 === 1 ? <strong key={idx}>{part}</strong> : part
                               )}
@@ -708,7 +753,7 @@ function PropertyDetail() {
                             {!isSystem && <div className="msg-meta">
                               <span className="time">{formatTime(msg.createdAt)}</span>
                               {msg.sender === "BUYER" && (
-                                <span className={`status ${msg.seen ? "seen" : ""} `}>
+                                <span className={`status ${msg.seen ? "seen" : ""}`}>
                                   {msg.seen ? "✓✓" : "✓"}
                                 </span>
                               )}
@@ -734,37 +779,34 @@ function PropertyDetail() {
                       onKeyDown={e => e.key === "Enter" && sendMessage()}
                     />
                     <button className="send-btn" onClick={sendMessage} disabled={!chatMessage.trim()}>
-                      <FiShare2 style={{ transform: 'rotate(-45deg)', marginLeft: '4px' }} />
+                      <ShareIcon style={{ transform: 'rotate(-45deg)', marginLeft: '4px' }} />
                     </button>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Description */}
             <div className="section">
               <h3>Description</h3>
               <p className="description">{property.description}</p>
             </div>
 
-            {/* Amenities */}
             <div className="section">
               <h3>Amenities</h3>
               <div className="amenities-grid">
                 {property.amenities.map((a, i) => (
                   <div key={i} className="amenity-item">
-                    <FiCheck /> {a}
+                    <CheckIcon /> {a}
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="sidebar">
             <div className="agent-card">
               <div className="agent-header">
-                <div className="agent-avatar"><FiUser /></div>
+                <div className="agent-avatar"><UserIcon /></div>
                 <div>
                   <h4>{property.agent.name}</h4>
                   <p>{property.agent.email}</p>
@@ -772,11 +814,11 @@ function PropertyDetail() {
               </div>
 
               <div className="agent-actions">
-                <a href={`mailto:${property.agent.email} `} className="contact-btn email">
-                  <FiMail /> Email
+                <a href={`mailto:${property.agent.email}`} className="contact-btn email">
+                  <MailIcon /> Email
                 </a>
                 <a href="tel:+919999999999" className="contact-btn phone">
-                  <FiPhone /> Call
+                  <PhoneIcon /> Call
                 </a>
               </div>
             </div>
@@ -795,23 +837,22 @@ function PropertyDetail() {
 
             <div className="property-stats">
               <div className="stat-item">
-                <FiEye /> {property.views} Views
+                <EyeIcon /> {property.views} Views
               </div>
               <div className="stat-item">
-                <FiCalendar /> Posted Recently
+                <HeartIcon /> {property.favorites} Favorites
+              </div>
+              <div className="stat-item">
+                <MailIcon /> {property.inquiries} Inquiries
               </div>
             </div>
           </div>
         </div>
+
+        <MapModal isOpen={showMap} onClose={() => setShowMap(false)} center={[property.latitude, property.longitude]} zoom={15} properties={[property]} />
       </div>
 
       <Footer />
-      <MapModal
-        isOpen={showMap}
-        onClose={() => setShowMap(false)}
-        initialProperty={property}
-      />
-
     </div>
   );
 }

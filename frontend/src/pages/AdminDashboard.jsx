@@ -5,12 +5,171 @@ import Footer from "../components/Footer";
 import { adminApi, chatApi } from "../api/api.js";
 import { formatPrice } from "../utils/priceUtils";
 import "../styles/AdminDashboard.css";
-import {
-    FiHome, FiMessageCircle, FiUsers, FiEdit, FiTrash2,
-    FiEye, FiEyeOff, FiSend, FiCheckCircle, FiXCircle,
-    FiTrendingUp, FiDollarSign, FiActivity, FiPieChart, FiX,
-    FiCalendar, FiSearch, FiFilter, FiAlertTriangle, FiClock, FiUser, FiLock, FiShield
-} from "react-icons/fi";
+/* ─── SVG Icons ─── */
+const HomeIcon = ({ size = 24, style }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+);
+
+const MessageCircleIcon = ({ size = 24 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+    </svg>
+);
+
+const UsersIcon = ({ size = 24 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+);
+
+const EditIcon = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+    </svg>
+);
+
+const Trash2Icon = ({ size = 24 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <line x1="10" y1="11" x2="10" y2="17"></line>
+        <line x1="14" y1="11" x2="14" y2="17"></line>
+    </svg>
+);
+
+const EyeIcon = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+);
+
+const EyeOffIcon = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 1.24-2.33M4.93 4.93A10.96 10.96 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+    </svg>
+);
+
+const SendIcon = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+    </svg>
+);
+
+const CheckCircleIcon = ({ size = 24, style, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+);
+
+const XCircleIcon = ({ size = 24, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+    </svg>
+);
+
+const TrendingUpIcon = ({ size = 32, style }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+        <polyline points="17 6 23 6 23 12"></polyline>
+    </svg>
+);
+
+const DollarSignIcon = ({ size = 32, style }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+        <line x1="12" y1="1" x2="12" y2="23"></line>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+    </svg>
+);
+
+const ActivityIcon = ({ size = 24 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+    </svg>
+);
+
+const PieChartIcon = ({ size = 24 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+    </svg>
+);
+
+const XIcon = ({ size = 24 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+);
+
+const CalendarIcon = ({ size = 24 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+);
+
+const SearchIcon = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+);
+
+const FilterIcon = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+    </svg>
+);
+
+const AlertTriangleIcon = ({ size = 24 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+);
+
+const ClockIcon = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+    </svg>
+);
+
+const UserIcon = ({ size = 20, style }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+);
+
+const LockIcon = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    </svg>
+);
+
+const ShieldIcon = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+    </svg>
+);
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer
@@ -364,28 +523,28 @@ function AdminDashboard() {
                 {/* Stats Cards */}
                 <div className="admin-stats">
                     <div className="stat-card">
-                        <FiHome size={32} />
+                        <HomeIcon size={32} />
                         <div>
                             <h3>{stats.totalProperties}</h3>
                             <p>Total Properties</p>
                         </div>
                     </div>
                     <div className="stat-card">
-                        <FiCheckCircle size={32} style={{ color: 'var(--secondary-color)' }} />
+                        <CheckCircleIcon size={32} style={{ color: 'var(--secondary-color)' }} />
                         <div>
                             <h3>{soldDeals.length}</h3>
                             <p>Properties Sold</p>
                         </div>
                     </div>
                     <div className="stat-card">
-                        <FiTrendingUp size={32} style={{ color: 'var(--secondary-color)' }} />
+                        <TrendingUpIcon size={32} style={{ color: 'var(--secondary-color)' }} />
                         <div>
                             <h3>{formatPrice(stats.totalSales)}</h3>
                             <p>Total Sales</p>
                         </div>
                     </div>
                     <div className="stat-card">
-                        <FiDollarSign size={32} style={{ color: 'var(--secondary-color)' }} />
+                        <DollarSignIcon size={32} style={{ color: 'var(--secondary-color)' }} />
                         <div>
                             <h3>{formatPrice(stats.totalCommission)}</h3>
                             <p>Total Commission</p>
@@ -396,13 +555,13 @@ function AdminDashboard() {
                 {/* Tabs */}
                 <div className="admin-tabs">
                     {[
-                        { id: "overview", icon: <FiActivity />, label: "Overview" },
-                        { id: "properties", icon: <FiHome />, label: "Properties" },
-                        { id: "chats", icon: <FiMessageCircle />, label: "Chats" },
-                        { id: "users", icon: <FiUsers />, label: "Users" },
-                        { id: "appointments", icon: <FiCalendar />, label: "Appointments" },
-                        { id: "sold", icon: <FiTrendingUp />, label: "Sold" },
-                        { id: "analysis", icon: <FiPieChart />, label: "Analysis" },
+                        { id: "overview", icon: <ActivityIcon />, label: "Overview" },
+                        { id: "properties", icon: <HomeIcon />, label: "Properties" },
+                        { id: "chats", icon: <MessageCircleIcon />, label: "Chats" },
+                        { id: "users", icon: <UsersIcon />, label: "Users" },
+                        { id: "appointments", icon: <CalendarIcon />, label: "Appointments" },
+                        { id: "sold", icon: <TrendingUpIcon />, label: "Sold" },
+                        { id: "analysis", icon: <PieChartIcon />, label: "Analysis" },
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -432,7 +591,7 @@ function AdminDashboard() {
                                     <div className="pending-actions">
                                         {users.filter(u => u.role === 'AGENT' && !u.verified).length > 0 && (
                                             <div className="pending-card warning" onClick={() => setActiveTab('users')}>
-                                                <FiAlertTriangle size={24} />
+                                                <AlertTriangleIcon size={24} />
                                                 <div>
                                                     <h4>{users.filter(u => u.role === 'AGENT' && !u.verified).length} Pending Agent Approvals</h4>
                                                     <p>Agents waiting for verification</p>
@@ -441,7 +600,7 @@ function AdminDashboard() {
                                         )}
                                         {users.filter(u => u.deletionRequested).length > 0 && (
                                             <div className="pending-card danger" onClick={() => setActiveTab('users')}>
-                                                <FiTrash2 size={24} />
+                                                <Trash2Icon size={24} />
                                                 <div>
                                                     <h4>{users.filter(u => u.deletionRequested).length} Deletion Requests</h4>
                                                     <p>Users requesting account deletion</p>
@@ -458,7 +617,7 @@ function AdminDashboard() {
                                             }, {})).filter(v => v.req > v.res).length;
                                             return assistanceCount > 0 && (
                                                 <div className="pending-card info" onClick={() => setActiveTab('chats')}>
-                                                    <FiMessageCircle size={24} />
+                                                    <MessageCircleIcon size={24} />
                                                     <div>
                                                         <h4>{assistanceCount} Chats Need Attention</h4>
                                                         <p>Admin assistance requested</p>
@@ -469,7 +628,7 @@ function AdminDashboard() {
                                         {users.filter(u => u.deletionRequested).length === 0 &&
                                             users.filter(u => u.role === 'AGENT' && !u.verified).length === 0 && (
                                                 <div className="pending-card success">
-                                                    <FiCheckCircle size={24} />
+                                                    <CheckCircleIcon size={24} />
                                                     <div>
                                                         <h4>All Clear!</h4>
                                                         <p>No pending actions require attention</p>
@@ -480,12 +639,12 @@ function AdminDashboard() {
 
                                     {/* Platform Stats Grid */}
                                     <div className="overview-stats-grid">
-                                        <div className="o-stat"><FiUsers size={20} /><div><h4>{users.filter(u => u.role === 'BUYER').length}</h4><p>Buyers</p></div></div>
-                                        <div className="o-stat"><FiUser size={20} /><div><h4>{users.filter(u => u.role === 'AGENT').length}</h4><p>Agents</p></div></div>
-                                        <div className="o-stat"><FiHome size={20} /><div><h4>{stats.activeListings}</h4><p>Active Listings</p></div></div>
-                                        <div className="o-stat"><FiCalendar size={20} /><div><h4>{appointments.filter(a => a.status === 'booked').length}</h4><p>Upcoming Visits</p></div></div>
-                                        <div className="o-stat"><FiTrash2 size={20} /><div><h4>{deletedUsers.length}</h4><p>Archived Users</p></div></div>
-                                        <div className="o-stat"><FiTrendingUp size={20} /><div><h4>{soldDeals.length}</h4><p>Deals Closed</p></div></div>
+                                        <div className="o-stat"><UsersIcon size={20} /><div><h4>{users.filter(u => u.role === 'BUYER').length}</h4><p>Buyers</p></div></div>
+                                        <div className="o-stat"><UserIcon size={20} /><div><h4>{users.filter(u => u.role === 'AGENT').length}</h4><p>Agents</p></div></div>
+                                        <div className="o-stat"><HomeIcon size={20} /><div><h4>{stats.activeListings}</h4><p>Active Listings</p></div></div>
+                                        <div className="o-stat"><CalendarIcon size={20} /><div><h4>{appointments.filter(a => a.status === 'booked').length}</h4><p>Upcoming Visits</p></div></div>
+                                        <div className="o-stat"><Trash2Icon size={20} /><div><h4>{deletedUsers.length}</h4><p>Archived Users</p></div></div>
+                                        <div className="o-stat"><TrendingUpIcon size={20} /><div><h4>{soldDeals.length}</h4><p>Deals Closed</p></div></div>
                                     </div>
 
                                     {/* Recent Activity */}
@@ -522,7 +681,7 @@ function AdminDashboard() {
                                     {/* Search & Filter Bar */}
                                     <div className="property-filters">
                                         <div className="search-box">
-                                            <FiSearch />
+                                            <SearchIcon />
                                             <input
                                                 type="text"
                                                 placeholder="Search by title, location, or agent..."
@@ -601,17 +760,17 @@ function AdminDashboard() {
                                                                     disabled={prop.status === 'SOLD'}
                                                                     title="Edit"
                                                                 >
-                                                                    <FiEdit />
+                                                                    <EditIcon />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => togglePropertyListing(prop)}
                                                                     disabled={prop.status === 'SOLD'}
                                                                     title="Toggle Listing"
                                                                 >
-                                                                    {prop.active ? <FiEyeOff /> : <FiEye />}
+                                                                    {prop.active ? <EyeOffIcon /> : <EyeIcon />}
                                                                 </button>
                                                                 <button onClick={() => handleDeleteProperty(prop.id)} className="delete-btn" title="Delete">
-                                                                    <FiTrash2 />
+                                                                    <Trash2Icon />
                                                                 </button>
                                                             </td>
                                                         </tr>
@@ -673,7 +832,7 @@ function AdminDashboard() {
                                     {users.filter(u => u.deletionRequested).length > 0 && (
                                         <div className="users-section" style={{ marginBottom: '40px' }}>
                                             <h2 style={{ color: 'var(--danger-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <FiTrash2 /> Account Deletion Requests ({users.filter(u => u.deletionRequested).length})
+                                                <Trash2Icon /> Account Deletion Requests ({users.filter(u => u.deletionRequested).length})
                                             </h2>
                                             <div className="table-wrapper">
                                                 <table>
@@ -691,10 +850,10 @@ function AdminDashboard() {
                                                                 <td><span className={`role-badge ${u.role?.toLowerCase()}`}>{u.role}</span></td>
                                                                 <td className="action-btns">
                                                                     <button onClick={() => handleDeleteUser(u.id)} className="approve-delete-btn" title="Approve Deletion">
-                                                                        <FiCheckCircle size={18} /> Approve
+                                                                        <CheckCircleIcon size={18} /> Approve
                                                                     </button>
                                                                     <button onClick={() => handleRejectDeletion(u.id)} className="reject-delete-btn" title="Reject Request">
-                                                                        <FiXCircle size={18} /> Reject
+                                                                        <XCircleIcon size={18} /> Reject
                                                                     </button>
                                                                 </td>
                                                             </tr>
@@ -708,7 +867,7 @@ function AdminDashboard() {
                                     {/* Pending Agent Approvals */}
                                     <div className="users-section" style={{ marginBottom: '40px' }}>
                                         <h2 style={{ color: 'var(--secondary-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <FiActivity /> Pending Agent Approvals ({users.filter(u => u.role === 'AGENT' && !u.verified).length})
+                                            <ActivityIcon /> Pending Agent Approvals ({users.filter(u => u.role === 'AGENT' && !u.verified).length})
                                         </h2>
                                         <div className="table-wrapper">
                                             <table>
@@ -734,10 +893,10 @@ function AdminDashboard() {
                                                                 <td>{u.agencyName || 'N/A'}</td>
                                                                 <td className="action-btns">
                                                                     <button onClick={() => handleVerifyUser(u)} title="Approve Agent" style={{ color: 'var(--secondary-color)' }}>
-                                                                        <FiCheckCircle size={20} />
+                                                                        <CheckCircleIcon size={20} />
                                                                     </button>
                                                                     <button onClick={() => handleDeleteUser(u.id)} className="delete-btn" title="Reject & Delete">
-                                                                        <FiTrash2 />
+                                                                        <Trash2Icon />
                                                                     </button>
                                                                 </td>
                                                             </tr>
@@ -783,7 +942,7 @@ function AdminDashboard() {
                                                             <td className="action-btns">
                                                                 {u.role === "AGENT" && (
                                                                     <button onClick={() => handleVerifyUser(u)} title="Revoke Verification" style={{ color: 'var(--secondary-color)' }}>
-                                                                        <FiXCircle />
+                                                                        <XCircleIcon />
                                                                     </button>
                                                                 )}
 
@@ -795,7 +954,7 @@ function AdminDashboard() {
                                                                         className="promote-btn"
                                                                         style={{ color: 'var(--secondary-color)' }}
                                                                     >
-                                                                        <FiCheckCircle />
+                                                                        <CheckCircleIcon />
                                                                     </button>
                                                                 ) : (
                                                                     // Only show revoke if not the current logged-in user
@@ -805,14 +964,14 @@ function AdminDashboard() {
                                                                             title="Revoke Admin"
                                                                             style={{ color: 'var(--danger-color)' }}
                                                                         >
-                                                                            <FiXCircle />
+                                                                            <XCircleIcon />
                                                                         </button>
                                                                     )
                                                                 )}
 
                                                                 {u.id !== user.id && (
                                                                     <button onClick={() => handleDeleteUser(u.id)} className="delete-btn" title="Delete User">
-                                                                        <FiTrash2 />
+                                                                        <Trash2Icon />
                                                                     </button>
                                                                 )}
                                                             </td>
@@ -827,7 +986,7 @@ function AdminDashboard() {
                                     {deletedUsers.length > 0 && (
                                         <div className="users-section" style={{ marginTop: '40px' }}>
                                             <h2 style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <FiTrash2 /> Deleted Users Archive ({deletedUsers.length})
+                                                <Trash2Icon /> Deleted Users Archive ({deletedUsers.length})
                                             </h2>
                                             <div className="table-wrapper">
                                                 <table>
@@ -942,7 +1101,7 @@ function AdminDashboard() {
                                                         <td className="action-btns">
                                                             {deal.buyerId && deal.agentId && (
                                                                 <button className="reply-btn" onClick={() => handleViewChat(deal)} title="View Conversation">
-                                                                    <FiMessageCircle /> Chat
+                                                                    <MessageCircleIcon /> Chat
                                                                 </button>
                                                             )}
                                                         </td>
@@ -959,7 +1118,7 @@ function AdminDashboard() {
                                 <div className="analysis-view">
                                     <div className="analysis-controls">
                                         <div className="agent-selector-wrapper">
-                                            <FiActivity />
+                                            <ActivityIcon />
                                             <select
                                                 value={selectedAgentId}
                                                 onChange={(e) => handleAgentSelect(e.target.value)}
@@ -1018,7 +1177,7 @@ function AdminDashboard() {
                                         </div>
                                     ) : (
                                         <div className="no-selection-state">
-                                            <FiPieChart size={60} />
+                                            <PieChartIcon size={60} />
                                             <h3>Select an Agent</h3>
                                             <p>Choose an agent from the dropdown to see their detailed sales analysis and performance metrics.</p>
                                         </div>
@@ -1033,7 +1192,7 @@ function AdminDashboard() {
                                     <div style={{ display: 'grid', gap: '32px', gridTemplateColumns: '1fr 1fr' }}>
                                         {/* Profile Edit */}
                                         <div className="profile-section" style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-md)' }}>
-                                            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><FiUser /> Public Info</h3>
+                                            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><UserIcon /> Public Info</h3>
                                             {profileMessage.text && (
                                                 <div className={`message ${profileMessage.type}`} style={{ padding: '10px', borderRadius: '4px', marginBottom: '16px', backgroundColor: profileMessage.type === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: profileMessage.type === 'error' ? '#ef4444' : '#22c55e' }}>
                                                     {profileMessage.text}
@@ -1076,7 +1235,7 @@ function AdminDashboard() {
 
                                         {/* Password Change */}
                                         <div className="password-section" style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-md)' }}>
-                                            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><FiLock /> Security</h3>
+                                            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><LockIcon /> Security</h3>
                                             {passwordMessage.text && (
                                                 <div className={`message ${passwordMessage.type}`} style={{ padding: '10px', borderRadius: '4px', marginBottom: '16px', backgroundColor: passwordMessage.type === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: passwordMessage.type === 'error' ? '#ef4444' : '#22c55e' }}>
                                                     {passwordMessage.text}
@@ -1199,7 +1358,7 @@ function AdminDashboard() {
                                 </p>
                             </div>
                             <button className="close-btn" onClick={() => { setSelectedChat(null); setChatMessages([]); }}>
-                                <FiX />
+                                <XIcon />
                             </button>
                         </div>
 
@@ -1216,9 +1375,9 @@ function AdminDashboard() {
                                     return (
                                         <div key={i} className={`chat-bubble-wrap ${isMe ? 'right' : 'left'}`}>
                                             <div className="chat-sender">
-                                                {msg.sender === 'BUYER' ? <><FiUser /> Buyer</> :
-                                                    msg.sender === 'ADMIN' ? <><FiShield /> Admin</> :
-                                                        <><FiHome /> Agent</>}
+                                                {msg.sender === 'BUYER' ? <><UserIcon /> Buyer</> :
+                                                    msg.sender === 'ADMIN' ? <><ShieldIcon /> Admin</> :
+                                                        <><HomeIcon /> Agent</>}
                                             </div>
                                             <div className={`chat-bubble ${senderClass}`}>
                                                 <div className="msg-content">{msg.message}</div>
@@ -1242,7 +1401,7 @@ function AdminDashboard() {
                                 flexDirection: 'column',
                                 alignItems: 'center'
                             }}>
-                                <FiLock size={20} style={{ marginBottom: '0.5rem', color: '#64748b' }} />
+                                <LockIcon size={20} style={{ marginBottom: '0.5rem', color: '#64748b' }} />
                                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Messaging disabled for sold properties</p>
                             </div>
                         ) : (
@@ -1255,7 +1414,7 @@ function AdminDashboard() {
                                     placeholder="Write a response as Admin..."
                                 />
                                 <button className="send-btn" onClick={handleSendMessage}>
-                                    <FiSend /> Send
+                                    <SendIcon /> Send
                                 </button>
                             </div>
                         )}

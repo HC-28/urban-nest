@@ -42,7 +42,8 @@ function createApi(path, options = {}) {
 
 // ---------------- API Instances ----------------
 export const authApi = createApi("/auth");
-authApi.googleLogin = (token) => authApi.post("/google", { token });
+authApi.googleLogin = (data) => authApi.post("/google", data);
+authApi.checkUser = (email) => authApi.post("/check-user", { email });
 authApi.requestOtp = (email) => authApi.post(`/request-otp?email=${email}`);
 authApi.verifyOtp = (email, otp) => authApi.post("/verify-otp", { email, otp });
 authApi.registerOtp = (email) => authApi.post(`/register-otp?email=${email}`);

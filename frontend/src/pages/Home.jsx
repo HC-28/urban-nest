@@ -6,13 +6,47 @@ import "../styles/Home.css";
 import heroBg from "../assets/hero-bg.png";
 import ahmImg from "../assets/ahm.jpg";
 import mumbaiImg from "../assets/Mumbai.jpeg";
-import { FiSearch, FiArrowRight, FiChevronDown, FiSliders } from "react-icons/fi";
 import { propertyApi, analyticsApi } from "../api/api";
 import { formatPrice } from "../utils/priceUtils";
 import PropertyCard from "../components/PropertyCard";
 import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
 import { Helmet } from "react-helmet-async";
+
+/* ─── SVG Icons ─── */
+const SearchIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+);
+
+const ArrowRightIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+    </svg>
+);
+
+const ChevronDownIcon = ({ className }) => (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+);
+
+const SlidersIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="4" y1="21" x2="4" y2="14"></line>
+        <line x1="4" y1="10" x2="4" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12" y2="3"></line>
+        <line x1="20" y1="21" x2="20" y2="16"></line>
+        <line x1="20" y1="12" x2="20" y2="3"></line>
+        <line x1="1" y1="14" x2="7" y2="14"></line>
+        <line x1="9" y1="8" x2="15" y2="8"></line>
+        <line x1="17" y1="16" x2="23" y2="16"></line>
+    </svg>
+);
 
 /* ─── Feature Card ─── */
 function FeatureBox({ icon, title, description, cta, onClick }) {
@@ -22,7 +56,7 @@ function FeatureBox({ icon, title, description, cta, onClick }) {
             <h4>{title}</h4>
             <p>{description}</p>
             <button className="explore-btn">
-                {cta} <FiArrowRight />
+                {cta} <ArrowRightIcon />
             </button>
         </div>
     );
@@ -164,7 +198,7 @@ function Hero({ onSearch }) {
                         <div className="search-field city-field" ref={suggestRef}>
                             <label className="field-label">City</label>
                             <div className="field-input-wrap">
-                                <FiSearch className="field-icon" />
+                                <SearchIcon />
                                 <input
                                     className="field-input"
                                     placeholder="Enter city..."
@@ -214,7 +248,7 @@ function Hero({ onSearch }) {
                                         <option key={t} value={t}>{t}</option>
                                     ))}
                                 </select>
-                                <FiChevronDown className="field-icon-right" />
+                                <ChevronDownIcon className="field-icon-right" />
                             </div>
                         </div>
 
@@ -224,14 +258,14 @@ function Hero({ onSearch }) {
                         {/* Advanced Filters Button */}
                         <div className={`search-field filter-field ${showAdvanced ? "active" : ""}`} onClick={() => setShowAdvanced(!showAdvanced)}>
                             <div className="field-input-wrap dummy-wrap">
-                                <FiSliders className="field-icon" />
+                                <SlidersIcon />
                                 <span className="field-text">Filters</span>
                             </div>
                         </div>
 
                         {/* Search Button */}
                         <button className="search-btn" onClick={handleSearch}>
-                            <FiSearch />
+                            <SearchIcon />
                             <span>Search</span>
                         </button>
                     </div>
@@ -251,7 +285,7 @@ function Hero({ onSearch }) {
                                             <option value="4">4 BHK</option>
                                             <option value="5">5+ BHK</option>
                                         </select>
-                                        <FiChevronDown className="field-icon-right" />
+                                        <ChevronDownIcon className="field-icon-right" />
                                     </div>
                                 </div>
                             )}
@@ -391,7 +425,7 @@ export default function Home() {
                             <p>Most popular listings in the market right now</p>
                         </div>
                         <button className="view-all-link" onClick={() => navigate("/properties")}>
-                            View All <FiArrowRight />
+                            View All <ArrowRightIcon />
                         </button>
                     </div>
                     <div className="featured-grid">
@@ -409,7 +443,7 @@ export default function Home() {
                         <p>Handpicked properties based on your preferences</p>
                     </div>
                     <button className="view-all-link" onClick={() => navigate("/properties")}>
-                        View All <FiArrowRight />
+                        View All <ArrowRightIcon />
                     </button>
                 </div>
                 <div className="featured-grid">

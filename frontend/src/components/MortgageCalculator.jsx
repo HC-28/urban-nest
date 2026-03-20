@@ -1,5 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { FiDollarSign, FiPercent, FiCalendar } from "react-icons/fi";
+/* ─── SVG Icons ─── */
+const DollarSignIcon = ({ size = 18, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <line x1="12" y1="1" x2="12" y2="23"></line>
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+  </svg>
+);
+
+const PercentIcon = ({ size = 18, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <line x1="19" y1="5" x2="5" y2="19"></line>
+    <circle cx="17" cy="17" r="3"></circle>
+    <circle cx="7" cy="7" r="3"></circle>
+  </svg>
+);
+
+const CalendarIcon = ({ size = 18, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
 
 const MortgageCalculator = ({ propertyPrice }) => {
   const [principal, setPrincipal] = useState(propertyPrice || 5000000); // Default ₹50L
@@ -35,7 +58,7 @@ const MortgageCalculator = ({ propertyPrice }) => {
         <div>
           <label style={{ fontSize: "0.85rem", color: "#94a3b8", display: "block", marginBottom: "6px" }}>Property Price (₹)</label>
           <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "8px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <FiDollarSign style={{ color: "#64748b", marginRight: "8px" }} />
+            <DollarSignIcon style={{ color: "#64748b", marginRight: "8px" }} />
             <input 
               type="number" 
               value={principal} 
@@ -64,7 +87,7 @@ const MortgageCalculator = ({ propertyPrice }) => {
           <div>
             <label style={{ fontSize: "0.85rem", color: "#94a3b8", display: "block", marginBottom: "6px" }}>Interest (%)</label>
             <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "8px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <FiPercent style={{ color: "#64748b", marginRight: "8px" }} />
+              <PercentIcon style={{ color: "#64748b", marginRight: "8px" }} />
               <input 
                 type="number" 
                 step="0.1"
@@ -77,7 +100,7 @@ const MortgageCalculator = ({ propertyPrice }) => {
           <div>
             <label style={{ fontSize: "0.85rem", color: "#94a3b8", display: "block", marginBottom: "6px" }}>Term (Years)</label>
             <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "8px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <FiCalendar style={{ color: "#64748b", marginRight: "8px" }} />
+              <CalendarIcon style={{ color: "#64748b", marginRight: "8px" }} />
               <input 
                 type="number" 
                 value={loanTerm} 

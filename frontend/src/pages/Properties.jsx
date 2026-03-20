@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { FiSearch, FiSliders, FiX, FiChevronDown } from "react-icons/fi";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/Properties.css";
@@ -10,6 +9,41 @@ import { PropertySkeleton } from "../components/SkeletonLoaders";
 import { formatPrice } from "../utils/priceUtils";
 import { getRecentlyViewed } from "../utils/recentlyViewed";
 import { Helmet } from "react-helmet-async";
+
+/* ─── SVG Icons ─── */
+const SearchIcon = ({ size = 20, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </svg>
+);
+
+const XIcon = ({ size = 18, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
+const SlidersIcon = ({ size = 20, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="4" y1="21" x2="4" y2="14"></line>
+    <line x1="4" y1="10" x2="4" y2="3"></line>
+    <line x1="12" y1="21" x2="12" y2="12"></line>
+    <line x1="12" y1="8" x2="12" y2="3"></line>
+    <line x1="20" y1="21" x2="20" y2="16"></line>
+    <line x1="20" y1="12" x2="20" y2="3"></line>
+    <line x1="1" y1="14" x2="7" y2="14"></line>
+    <line x1="9" y1="8" x2="15" y2="8"></line>
+    <line x1="17" y1="16" x2="23" y2="16"></line>
+  </svg>
+);
+
+const ChevronDownIcon = ({ size = 18, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+);
 
 export default function Properties() {
   const navigate = useNavigate();
@@ -180,7 +214,7 @@ export default function Properties() {
         <div className="search-controls-bar">
           <div className="search-control-left">
             <div className="prop-search-wrap">
-              <FiSearch className="prop-search-icon" />
+              <SearchIcon className="prop-search-icon" />
               <input
                 type="text"
                 placeholder="Search by title, location, pincode..."
@@ -190,7 +224,7 @@ export default function Properties() {
               />
               {filters.search && (
                 <button className="prop-search-clear" onClick={() => applyFilters({ search: "" })}>
-                  <FiX />
+                  <XIcon />
                 </button>
               )}
             </div>
@@ -201,7 +235,7 @@ export default function Properties() {
               className={`filter-toggle-btn ${showFilters ? "active" : ""}`}
               onClick={() => setShowFilters(!showFilters)}
             >
-              <FiSliders />
+              <SlidersIcon />
               <span>Filters</span>
               {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
             </button>
@@ -214,7 +248,7 @@ export default function Properties() {
                 <option value="area-low">Area: Small to Large</option>
                 <option value="area-high">Area: Large to Small</option>
               </select>
-              <FiChevronDown className="sort-icon" />
+              <ChevronDownIcon className="sort-icon" />
             </div>
           </div>
         </div>
@@ -307,7 +341,7 @@ export default function Properties() {
 
               {hasActiveFilters && (
                 <button className="clear-filters-btn" onClick={clearFilters}>
-                  <FiX /> Clear All
+                  <XIcon /> Clear All
                 </button>
               )}
             </div>

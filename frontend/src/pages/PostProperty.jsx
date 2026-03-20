@@ -4,8 +4,35 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import toast from "react-hot-toast";
 import "../styles/PostProperty.css";
-import { FiUpload, FiX, FiCheck, FiLock } from "react-icons/fi";
 import { propertyApi } from "../api/api";
+/* ─── SVG Icons ─── */
+const UploadIcon = ({ size = 40 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <polyline points="17 8 12 3 7 8"></polyline>
+    <line x1="12" y1="3" x2="12" y2="15"></line>
+  </svg>
+);
+
+const XIcon = ({ size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
+const CheckIcon = ({ size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
+
+const LockIcon = ({ size = 32, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+  </svg>
+);
 import heroBg from "../assets/hero-bg.png";
 
 function PostProperty() {
@@ -316,7 +343,7 @@ function PostProperty() {
               margin: '0 auto 24px',
               border: '1px solid rgba(239, 68, 68, 0.2)'
             }}>
-              <FiLock size={32} color="#ef4444" />
+              <LockIcon size={32} color="#ef4444" />
             </div>
             <h2 style={{ fontSize: '2rem', marginBottom: '16px', color: '#fff' }}>Access Restricted</h2>
             <p style={{ color: '#94a3b8', marginBottom: '32px', fontSize: '1.1rem', lineHeight: '1.6' }}>
@@ -347,22 +374,22 @@ function PostProperty() {
 
         <div className="progress-steps">
           <div className={`step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
-            <div className="step-number">{step > 1 ? <FiCheck /> : "1"}</div>
+            <div className="step-number">{step > 1 ? <CheckIcon size={16} /> : "1"}</div>
             <span>Basic Info</span>
           </div>
           <div className="step-line"></div>
           <div className={`step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
-            <div className="step-number">{step > 2 ? <FiCheck /> : "2"}</div>
+            <div className="step-number">{step > 2 ? <CheckIcon size={16} /> : "2"}</div>
             <span>Property Details</span>
           </div>
           <div className="step-line"></div>
           <div className={`step ${step >= 3 ? 'active' : ''} ${step > 3 ? 'completed' : ''}`}>
-            <div className="step-number">{step > 3 ? <FiCheck /> : "3"}</div>
+            <div className="step-number">{step > 3 ? <CheckIcon size={16} /> : "3"}</div>
             <span>Amenities</span>
           </div>
           <div className="step-line"></div>
           <div className={`step ${step >= 4 ? 'active' : ''}`}>
-            <div className="step-number">{step > 4 ? <FiCheck /> : "4"}</div>
+            <div className="step-number">{step > 4 ? <CheckIcon size={16} /> : "4"}</div>
             <span>Photos</span>
           </div>
         </div>
@@ -381,7 +408,7 @@ function PostProperty() {
                         className={`amenity-chip ${formData.type === type ? "selected" : ""}`}
                         onClick={() => handlePropertyTypeSelect(type)}
                       >
-                        {formData.type === type && <FiCheck />}
+                        {formData.type === type && <CheckIcon size={14} />}
                         {type}
                       </div>
                     ))}
@@ -397,7 +424,7 @@ function PostProperty() {
                         className={`amenity-chip ${formData.purpose === purpose ? "selected" : ""}`}
                         onClick={() => handlePurposeSelect(purpose)}
                       >
-                        {formData.purpose === purpose && <FiCheck />}
+                        {formData.purpose === purpose && <CheckIcon size={14} />}
                         {purpose}
                       </div>
                     ))}
@@ -736,7 +763,7 @@ function PostProperty() {
                       className={`amenity-chip ${formData.amenities.includes(amenity) ? 'selected' : ''}`}
                       onClick={() => handleAmenityToggle(amenity)}
                     >
-                      {formData.amenities.includes(amenity) && <FiCheck />}
+                      {formData.amenities.includes(amenity) && <CheckIcon size={14} />}
                       {amenity}
                     </div>
                   ))}
@@ -769,7 +796,7 @@ function PostProperty() {
                     </>
                   ) : (
                     <>
-                      <FiUpload size={40} />
+                      <UploadIcon size={40} />
                       <span>{formData.images.length === 0 ? "Click to upload images" : `Add more images (${formData.images.length}/10)`}</span>
                       <small>Maximum 10 images. High-quality photos attract more buyers.</small>
                     </>
@@ -781,7 +808,7 @@ function PostProperty() {
                   {formData.images.map((img, index) => (
                     <div key={index} className="uploaded-image">
                       <img src={img} alt={`Upload ${index + 1}`} />
-                      <button type="button" className="remove-image" onClick={() => removeImage(index)}><FiX /></button>
+                      <button type="button" className="remove-image" onClick={() => removeImage(index)}><XIcon size={14} /></button>
                     </div>
                   ))}
                 </div>

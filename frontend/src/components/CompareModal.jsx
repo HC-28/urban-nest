@@ -1,9 +1,28 @@
 import React from 'react';
 import { useCompare } from '../context/CompareContext';
-import { FiX, FiCheck, FiMapPin } from 'react-icons/fi';
 import { formatPrice } from '../utils/priceUtils';
 import { useNavigate } from 'react-router-dom';
 import '../styles/CompareTool.css';
+
+const CloseIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+);
+
+const CheckIcon = ({ className }) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+);
+
+const MapPinIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+        <circle cx="12" cy="10" r="3"></circle>
+    </svg>
+);
 
 const CompareModal = () => {
     const { compareList, showCompareModal, closeCompareModal, removeFromCompare } = useCompare();
@@ -11,9 +30,12 @@ const CompareModal = () => {
 
     if (!showCompareModal || compareList.length < 2) return null;
 
-    // Helper to get amenities safely
+    // Helper to get amenities safely (handling string from backend)
     const hasAmenity = (property, amenityName) => {
-        return property.amenities?.some(a => a.toLowerCase().includes(amenityName.toLowerCase())) ? <FiCheck className="text-green-500" /> : <FiX className="text-red-500" />;
+        const amenitiesStr = property.amenities || "";
+        const lowerAmenities = String(amenitiesStr).toLowerCase();
+        const lowerTarget = amenityName.toLowerCase();
+        return lowerAmenities.includes(lowerTarget) ? <CheckIcon className="text-green-500" /> : <span style={{color: '#ef4444', fontSize: '1.2rem'}}>×</span>;
     };
 
     const commonAmenities = ["Parking", "Security", "Power Backup", "Gym", "Lift"];
@@ -22,7 +44,7 @@ const CompareModal = () => {
         <div className="compare-modal-overlay">
             <div className="compare-modal">
                 <button className="compare-modal-close" onClick={closeCompareModal}>
-                    <FiX />
+                    <CloseIcon />
                 </button>
 
                 <h2 className="compare-title">Compare Properties</h2>
@@ -50,7 +72,7 @@ const CompareModal = () => {
                         <tbody>
                             <tr>
                                 <td>Location</td>
-                                {compareList.map(p => <td key={p.id}><FiMapPin className="inline-icon" /> {p.location || p.city || p.address || p.pinCode || 'N/A'}</td>)}
+                                {compareList.map(p => <td key={p.id}><MapPinIcon /> {p.location || p.city || p.address || p.pinCode || 'N/A'}</td>)}
                             </tr>
                             <tr>
                                 <td>Property Type</td>

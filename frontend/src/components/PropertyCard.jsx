@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { FiMapPin, FiHome, FiMaximize } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import "../styles/PropertyCard.css";
 import { favoritesApi } from "../api/api";
@@ -7,6 +6,23 @@ import toast from "react-hot-toast";
 import { formatPrice as defaultFormatPrice } from "../utils/priceUtils";
 import { parsePropertyImages } from "../utils/imageUtils";
 import { useCompare } from "../context/CompareContext";
+
+const MapPinIcon = ({ "aria-hidden": ariaHidden }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden={ariaHidden}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+    <circle cx="12" cy="10" r="3"></circle>
+  </svg>
+);
+
+const CompareIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 3 21 3 21 8"></polyline>
+        <line x1="4" y1="20" x2="21" y2="3"></line>
+        <polyline points="21 16 21 21 16 21"></polyline>
+        <line x1="15" y1="15" x2="21" y2="21"></line>
+        <line x1="4" y1="4" x2="9" y2="9"></line>
+    </svg>
+);
 
 function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, onUnfav, showFeaturedBadge = false }) {
   const navigate = useNavigate();
@@ -143,13 +159,20 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
           <span className="heart-icon">{isSaved ? "♥" : "♡"}</span>
         </button>
 
+        {/* Verified badge */}
+        {property.isVerified && (
+          <span className="verified-badge">✓ Verified</span>
+        )}
+
         {/* Compare button */}
         <button
           className={`compare-card-btn ${isInCompare ? "active" : ""}`}
           onClick={(e) => { e.stopPropagation(); toggleCompare(property); }}
           title={isInCompare ? "Remove from Compare" : "Add to Compare"}
         >
-          <span className="compare-icon">⇄</span>
+          <span className="compare-icon">
+            <CompareIcon />
+          </span>
         </button>
 
         {/* Price overlay on image (Trulia-style) */}
@@ -179,7 +202,7 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
         <h3 className="property-title">{property.title}</h3>
 
         <p className="property-location">
-          <FiMapPin aria-hidden="true" />
+          <MapPinIcon aria-hidden="true" />
           <span className="visually-hidden">Location:</span>
           {property.location || property.city || property.pinCode}
         </p>

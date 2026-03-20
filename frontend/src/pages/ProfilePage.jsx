@@ -1,48 +1,135 @@
 import { useState, useEffect } from "react";
-import { adminApi } from "../api/api";
+import { adminApi, authApi } from "../api/api";
 import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { userApi, propertyApi, favoritesApi, analyticsApi } from "../api/api";
 import toast from "react-hot-toast";
-import { FiLock, FiEye, FiEyeOff, FiShield, FiUsers, FiHome, FiTrendingUp, FiCheckCircle, FiEdit2 } from "react-icons/fi";
 import "../styles/Profile.css";
-import {
-    FiUser,
-    FiSettings,
-    FiPhone,
-    FiMapPin,
-    FiBriefcase,
-    FiArrowLeft,
-    FiGrid,
-    FiHeart,
-    FiLogOut,
-    FiList
-} from "react-icons/fi";
 import PropertyCard from "../components/PropertyCard";
+
+/* ─── SVG Icons ─── */
+const UserIcon = ({ size = 18, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+);
+
+const SettingsIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+);
+
+const HeartIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+    </svg>
+);
+
+const LogOutIcon = ({ size = 16 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+    </svg>
+);
+
+const ListIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+    </svg>
+);
+
+const ArrowLeftIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+    </svg>
+);
+
+const LockIcon = ({ size = 18, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    </svg>
+);
+
+const EyeIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+);
+
+const EyeOffIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 1.24-2.33M4.93 4.93A10.96 10.96 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+    </svg>
+);
+
+const ShieldIcon = ({ size = 16, color = "white" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+    </svg>
+);
+
+const HomeIcon = ({ size = 20, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+);
+
+const UsersIcon = ({ size = 20, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+);
+
+const CheckCircleIcon = ({ size = 20, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+);
+
+const EditIcon = ({ size = 13 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+    </svg>
+);
 
 function ProfilePage() {
     const navigate = useNavigate();
     const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
-    const [activeTab, setActiveTab] = useState("overview"); // overview, listings, favorites, settings
+    const [activeTab, setActiveTab] = useState("overview"); 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
 
-    // Data states
     const [myProperties, setMyProperties] = useState([]);
     const [favorites, setFavorites] = useState([]);
 
-    // Change password state
     const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
     const [passwordMessage, setPasswordMessage] = useState({ type: "", text: "" });
     const [changingPassword, setChangingPassword] = useState(false);
     const [showCurrentPw, setShowCurrentPw] = useState(false);
     const [showNewPw, setShowNewPw] = useState(false);
 
-    // Admin stats
     const [adminStats, setAdminStats] = useState({ totalProperties: 0, totalUsers: 0, propertiesSold: 0 });
 
-    // Admin inline-name edit
     const [adminEditingName, setAdminEditingName] = useState(false);
     const [adminNewName, setAdminNewName] = useState(user?.name || "");
     const [adminNameLoading, setAdminNameLoading] = useState(false);
@@ -64,7 +151,6 @@ function ProfilePage() {
             return;
         }
 
-        // Fetch admin stats once on mount
         if (user.role?.toUpperCase() === "ADMIN") {
             adminApi.get("/stats").then(res => {
                 setAdminStats({
@@ -99,7 +185,6 @@ function ProfilePage() {
     const fetchMyProperties = async () => {
         try {
             const res = await propertyApi.get(`/agent/${user.id}`);
-            // Sort: featured first, then by id descending
             const sorted = [...res.data].sort((a, b) => {
                 if (a.featured && !b.featured) return -1;
                 if (!a.featured && b.featured) return 1;
@@ -118,7 +203,7 @@ function ProfilePage() {
         setPasswordMessage({ type: "", text: "" });
         setChangingPassword(true);
         try {
-            await authApi.requestOtp(user.email);
+            await authApi.post(`/request-otp?email=${user.email}`);
             setOtpSent(true);
             toast.success("Verification code sent to your email!");
         } catch (err) {
@@ -210,7 +295,7 @@ function ProfilePage() {
 
     const handleDeleteRequest = async () => {
         const reason = window.prompt("Please tell us why you want to delete your account (optional):");
-        if (reason === null) return; // cancelled
+        if (reason === null) return; 
         if (!window.confirm("Are you sure you want to request account deletion? An admin will review your request.")) return;
         try {
             await userApi.patch(`/${user.id}`, { deletionRequested: true });
@@ -228,32 +313,24 @@ function ProfilePage() {
     const isAdmin = user.role?.toUpperCase() === "ADMIN";
     const isAgent = user.role?.toUpperCase() === "AGENT";
 
-    // ===== ADMIN PROFILE PAGE =====
     if (isAdmin) {
         return (
             <div className="profile-page">
                 <Navbar />
                 <div style={{ maxWidth: 900, margin: "100px auto 60px", padding: "0 20px" }}>
-
-                    {/* Back link */}
                     <button
                         onClick={() => navigate("/admin")}
                         style={{ background: "none", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: "0.95rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 6, marginBottom: 28, padding: 0 }}
                     >
-                        <FiArrowLeft /> Back to Admin Dashboard
+                        <ArrowLeftIcon /> Back to Admin Dashboard
                     </button>
 
-                    {/* Main Card */}
                     <div style={{ background: "linear-gradient(135deg, #0f1a2e 0%, #0c1526 100%)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 24px 60px rgba(0,0,0,0.5)", overflow: "hidden" }}>
-
-                        {/* Hero Banner */}
                         <div style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #162d4f 50%, #0f2040 100%)", padding: "40px 40px 0", position: "relative", overflow: "hidden" }}>
                             <div style={{ position: "absolute", top: 0, right: 0, width: 300, height: 300, background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)", borderRadius: "50%", transform: "translate(80px,-80px)" }} />
                             <div style={{ position: "absolute", bottom: 0, left: "30%", width: 200, height: 200, background: "radial-gradient(circle, rgba(99,160,255,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
 
-                            {/* Avatar + Info Row */}
                             <div style={{ display: "flex", alignItems: "flex-end", gap: 28, position: "relative", zIndex: 1 }}>
-                                {/* Avatar */}
                                 <div style={{ position: "relative", flexShrink: 0 }}>
                                     <img
                                         src={user.profilePicture || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect fill='%231e3a5f' width='120' height='120'/%3E%3Ctext fill='%2360a5fa' font-family='sans-serif' font-size='48' dy='18' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3E" + (user.name?.[0]?.toUpperCase() || "A") + "%3C/text%3E%3C/svg%3E"}
@@ -262,11 +339,10 @@ function ProfilePage() {
                                         onError={(e) => { e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect fill='%231e3a5f' width='120' height='120'/%3E%3Ctext fill='%2360a5fa' font-family='sans-serif' font-size='48' dy='18' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E"; }}
                                     />
                                     <div style={{ position: "absolute", bottom: 4, right: 4, background: "#1d4ed8", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #0f1a2e" }}>
-                                        <FiShield size={14} color="white" />
+                                        <ShieldIcon size={14} color="white" />
                                     </div>
                                 </div>
 
-                                {/* Name + Email */}
                                 <div style={{ paddingBottom: 20 }}>
                                     {adminEditingName ? (
                                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -284,7 +360,7 @@ function ProfilePage() {
                                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                                             <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "white", margin: 0 }}>{user.name}</h1>
                                             <button onClick={() => { setAdminNewName(user.name); setAdminEditingName(true); }} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#94a3b8" }}>
-                                                <FiEdit2 size={13} />
+                                                <EditIcon size={13} />
                                             </button>
                                         </div>
                                     )}
@@ -294,12 +370,11 @@ function ProfilePage() {
                             </div>
                         </div>
 
-                        {/* Stats Row */}
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                             {[
-                                { icon: <FiHome size={20} color="#60a5fa" />, label: "Total Properties", value: adminStats.totalProperties },
-                                { icon: <FiUsers size={20} color="#34d399" />, label: "Registered Users", value: adminStats.totalUsers },
-                                { icon: <FiCheckCircle size={20} color="#f59e0b" />, label: "Properties Sold", value: adminStats.propertiesSold },
+                                { icon: <HomeIcon size={20} color="#60a5fa" />, label: "Total Properties", value: adminStats.totalProperties },
+                                { icon: <UsersIcon size={20} color="#34d399" />, label: "Registered Users", value: adminStats.totalUsers },
+                                { icon: <CheckCircleIcon size={20} color="#f59e0b" />, label: "Properties Sold", value: adminStats.propertiesSold },
                             ].map((s, i) => (
                                 <div key={i} style={{ padding: "24px", textAlign: "center", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
                                     <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>{s.icon}</div>
@@ -309,7 +384,6 @@ function ProfilePage() {
                             ))}
                         </div>
 
-                        {/* Quick Actions */}
                         <div style={{ padding: "28px 40px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                             <h3 style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Quick Actions</h3>
                             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -317,29 +391,28 @@ function ProfilePage() {
                                     onMouseEnter={e => e.currentTarget.style.background = "rgba(59,130,246,0.2)"}
                                     onMouseLeave={e => e.currentTarget.style.background = "rgba(59,130,246,0.12)"}
                                 >
-                                    <FiShield size={16} /> Admin Dashboard
+                                    <ShieldIcon size={16} color="#60a5fa" /> Admin Dashboard
                                 </button>
                                 <button onClick={() => navigate("/admin#users")} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 10, padding: "12px 20px", color: "#34d399", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s" }}
                                     onMouseEnter={e => e.currentTarget.style.background = "rgba(52,211,153,0.18)"}
                                     onMouseLeave={e => e.currentTarget.style.background = "rgba(52,211,153,0.1)"}
                                 >
-                                    <FiUsers size={16} /> Manage Users
+                                    <UsersIcon size={16} color="#34d399" /> Manage Users
                                 </button>
                                 <button onClick={() => navigate("/admin#properties")} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, padding: "12px 20px", color: "#f59e0b", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s" }}
                                     onMouseEnter={e => e.currentTarget.style.background = "rgba(245,158,11,0.18)"}
                                     onMouseLeave={e => e.currentTarget.style.background = "rgba(245,158,11,0.1)"}
                                 >
-                                    <FiHome size={16} /> Manage Properties
+                                    <HomeIcon size={16} color="#f59e0b" /> Manage Properties
                                 </button>
                             </div>
                         </div>
 
-                        {/* Change Password */}
                         <div style={{ padding: "28px 40px 36px" }}>
                             <h3 style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: 1, marginBottom: 20 }}>Security</h3>
                             <div style={{ maxWidth: 420 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                                    <FiLock size={18} color="#60a5fa" />
+                                    <LockIcon size={18} color="#60a5fa" />
                                     <span style={{ color: "white", fontWeight: 600 }}>Change Password</span>
                                 </div>
                                 {passwordMessage.text && (
@@ -358,7 +431,7 @@ function ProfilePage() {
                                             style={{ width: "100%", padding: "12px 44px 12px 16px", background: "rgba(15,23,42,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#E2E8F0", fontSize: "0.95rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
                                         />
                                         <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748B", cursor: "pointer" }}>
-                                            {showCurrentPw ? <FiEyeOff /> : <FiEye />}
+                                            {showCurrentPw ? <EyeOffIcon /> : <EyeIcon />}
                                         </button>
                                     </div>
                                     <div style={{ position: "relative" }}>
@@ -371,7 +444,7 @@ function ProfilePage() {
                                             style={{ width: "100%", padding: "12px 44px 12px 16px", background: "rgba(15,23,42,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#E2E8F0", fontSize: "0.95rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
                                         />
                                         <button type="button" onClick={() => setShowNewPw(!showNewPw)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748B", cursor: "pointer" }}>
-                                            {showNewPw ? <FiEyeOff /> : <FiEye />}
+                                            {showNewPw ? <EyeOffIcon /> : <EyeIcon />}
                                         </button>
                                     </div>
                                     <input
@@ -389,13 +462,12 @@ function ProfilePage() {
                             </div>
                         </div>
 
-                        {/* Logout */}
                         <div style={{ padding: "0 40px 36px" }}>
                             <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "12px 24px", color: "#f87171", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s" }}
                                 onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.22)"}
                                 onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.12)"}
                             >
-                                <FiLogOut size={16} /> Sign Out
+                                <LogOutIcon size={16} /> Sign Out
                             </button>
                         </div>
                     </div>
@@ -409,7 +481,6 @@ function ProfilePage() {
         <div className="profile-page">
             <Navbar />
             <div className="profile-container">
-                {/* Sidebar */}
                 <div className="profile-sidebar">
                     <div className="profile-sidebar-header">
                         <div className="profile-avatar-container">
@@ -448,41 +519,40 @@ function ProfilePage() {
                             onClick={() => navigate("/")}
                             style={{ color: "var(--primary-color)", fontWeight: "bold" }}
                         >
-                            <FiArrowLeft /> Back to Home
+                            <ArrowLeftIcon /> Back to Home
                         </div>
                         <div
                             className={`profile-nav-item ${activeTab === "overview" ? "active" : ""}`}
                             onClick={() => setActiveTab("overview")}
                         >
-                            <div className="nav-icon">👤</div> Edit Profile
+                            <div className="nav-icon"><UserIcon /></div> Edit Profile
                         </div>
                         {isAgent && (
                             <div
                                 className={`profile-nav-item ${activeTab === "listings" ? "active" : ""}`}
                                 onClick={() => setActiveTab("listings")}
                             >
-                                <FiList /> My Listings
+                                <ListIcon /> My Listings
                             </div>
                         )}
                         <div
                             className={`profile-nav-item ${activeTab === "favorites" ? "active" : ""}`}
                             onClick={() => setActiveTab("favorites")}
                         >
-                            <FiHeart /> Favorites
+                            <HeartIcon /> Favorites
                         </div>
                         <div
                             className={`profile-nav-item ${activeTab === "settings" ? "active" : ""}`}
                             onClick={() => setActiveTab("settings")}
                         >
-                            <FiSettings /> Settings
+                            <SettingsIcon /> Settings
                         </div>
                         <div className="profile-nav-item" onClick={handleLogout} style={{ color: "var(--danger-color)" }}>
-                            <FiLogOut /> Logout
+                            <LogOutIcon /> Logout
                         </div>
                     </div>
                 </div>
 
-                {/* Content Area */}
                 <div className="profile-content">
                     {activeTab === "overview" && (
                         <div className="profile-section">
@@ -646,10 +716,9 @@ function ProfilePage() {
                         <div className="profile-section">
                             <h1 className="section-title">Account Settings</h1>
                             <div className="settings-options">
-                                {/* Change Password */}
                                 <div style={{ padding: '24px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', marginBottom: '20px', background: 'rgba(30,41,59,0.5)' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                                        <FiLock style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }} />
+                                        <LockIcon color="var(--primary-color)" />
                                         <h3 style={{ color: 'var(--text-primary)', margin: 0 }}>Change Password</h3>
                                     </div>
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>Ensure your account is secure by using a strong password.</p>
@@ -677,7 +746,7 @@ function ProfilePage() {
                                                 placeholder="Enter current password"
                                             />
                                             <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} style={{ position: 'absolute', right: '12px', top: '34px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px' }}>
-                                                {showCurrentPw ? <FiEyeOff /> : <FiEye />}
+                                                {showCurrentPw ? <EyeOffIcon /> : <EyeIcon />}
                                             </button>
                                         </div>
                                         <div style={{ position: 'relative' }}>
@@ -692,7 +761,7 @@ function ProfilePage() {
                                                 placeholder="Min 6 characters"
                                             />
                                             <button type="button" onClick={() => setShowNewPw(!showNewPw)} style={{ position: 'absolute', right: '12px', top: '34px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px' }}>
-                                                {showNewPw ? <FiEyeOff /> : <FiEye />}
+                                                {showNewPw ? <EyeOffIcon /> : <EyeIcon />}
                                             </button>
                                         </div>
                                         <div>
@@ -744,7 +813,6 @@ function ProfilePage() {
                                     </form>
                                 </div>
 
-                                {/* Danger Zone */}
                                 <div style={{ padding: '24px', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '12px', background: 'rgba(239,68,68,0.08)' }}>
                                     <h3 style={{ color: '#F87171', marginBottom: '8px' }}>Danger Zone</h3>
                                     {user.deletionRequested ? (

@@ -2,7 +2,6 @@ import React, { Suspense, lazy } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AnimatePresence, motion } from "framer-motion";
-import ScrollToTop from "./components/ScrollToTop";
 import BackToTop from "./components/BackToTop";
 import { CompareProvider } from "./context/CompareContext";
 import CompareActionBanner from "./components/CompareActionBanner";
@@ -69,7 +68,6 @@ function App() {
     return (
         <HelmetProvider>
             <CompareProvider>
-                <ScrollToTop />
                 <BackToTop />
                 <AnimatePresence mode="wait">
                     <Suspense fallback={<GlobalLoader />}>

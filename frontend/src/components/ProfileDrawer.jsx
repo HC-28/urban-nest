@@ -4,7 +4,58 @@ import { userApi, favoritesApi, propertyApi } from "../api/api.js";
 import "../styles/ProfileDrawer.css";
 import PropertyCard from "./PropertyCard.jsx";
 import { formatPrice } from "../utils/priceUtils.js";
-import { FiGrid, FiUser, FiHeart, FiCalendar, FiMessageCircle, FiShield, FiLogOut } from "react-icons/fi";
+
+/* ─── SVG Icons ─── */
+const GridIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7"></rect>
+    <rect x="14" y="3" width="7" height="7"></rect>
+    <rect x="14" y="14" width="7" height="7"></rect>
+    <rect x="3" y="14" width="7" height="7"></rect>
+  </svg>
+);
+
+const UserIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+);
+
+const HeartIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+  </svg>
+);
+
+const CalendarIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
+
+const MessageCircleIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+  </svg>
+);
+
+const ShieldIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+  </svg>
+);
+
+const LogOutIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+    <polyline points="16 17 21 12 16 7"></polyline>
+    <line x1="21" y1="12" x2="9" y2="12"></line>
+  </svg>
+);
 
 function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
   const navigate = useNavigate();
@@ -189,12 +240,12 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
         )}
 
         <div className="drawer-menu">
-          {!isOnDashboard && user.role !== "ADMIN" && <button onClick={() => { navigate("/dashboard"); onClose(); }}><FiGrid size={16} /> Dashboard</button>}
-          {location.pathname !== "/admin" && user.role === "ADMIN" && <button onClick={() => { navigate("/admin"); onClose(); }}><FiShield size={16} /> Admin Area</button>}
-          <button onClick={() => { navigate("/profile"); onClose(); }}><FiUser size={16} /> My Profile</button>
-          {user.role === "BUYER" && <button onClick={() => { navigate("/favorites"); onClose(); }}><FiHeart size={16} /> Favourites</button>}
-          {user.role !== "ADMIN" && <button onClick={() => { navigate("/dashboard"); onClose(); }}><FiCalendar size={16} /> My Appointments</button>}
-          {user.role !== "ADMIN" && <button onClick={() => { navigate(user.role === 'AGENT' ? "/agent/chats" : "/chats"); onClose(); }}><FiMessageCircle size={16} /> Chats</button>}
+          {!isOnDashboard && user.role !== "ADMIN" && <button onClick={() => { navigate("/dashboard"); onClose(); }}><GridIcon size={16} /> Dashboard</button>}
+          {location.pathname !== "/admin" && user.role === "ADMIN" && <button onClick={() => { navigate("/admin"); onClose(); }}><ShieldIcon size={16} /> Admin Area</button>}
+          <button onClick={() => { navigate("/profile"); onClose(); }}><UserIcon size={16} /> My Profile</button>
+          {user.role === "BUYER" && <button onClick={() => { navigate("/favorites"); onClose(); }}><HeartIcon size={16} /> Favourites</button>}
+          {user.role !== "ADMIN" && <button onClick={() => { navigate("/dashboard"); onClose(); }}><CalendarIcon size={16} /> My Appointments</button>}
+          {user.role !== "ADMIN" && <button onClick={() => { navigate(user.role === 'AGENT' ? "/agent/chats" : "/chats"); onClose(); }}><MessageCircleIcon size={16} /> Chats</button>}
         </div>
 
         {user.role !== 'ADMIN' && (
@@ -246,7 +297,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
         )}
 
         <div className="drawer-footer">
-          <button className="logout-btn-drawer" onClick={handleLogout}><FiLogOut size={16} /> Logout</button>
+          <button className="logout-btn-drawer" onClick={handleLogout}><LogOutIcon size={16} /> Logout</button>
         </div>
       </div>
     </>

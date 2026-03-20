@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { FiArrowUp } from "react-icons/fi";
+/* ─── SVG Icons ─── */
+const ArrowUpIcon = ({ size = 26 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+);
 
 function BackToTop() {
     const [visible, setVisible] = useState(false);
@@ -39,7 +44,7 @@ function BackToTop() {
             onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
-            <FiArrowUp size={22} />
+            <ArrowUpIcon size={22} />
         </button>
     );
 }

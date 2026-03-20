@@ -4,10 +4,50 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyCard from "../components/PropertyCard";
 import { agentsApi } from "../api/api";
-import { FiMail, FiPhone, FiMapPin, FiStar, FiHome, FiCheckCircle } from "react-icons/fi";
 import CountUp from 'react-countup';
 import { Helmet } from "react-helmet-async";
 import "../styles/AgentProfile.css";
+
+/* ─── SVG Icons ─── */
+const MailIcon = ({ size = 18, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+    <polyline points="22,6 12,13 2,6"></polyline>
+  </svg>
+);
+
+const PhoneIcon = ({ size = 18, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+  </svg>
+);
+
+const MapPinIcon = ({ size = 18, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+    <circle cx="12" cy="10" r="3"></circle>
+  </svg>
+);
+
+const StarIcon = ({ size = 18, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+  </svg>
+);
+
+const HomeIcon = ({ size = 20, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+  </svg>
+);
+
+const CheckCircleIcon = ({ size = 24, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+  </svg>
+);
 
 function AgentProfile() {
     const { id } = useParams();
@@ -87,12 +127,12 @@ function AgentProfile() {
                         <div className="agent-details">
                             <h1>{agent.name}</h1>
                             <p className="agent-city">
-                                <FiMapPin /> {agent.city || "India"}
+                                <MapPinIcon /> {agent.city || "India"}
                             </p>
                             <div className="agent-rating">
                                 {agent.reviews > 0 ? (
                                     <>
-                                        <FiStar className="star-icon" />
+                                        <StarIcon className="star-icon" />
                                         <span>{agent.rating}</span>
                                         <span className="reviews">({agent.reviews} reviews)</span>
                                     </>
@@ -119,10 +159,10 @@ function AgentProfile() {
 
                     <div className="agent-contact-actions">
                         <a href={`tel:${agent.phone}`} className="contact-btn call-btn">
-                            <FiPhone /> Call
+                            <PhoneIcon /> Call
                         </a>
                         <a href={`mailto:${agent.email}`} className="contact-btn email-btn">
-                            <FiMail /> Email
+                            <MailIcon /> Email
                         </a>
                     </div>
                 </div>
@@ -133,7 +173,7 @@ function AgentProfile() {
                 <div className="properties-section featured-section">
                     <div className="section-container">
                         <div className="section-header">
-                            <FiStar className="section-icon" />
+                            <StarIcon className="section-icon" />
                             <h2>Featured Properties</h2>
                         </div>
                         <div className="properties-grid">
@@ -150,7 +190,7 @@ function AgentProfile() {
                 <div className="properties-section">
                     <div className="section-container">
                         <div className="section-header">
-                            <FiHome className="section-icon" />
+                            <HomeIcon className="section-icon" />
                             <h2>All Listings</h2>
                         </div>
                         <div className="properties-grid">
@@ -167,7 +207,7 @@ function AgentProfile() {
                 <div className="properties-section sold-section">
                     <div className="section-container">
                         <div className="section-header">
-                            <FiCheckCircle className="section-icon" style={{ color: '#10b981' }} />
+                            <CheckCircleIcon size={24} style={{ color: '#10b981' }} />
                             <h2>Recently Sold</h2>
                         </div>
                         <div className="properties-grid">
