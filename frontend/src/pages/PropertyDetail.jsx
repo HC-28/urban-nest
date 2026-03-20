@@ -99,13 +99,13 @@ const CloseIcon = () => (
 );
 
 const ChevronLeftIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="15 18 9 12 15 6"></polyline>
   </svg>
 );
 
 const ChevronRightIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="9 18 15 12 9 6"></polyline>
   </svg>
 );
@@ -160,13 +160,9 @@ function PropertyDetail() {
                 : `${IMAGE_URL}${encodeURIComponent(p)}`
             )
             : ["/property-placeholder.jpg"],
-          amenities: [
-            "Parking",
-            "Security",
-            "Power Backup",
-            "Lift",
-            "Water Supply"
-          ],
+          amenities: data.amenities
+            ? data.amenities.split(",").map(a => a.trim()).filter(Boolean)
+            : ["Parking", "Security", "Power Backup", "Lift", "Water Supply"],
           agentId: data.agentId,
           agent: {
             name: data.agentName || "Agent",
