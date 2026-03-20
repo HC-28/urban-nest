@@ -56,11 +56,21 @@ function Signup() {
     setLoading(true);
     setError(null);
     try {
+      // Check if user exists first
+      try {
+        await authApi.post("/check-user", { email: user.email });
+      } catch (checkErr) {
+        if (checkErr.response?.status === 409) {
+          setError("User with this email already exists");
+          return;
+        }
+      }
+
       await authApi.registerOtp(user.email);
       setOtpStep(true);
       toast.success("OTP sent to your email!");
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to send OTP");
+      setError(err.response?.data?.error || "Failed to send OTP. Please check your email configuration.");
     } finally {
       setLoading(false);
     }
@@ -95,11 +105,23 @@ function Signup() {
   };
 
   const handleGoogleSuccess = async (response) => {
+    // Check mandatory fields if AGENT
+    if (user.role === "AGENT") {
+      if (!user.city || !user.phone || !user.pincode) {
+        setError("Please fill in City, Phone, and Pincode before using Google Signup.");
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const res = await authApi.post("/google", { 
         token: response.credential,
-        role: user.role 
+        role: user.role,
+        city: user.city,
+        phone: user.phone,
+        pincode: user.pincode,
+        agencyName: user.agencyName
       });
       const loggedUser = res.data;
       localStorage.setItem("token", loggedUser.token);
@@ -109,7 +131,7 @@ function Signup() {
       toast.success("Registration successful!");
       navigate("/");
     } catch (err) {
-      toast.error("Google signup failed");
+      toast.error(err.response?.data?.error || "Google signup failed");
     } finally {
       setLoading(false);
     }
@@ -119,13 +141,15 @@ function Signup() {
     return (
       <div className="auth-page" style={{ backgroundImage: `url(${heroBg})` }}>
         <div className="auth-overlay"></div>
-        <div className="auth-card glass-strong arrow-border" style={{ textAlign: 'center', padding: '40px' }}>
-          <div className="auth-logo-icon">🎉</div>
-          <h2 style={{ color: 'var(--text-primary)', marginBottom: '15px' }}>Account Created!</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6' }}>
-            Your account has been created successfully.<br />
-            Redirecting you to the login page...
-          </p>
+        <div className="auth-card">
+          <div style={{ textAlign: 'center', padding: '1rem' }}>
+            <div className="auth-logo-icon">🎉</div>
+            <h2 style={{ color: '#f1f5f9', marginBottom: '1rem' }}>Account Created!</h2>
+            <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: '1.6' }}>
+              Your account has been created successfully.<br />
+              Redirecting you to the login page...
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -135,7 +159,7 @@ function Signup() {
     <div className="auth-page" style={{ backgroundImage: `url(${heroBg})` }}>
       <div className="auth-overlay"></div>
 
-      <div className="auth-card glass-strong">
+      <div className="auth-card">
         <div className="auth-header">
           <div className="auth-logo-icon">✨</div>
           <h2>Create Account</h2>
@@ -166,31 +190,31 @@ function Signup() {
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div className="form-group">
-                  <input name="city" placeholder="City" value={user.city} onChange={handleChange} />
+                  <input name="city" placeholder="City" value={user.city} onChange={handleChange} required />
                 </div>
                 <div className="form-group">
-                  <input name="pincode" placeholder="Pincode" value={user.pincode} onChange={handleChange} maxLength="6" />
+                  <input name="pincode" placeholder="Pincode" value={user.pincode} onChange={handleChange} maxLength="6" required />
                 </div>
               </div>
               <div className="form-group">
-                <input name="phone" placeholder="Phone" value={user.phone} onChange={handleChange} />
+                <input name="phone" placeholder="Phone Number" value={user.phone} onChange={handleChange} required />
               </div>
 
               {user.role === "AGENT" && (
                 <div className="form-group">
-                  <input name="agencyName" placeholder="Agency Name" value={user.agencyName || ""} onChange={handleChange} />
+                  <input name="agencyName" placeholder="Agency Name (Optional)" value={user.agencyName || ""} onChange={handleChange} />
                 </div>
               )}
 
               <div className="form-group">
-                <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.9rem', border: '1px solid var(--border-light)' }}>
+                <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '0.6rem 1rem', borderRadius: '0.75rem', fontSize: '0.85rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
                     {previewImage ? "✨ Change Photo" : "📷 Upload Photo"}
                   </span>
                   <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-                  {previewImage && <img src={previewImage} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />}
+                  {previewImage && <img src={previewImage} alt="Preview" style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', objectFit: 'cover' }} />}
                 </label>
               </div>
             </>
@@ -209,18 +233,18 @@ function Signup() {
                   Resend
                 </button>
               </div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
+              <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.5rem' }}>
                 We've sent a code to <b>{user.email}</b>
               </p>
             </div>
           )}
 
-          <button type="submit" className="auth-btn glow-amber" disabled={loading}>
+          <button type="submit" className="auth-btn" disabled={loading}>
             {loading ? "Please wait..." : otpStep ? "Verify & Register" : "Sign Up"}
           </button>
           
           {otpStep && (
-            <button type="button" className="auth-link-btn" onClick={() => setOtpStep(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '10px', cursor: 'pointer' }}>
+            <button type="button" onClick={() => setOtpStep(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.9rem', marginTop: '0.75rem', cursor: 'pointer' }}>
               ← Edit Registration Details
             </button>
           )}

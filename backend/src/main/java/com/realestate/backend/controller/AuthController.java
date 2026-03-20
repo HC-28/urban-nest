@@ -61,6 +61,10 @@ public class AuthController {
 
             String email = googleUser.getEmail();
             String name = (String) googleUser.get("name");
+            String phone = payload.get("phone");
+            String city = payload.get("city");
+            String pincode = payload.get("pincode");
+            String agencyName = payload.get("agencyName");
 
             AppUser user = userRepository.findByEmail(email).orElseGet(() -> {
                 AppUser newUser = new AppUser();
@@ -68,15 +72,28 @@ public class AuthController {
                 newUser.setName(name);
                 newUser.setRole(requestedRole.toUpperCase());
                 newUser.setEmailVerified(true);
+                newUser.setPhone(phone);
+                newUser.setCity(city);
+                newUser.setPincode(pincode);
+                newUser.setAgencyName(agencyName);
+                
                 // Agents still need manual verification if that's the policy
                 if ("AGENT".equalsIgnoreCase(requestedRole)) {
                     newUser.setVerified(false);
+                    emailService.sendAgentRegistrationPendingEmail(email, name);
                 } else {
                     newUser.setVerified(true);
+                    emailService.sendBuyerWelcomeEmail(email, name);
                 }
                 newUser.setPassword(encoder.encode(UUID.randomUUID().toString()));
                 return userRepository.save(newUser);
             });
+
+            // Block unverified agents even if they're already in the DB
+            if ("AGENT".equalsIgnoreCase(user.getRole()) && !user.isVerified()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Agent account pending admin approval"));
+            }
 
             String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
             return ResponseEntity.ok(prepareUserResponse(user, token));
@@ -84,6 +101,15 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Google auth failed"));
         }
+    }
+
+    @PostMapping("/check-user")
+    public ResponseEntity<?> checkUserExists(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        if (userRepository.findByEmail(email).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "User already exists"));
+        }
+        return ResponseEntity.ok(Map.of("message", "Email available"));
     }
 
     @PostMapping("/request-otp")

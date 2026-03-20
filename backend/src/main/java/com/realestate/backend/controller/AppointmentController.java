@@ -78,13 +78,12 @@ public class AppointmentController {
             Long propertyId = null;
             if (request.containsKey("propertyId") && request.get("propertyId") != null) {
                 propertyId = Long.valueOf(request.get("propertyId").toString());
-            } else if (slotId != null) {
+            } else if (slotId != null && slot != null) {
                 propertyId = slot.getPropertyId();
             }
-
             // Get AgentId
             Long agentId = null;
-            if (slotId != null) {
+            if (slotId != null && slot != null) {
                 agentId = slot.getAgentId();
             } else if (propertyId != null) {
                 Property p = propertyRepository.findById(propertyId).orElse(null);
@@ -111,7 +110,7 @@ public class AppointmentController {
                         .body(Map.of("error", "This property has already been sold"));
 
             // 3. Buyer time-conflict check (if slot provided)
-            if (slotId != null) {
+            if (slotId != null && slot != null) { // Ensure slot is not null before accessing its methods
                 List<Appointment> conflicts = appointmentRepository.findConflictingBuyerAppointments(
                         buyerId, slot.getSlotDate(), slot.getSlotTime());
                 if (!conflicts.isEmpty()) {
@@ -150,7 +149,7 @@ public class AppointmentController {
             appointment.setBuyerEmail(buyer.getEmail());
             appointment.setBuyerPhone(buyer.getPhone());
 
-            if (slotId != null) {
+            if (slotId != null && slot != null) {
                 appointment.setSlotId(slotId);
                 appointment.setAppointmentDate(slot.getSlotDate());
                 appointment.setAppointmentTime(slot.getSlotTime());
@@ -168,7 +167,7 @@ public class AppointmentController {
             Appointment saved = appointmentRepository.save(appointment);
 
             // 7. Lock the slot & tracking & notifications
-            if (slotId != null) {
+            if (slotId != null && slot != null) {
                 slot.setBooked(true);
                 agentSlotRepository.save(slot);
 

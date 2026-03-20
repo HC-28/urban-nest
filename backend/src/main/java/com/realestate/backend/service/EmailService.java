@@ -184,20 +184,51 @@ public class EmailService {
      */
     public void sendBuyerWelcomeEmail(String toEmail, String name) {
         try {
-            SimpleMailMessage msg = new SimpleMailMessage();
-            msg.setFrom(FROM);
-            msg.setTo(toEmail);
-            msg.setSubject("[" + APP_NAME + "] Welcome to " + APP_NAME + "!");
-            msg.setText(
-                    "Hi " + name + ",\n\n" +
-                            "Welcome to " + APP_NAME + "! We are thrilled to have you here.\n\n" +
-                            "You can now explore thousands of properties, add them to your favorites, chat directly with agents, and book property tours.\n\n"
-                            +
-                            "Start your journey today: " + APP_NAME + " Portal\n\n" +
-                            "Best regards,\n" + APP_NAME + " Team");
-            mailSender.send(msg);
+            String htmlContent = "<html><body style='font-family: sans-serif; color: #334155;'>" +
+                    "<div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;'>" +
+                    "<h1 style='color: #2563eb;'>✨ Welcome to " + APP_NAME + "!</h1>" +
+                    "<p>Hi <b>" + name + "</b>,</p>" +
+                    "<p>We're thrilled to have you join our premium real estate community. Whether you're looking for your dream home or a smart investment, Urban Nest is here to simplify your journey.</p>" +
+                    "<h3>What's Next?</h3>" +
+                    "<ul>" +
+                    "  <li><b>Explore:</b> Browse thousands of verified listings in Mumbai, Bangalore, and Ahmedabad.</li>" +
+                    "  <li><b>Save:</b> Add properties to your favorites to track price changes.</li>" +
+                    "  <li><b>Connect:</b> Chat directly with professional agents in real-time.</li>" +
+                    "</ul>" +
+                    "<div style='text-align: center; margin: 30px 0;'>" +
+                    "  <a href='http://localhost:5173' style='background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;'>Start Exploring Now</a>" +
+                    "</div>" +
+                    "<p>Happy hunting!</p>" +
+                    "<hr style='border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;'>" +
+                    "<p style='font-size: 0.8rem; color: #64748b;'>Best regards,<br>The Urban Nest Team</p>" +
+                    "</div></body></html>";
+            sendHtmlEmail(toEmail, "✨ Welcome to Urban Nest - Start Your Journey!", htmlContent);
         } catch (Exception e) {
             System.err.println("⚠️ [EmailService] Failed to send buyer welcome email: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Sent to an agent when they register but need admin approval.
+     */
+    public void sendAgentRegistrationPendingEmail(String toEmail, String name) {
+        try {
+            String htmlContent = "<html><body style='font-family: sans-serif; color: #334155;'>" +
+                    "<div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;'>" +
+                    "<h1 style='color: #2563eb;'>🤝 Welcome, Agent " + name + "!</h1>" +
+                    "<p>Thank you for choosing to partner with <b>" + APP_NAME + "</b>.</p>" +
+                    "<p>Your registration is currently <b>awaiting administrator approval</b>. Our team will verify your details shortly to ensure a high-quality ecosystem for our buyers.</p>" +
+                    "<h3>What happens next?</h3>" +
+                    "<p>1. <b>Verification:</b> We review your agency details.<br>" +
+                    "2. <b>Approval:</b> You'll receive a confirmation email once your account is active.<br>" +
+                    "3. <b>Onboarding:</b> You can then log in and start listing your properties.</p>" +
+                    "<p>Thank you for your patience.</p>" +
+                    "<hr style='border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;'>" +
+                    "<p style='font-size: 0.8rem; color: #64748b;'>Best regards,<br>The Urban Nest Team</p>" +
+                    "</div></body></html>";
+            sendHtmlEmail(toEmail, "🤝 Your Agent Registration is Pending Approval", htmlContent);
+        } catch (Exception e) {
+            System.err.println("⚠️ [EmailService] Failed to send agent pending email: " + e.getMessage());
         }
     }
 
