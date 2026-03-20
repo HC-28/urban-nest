@@ -264,12 +264,6 @@ export default function Properties() {
                   <option value="Mumbai">Mumbai</option>
                   <option value="Bangalore">Bangalore</option>
                   <option value="Ahmedabad">Ahmedabad</option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Pune">Pune</option>
-                  <option value="Hyderabad">Hyderabad</option>
-                  <option value="Chennai">Chennai</option>
-                  <option value="Kolkata">Kolkata</option>
-                  <option value="Goa">Goa</option>
                 </select>
               </div>
 

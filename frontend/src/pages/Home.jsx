@@ -122,7 +122,7 @@ function Hero({ onSearch }) {
 
     const suggestRef = useRef(null);
 
-    const availableCities = ["Mumbai", "Bangalore", "Ahmedabad", "Delhi", "Pune", "Hyderabad", "Chennai", "Kolkata", "Goa"];
+    const availableCities = ["Mumbai", "Bangalore", "Ahmedabad"];
 
     // Dynamic property types based on purpose
     const propertyTypes = purpose === 'Rent'
@@ -335,13 +335,16 @@ export default function Home() {
 
     const user = JSON.parse(localStorage.getItem("user"));
 
-    const handleSearch = (city, purpose, type, openFilters = false) => {
-        const queryParams = [];
-        if (city) queryParams.push(`city=${city}`);
-        if (purpose) queryParams.push(`purpose=${purpose === 'buy' ? 'Sale' : 'Rent'}`);
-        if (type && type !== 'All') queryParams.push(`type=${type}`);
+    const handleSearch = (filters) => {
+        const queryParams = new URLSearchParams();
+        if (filters.city) queryParams.set("city", filters.city);
+        if (filters.purpose) queryParams.set("purpose", filters.purpose === 'Buy' ? 'Sale' : 'Rent');
+        if (filters.type && filters.type !== 'All') queryParams.set("type", filters.type);
+        if (filters.bhk) queryParams.set("bhk", filters.bhk);
+        if (filters.minPrice) queryParams.set("minPrice", filters.minPrice);
+        if (filters.maxPrice) queryParams.set("maxPrice", filters.maxPrice);
 
-        navigate(`/properties?${queryParams.join('&')}`);
+        navigate(`/properties?${queryParams.toString()}`);
     };
 
     useEffect(() => {

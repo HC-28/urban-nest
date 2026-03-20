@@ -58,7 +58,7 @@ function Agents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
 
-  const cities = ["all", "Mumbai", "Bangalore", "Ahmedabad", "Delhi", "Pune", "Hyderabad", "Chennai", "Kolkata", "Goa"];
+  const cities = ["all", "Mumbai", "Bangalore", "Ahmedabad"];
 
   // Fetch agents from backend
   useEffect(() => {
