@@ -94,8 +94,22 @@ function Signup() {
     setLoading(true);
     try {
       const res = await authApi.post("/register", { ...user, otp });
-      setSuccess(true);
-      setTimeout(() => navigate("/login"), 2000);
+      
+      if (res.data.token) {
+        // Auto-login for Buyers
+        localStorage.setItem("token", res.data.token);
+        const loggedUser = { ...res.data };
+        delete loggedUser.token;
+        localStorage.setItem("user", JSON.stringify(loggedUser));
+        window.dispatchEvent(new Event("storage"));
+        toast.success("Welcome! You are now logged in.");
+        navigate("/");
+      } else {
+        // Enforce admin approval for Agents
+        toast.success(res.data.message || "Registration successful!");
+        setSuccess(true);
+        setTimeout(() => navigate("/login"), 2000);
+      }
     } catch (err) {
       console.error("Signup error:", err);
       setError(err.response?.data?.error || err.response?.data?.message || "Signup failed. Please try again.");

@@ -54,17 +54,13 @@ public class AuthController {
             String idToken = payload.get("token");
             String requestedRole = payload.getOrDefault("role", "BUYER");
             GoogleIdToken.Payload googleUser = googleAuthService.verifyToken(idToken);
-            
+
             if (googleUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid Google Token"));
             }
 
             String email = googleUser.getEmail();
             String name = (String) googleUser.get("name");
-            String phone = payload.get("phone");
-            String city = payload.get("city");
-            String pincode = payload.get("pincode");
-            String agencyName = payload.get("agencyName");
 
             AppUser user = userRepository.findByEmail(email).orElseGet(() -> {
                 AppUser newUser = new AppUser();
@@ -72,28 +68,15 @@ public class AuthController {
                 newUser.setName(name);
                 newUser.setRole(requestedRole.toUpperCase());
                 newUser.setEmailVerified(true);
-                newUser.setPhone(phone);
-                newUser.setCity(city);
-                newUser.setPincode(pincode);
-                newUser.setAgencyName(agencyName);
-                
                 // Agents still need manual verification if that's the policy
                 if ("AGENT".equalsIgnoreCase(requestedRole)) {
                     newUser.setVerified(false);
-                    emailService.sendAgentRegistrationPendingEmail(email, name);
                 } else {
                     newUser.setVerified(true);
-                    emailService.sendBuyerWelcomeEmail(email, name);
                 }
                 newUser.setPassword(encoder.encode(UUID.randomUUID().toString()));
                 return userRepository.save(newUser);
             });
-
-            // Block unverified agents even if they're already in the DB
-            if ("AGENT".equalsIgnoreCase(user.getRole()) && !user.isVerified()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Agent account pending admin approval"));
-            }
 
             String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
             return ResponseEntity.ok(prepareUserResponse(user, token));
@@ -103,15 +86,6 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/check-user")
-    public ResponseEntity<?> checkUserExists(@RequestBody Map<String, String> payload) {
-        String email = payload.get("email");
-        if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "User already exists"));
-        }
-        return ResponseEntity.ok(Map.of("message", "Email available"));
-    }
-
     @PostMapping("/request-otp")
     public ResponseEntity<?> requestOtp(@RequestParam String email) {
         try {
@@ -119,7 +93,8 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid email domain"));
             }
             String otp = otpService.generateOtp(email);
-            emailService.sendHtmlEmail(email, "Your Login OTP", "Your login code is: <b>" + otp + "</b>. It expires in 5 minutes.");
+            emailService.sendHtmlEmail(email, "Your Login OTP",
+                    "Your login code is: <b>" + otp + "</b>. It expires in 5 minutes.");
             return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Could not send OTP"));
@@ -151,7 +126,8 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email already exists"));
         }
         String otp = otpService.generateOtp(email);
-        emailService.sendHtmlEmail(email, "Your Registration OTP", "Welcome to Urban Nest! Your registration code is: <b>" + otp + "</b>. It expires in 5 minutes.");
+        emailService.sendHtmlEmail(email, "Your Registration OTP",
+                "Welcome to Urban Nest! Your registration code is: <b>" + otp + "</b>. It expires in 5 minutes.");
         return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
     }
 
@@ -164,7 +140,8 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User with this email not found"));
         }
         String otp = otpService.generateOtp(email);
-        emailService.sendHtmlEmail(email, "Your Password Reset OTP", "You requested a password reset. Your code is: <b>" + otp + "</b>. It expires in 5 minutes.");
+        emailService.sendHtmlEmail(email, "Your Password Reset OTP",
+                "You requested a password reset. Your code is: <b>" + otp + "</b>. It expires in 5 minutes.");
         return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
     }
 
@@ -251,10 +228,22 @@ public class AuthController {
             }
 
             userRepository.save(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Registration successful!"));
+
+            if (user.isVerified()) {
+                String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
+                Map<String, Object> response = prepareUserResponse(user, token);
+                response.put("message", "Registration successful!");
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            } else {
+                return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "message", "Registration successful! Your account is pending admin approval.",
+                    "requiresApproval", true
+                ));
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Server error during registration"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Server error during registration"));
         }
     }
 
