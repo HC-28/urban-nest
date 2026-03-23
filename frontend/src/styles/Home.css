@@ -518,6 +518,20 @@
   100% { transform: translate(-50%, 16px); opacity: 0; }
 }
 
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+
+.scroll-arrow {
+  transition: all 0.3s ease;
+}
+
+.scroll-down:hover .scroll-arrow {
+  stroke: #3b82f6;
+  transform: scale(1.1);
+}
+
 .feature-box {
   background: rgba(30, 41, 59, 0.6);
   backdrop-filter: blur(10px);

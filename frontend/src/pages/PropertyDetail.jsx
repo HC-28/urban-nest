@@ -13,6 +13,11 @@ import toast from "react-hot-toast";
 import { Helmet } from "react-helmet-async";
 
 /* ─── SVG Icons ─── */
+const StarIcon = ({ filled = false, onClick, size = 18, className }) => (
+  <svg className={className} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default', color: filled ? '#F59E0B' : '#64748b', transition: 'color 0.2s' }} width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+  </svg>
+);
 const EyeIcon = ({ className }) => (
   <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -130,6 +135,14 @@ function PropertyDetail() {
   const [showMap, setShowMap] = useState(false);
   const chatMessagesRef = useRef(null);
 
+  // Agent Review State
+  const [agentStats, setAgentStats] = useState({ averageRating: 0, reviewCount: 0 });
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewHover, setReviewHover] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   /* ================= FETCH PROPERTY ================= */
@@ -152,7 +165,7 @@ function PropertyDetail() {
           area: data.area,
           bhk: data.bhk,
           age: "Ready to Move",
-          address: data.pinCode || "Prime Location",
+          address: data.address ? `${data.address}` : (data.location || "Prime Location"),
           images: parsePropertyImages(data.photos || data.images).length > 0
             ? parsePropertyImages(data.photos || data.images).map(p =>
               p.startsWith("data:") || p.startsWith("http")
@@ -173,6 +186,7 @@ function PropertyDetail() {
           inquiries: data.inquiries || 0,
           listedDate: data.listedDate || null,
           sold: data.sold || false,
+          soldToUserId: data.soldToUserId || null,
           latitude: data.latitude,
           longitude: data.longitude,
           city: data.city,
@@ -260,6 +274,50 @@ function PropertyDetail() {
 
     fetchChats();
   }, [showChat, property, user]);
+
+  /* ================= FETCH AGENT STATS ================= */
+  useEffect(() => {
+    if (!property?.agentId) return;
+    const fetchStats = async () => {
+      try {
+        const res = await reviewsApi.get(`/agent/${property.agentId}/stats`);
+        setAgentStats(res.data);
+      } catch (err) {
+        console.error("Agent stats fetch failed", err);
+      }
+    };
+    fetchStats();
+  }, [property?.agentId]);
+
+  /* ================= SUBMIT AGENT REVIEW ================= */
+  const submitReview = async () => {
+    if (reviewRating === 0) return toast.error("Please select a star rating");
+    
+    setIsSubmittingReview(true);
+    try {
+      await reviewsApi.post("/", {
+        agentId: property.agentId,
+        buyerId: user.id,
+        propertyId: property.id,
+        rating: reviewRating,
+        reviewText: reviewText
+      });
+      toast.success("Review submitted! Thank you.");
+      setHasReviewed(true);
+      
+      const res = await reviewsApi.get(`/agent/${property.agentId}/stats`);
+      setAgentStats(res.data);
+    } catch (err) {
+      if (err.response?.status === 409) {
+        toast.error("You have already reviewed this interaction");
+        setHasReviewed(true);
+      } else {
+        toast.error(err.response?.data?.error || "Failed to submit review");
+      }
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -525,8 +583,13 @@ function PropertyDetail() {
               <div>
                 <h1>{property.title}</h1>
                 <p className="location">
-                  <MapPinIcon /> {property.address}
+                  <MapPinIcon /> {property.address}{property.city ? `, ${property.city}` : ''}{property.pinCode ? ` - ${property.pinCode}` : ''}
                 </p>
+                {(property.latitude && property.longitude) && (
+                  <small style={{ color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px", marginTop: "4px", fontSize: "0.85rem" }}>
+                    🌍 {property.latitude.toFixed(6)}, {property.longitude.toFixed(6)}
+                  </small>
+                )}
               </div>
 
               <div className="price-section">
@@ -806,6 +869,13 @@ function PropertyDetail() {
                 <div>
                   <h4>{property.agent.name}</h4>
                   <p>{property.agent.email}</p>
+                  {agentStats.reviewCount > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', fontSize: '14px', color: '#cbd5e1' }}>
+                      <StarIcon size={14} filled={true} />
+                      <span style={{ fontWeight: 'bold', color: '#f1f5f9' }}>{agentStats.averageRating.toFixed(1)}</span>
+                      <span>({agentStats.reviewCount} Reviews)</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -831,6 +901,43 @@ function PropertyDetail() {
               </div>
             )}
 
+            {property.sold && property.soldToUserId === user?.id && !hasReviewed && (
+              <div className="agent-card review-card" style={{ background: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+                <h4 style={{ marginBottom: '0.8rem', color: '#f59e0b', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <StarIcon size={16} filled={true} /> Rate Your Experience
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '1rem' }}>You successfully bought this property. How was your experience with {property.agent.name}?</p>
+                
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <StarIcon 
+                      key={star} 
+                      size={28} 
+                      filled={star <= (reviewHover || reviewRating)} 
+                      onClick={() => setReviewRating(star)}
+                      className="rating-star"
+                    />
+                  ))}
+                </div>
+                
+                <textarea 
+                  placeholder="Leave a short review (optional)" 
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  style={{ width: '100%', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: 'white', minHeight: '60px', marginBottom: '1rem', fontSize: '0.9rem' }}
+                />
+                
+                <button 
+                  className="action-btn primary" 
+                  style={{ width: '100%', padding: '10px' }} 
+                  onClick={submitReview}
+                  disabled={isSubmittingReview || reviewRating === 0}
+                >
+                  {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            )}
+
             <div className="property-stats">
               <div className="stat-item">
                 <EyeIcon /> {property.views} Views
@@ -845,7 +952,7 @@ function PropertyDetail() {
           </div>
         </div>
 
-        <MapModal isOpen={showMap} onClose={() => setShowMap(false)} center={[property.latitude, property.longitude]} zoom={15} properties={[property]} />
+        <MapModal isOpen={showMap} onClose={() => setShowMap(false)} initialProperty={property} />
       </div>
 
       <Footer />

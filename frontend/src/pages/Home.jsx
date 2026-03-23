@@ -322,6 +322,21 @@ function Hero({ onSearch }) {
                     <div className="mouse-icon">
                         <div className="wheel"></div>
                     </div>
+                    {/* Added Scroll Down Arrow SVG */}
+                    <svg 
+                        width="20" 
+                        height="20" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="rgba(255, 255, 255, 0.7)" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        className="scroll-arrow"
+                        style={{ marginTop: '8px', animation: 'bounce 1.5s infinite' }}
+                    >
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
                 </div>
             </div>
         </div>

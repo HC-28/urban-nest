@@ -61,6 +61,7 @@ export const analyticsApi = createApi("/analytics", { timeout: 15000 });
 export const appointmentApi = createApi("/appointments");
 export const slotsApi = createApi("/slots");
 export const contactApi = createApi("/contact");
+export const reviewsApi = createApi("/reviews");
 
 // ---------------- Default Export ----------------
 export default {
@@ -75,4 +76,5 @@ export default {
   appointmentApi,
   slotsApi,
   contactApi,
+  reviewsApi,
 };

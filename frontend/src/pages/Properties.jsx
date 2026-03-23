@@ -343,7 +343,7 @@ export default function Properties() {
             <div className="filter-row amenities-row" style={{ marginTop: '15px' }}>
               <label className="filter-label" style={{ display: 'block', marginBottom: '10px' }}>Amenities</label>
               <div className="amenities-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                {["WiFi", "Parking", "Gym", "Pool", "Security", "Power Backup", "Lift", "Balcony"].map(amenity => {
+                {["Swimming Pool", "Gym", "24/7 Security", "Power Backup", "Lift", "Club House", "Children's Play Area", "Jogging Track", "Covered Parking", "Intercom", "Fire Safety", "Rain Water Harvesting", "Garden", "CCTV", "Visitor Parking", "Maintenance Staff", "Vastu Compliant", "Gas Pipeline", "Wi-Fi Connectivity"].map(amenity => {
                   const currentAmenities = filters.amenities ? filters.amenities.split(",") : [];
                   const isActive = currentAmenities.includes(amenity);
                   return (

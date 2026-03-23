@@ -66,6 +66,7 @@ public class FavoriteController {
 
     /** POST /api/favorites — Add a favorite */
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Transactional
     public ResponseEntity<?> addFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
         try {
             long count = favoriteRepository.countByUser_Id(userId);
