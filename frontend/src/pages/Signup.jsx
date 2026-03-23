@@ -142,12 +142,15 @@ function Signup() {
   };
 
   const handleGoogleSuccess = async (response) => {
-    // Check mandatory fields if AGENT
-    if (user.role === "AGENT") {
-      if (!user.city || !user.phone || !user.pincode) {
-        setError("Please fill in City, Phone, and Pincode before using Google Signup.");
-        return;
-      }
+    // Check mandatory fields for ALL roles before calling Google API
+    if (!user.city || !user.phone || !user.pincode) {
+      setError("Please fill in City, Pincode, and Phone Number before using Google Signup.");
+      toast.error("Complete the form fields first");
+      return;
+    }
+
+    if (user.role === "AGENT" && !user.agencyName) {
+      // Optional: enforce agency name or just let it pass, but previously it wasn't strictly enforced.
     }
 
     setLoading(true);
@@ -302,15 +305,35 @@ function Signup() {
         </form>
 
         <div className="auth-divider"><span>OR</span></div>
-        <div className="google-auth-container">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => toast.error("Google Signup failed")}
-            theme="filled_blue"
-            shape="pill"
-            text="signup_with"
-            width="350"
-          />
+        <div className="google-auth-container" onClick={() => {
+          if (!user.city || !user.phone || !user.pincode) {
+            setError("You must fill in City, Pincode, and Phone before signing up with Google.");
+            toast.error("Please complete the required form fields first.");
+          }
+        }}>
+          {(!user.city || !user.phone || !user.pincode) ? (
+            <div className="google-disabled-overlay" style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '24px',
+              padding: '10px 20px',
+              color: '#94a3b8',
+              textAlign: 'center',
+              cursor: 'not-allowed',
+              width: '100%'
+            }}>
+              Fill required fields to unlock Google Signup
+            </div>
+          ) : (
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => toast.error("Google Signup failed")}
+              theme="filled_blue"
+              shape="pill"
+              text="signup_with"
+              width="350"
+            />
+          )}
         </div>
 
         <div className="auth-footer">
