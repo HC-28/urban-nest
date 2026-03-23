@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Manage user favorites.
  * RESTful: POST /api/favorites to add, DELETE /api/favorites to remove.
@@ -24,6 +27,8 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/favorites")
 public class FavoriteController {
+
+    private static final Logger logger = LoggerFactory.getLogger(FavoriteController.class);
 
     @Autowired
     private FavoriteRepository favoriteRepository;
@@ -45,7 +50,7 @@ public class FavoriteController {
             }
             return ResponseEntity.ok(properties);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Exception in FavoriteController: ", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Server error"));
         }
@@ -58,7 +63,7 @@ public class FavoriteController {
             boolean exists = favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId);
             return ResponseEntity.ok(Map.of("isFavorite", exists));
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Exception in FavoriteController: ", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Server error"));
         }
@@ -95,7 +100,7 @@ public class FavoriteController {
                     .body(Map.of("message", "Added to favorites"));
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Exception in FavoriteController: ", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Server error: " + ex.getMessage()));
         }
@@ -115,7 +120,7 @@ public class FavoriteController {
             return ResponseEntity.ok(Map.of("message", "Removed from favorites"));
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Exception in FavoriteController: ", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Server error"));
         }
