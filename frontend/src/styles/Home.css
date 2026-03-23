@@ -471,56 +471,24 @@
   gap: 24px;
 }
 
-/* Scroll Down Mouse Animation */
+/* Scroll Down Arrow */
 .scroll-down {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+  margin-top: 36px;
   cursor: pointer;
-  z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: center;
+  opacity: 0.75;
+  transition: opacity 0.3s ease;
 }
 
-.mouse-icon {
-  width: 26px;
-  height: 42px;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  border-radius: 20px;
-  position: relative;
-  background: rgba(10, 25, 50, 0.4);
-  backdrop-filter: blur(5px);
-  transition: all 0.3s ease;
-}
-
-.scroll-down:hover .mouse-icon {
-  border-color: #3b82f6;
-  transform: translateY(3px);
-}
-
-.wheel {
-  width: 4px;
-  height: 8px;
-  background: #3b82f6;
-  border-radius: 2px;
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  animation: scrollWheel 1.5s ease-in-out infinite;
-}
-
-@keyframes scrollWheel {
-  0% { transform: translate(-50%, 0); opacity: 0; }
-  30% { opacity: 1; }
-  100% { transform: translate(-50%, 16px); opacity: 0; }
+.scroll-down:hover {
+  opacity: 1;
 }
 
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(5px); }
+  50% { transform: translateY(6px); }
 }
 
 .scroll-arrow {
@@ -528,8 +496,7 @@
 }
 
 .scroll-down:hover .scroll-arrow {
-  stroke: #3b82f6;
-  transform: scale(1.1);
+  stroke: #60a5fa;
 }
 
 .feature-box {
