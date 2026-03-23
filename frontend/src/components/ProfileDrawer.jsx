@@ -263,7 +263,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
                           onClick={(e) => {
                             e.stopPropagation();
                             handleUnfav(p.id);
-                            favoritesApi.delete(`/?userId=${user.id}&propertyId=${p.id}`);
+                            favoritesApi.delete(`?userId=${user.id}&propertyId=${p.id}`);
                           }}
                           style={{
                             position: 'absolute',
