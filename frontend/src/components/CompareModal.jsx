@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCompare } from '../context/CompareContext';
 import { formatPrice } from '../utils/priceUtils';
+import { parsePropertyImages } from '../utils/imageUtils';
 import { useNavigate } from 'react-router-dom';
 import '../styles/CompareTool.css';
 
@@ -24,11 +25,19 @@ const MapPinIcon = () => (
     </svg>
 );
 
+const fallbackSvg = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#1e293b" width="400" height="300"/><path fill="#334155" d="M100 150l75-75 75 75v100h-150z"/><path fill="#475569" d="M150 175h50v75h-50z"/><circle fill="#94a3b8" cx="250" cy="100" r="25"/></svg>`)}`;
+
 const CompareModal = () => {
     const { compareList, showCompareModal, closeCompareModal, removeFromCompare } = useCompare();
     const navigate = useNavigate();
 
     if (!showCompareModal || compareList.length < 2) return null;
+
+    // Get the first image from property photos
+    const getPropertyImage = (property) => {
+        const images = parsePropertyImages(property.photos || property.images);
+        return images.length > 0 ? images[0] : fallbackSvg;
+    };
 
     // Helper to get amenities safely (handling string from backend)
     const hasAmenity = (property, amenityName) => {
@@ -36,6 +45,14 @@ const CompareModal = () => {
         const lowerAmenities = String(amenitiesStr).toLowerCase();
         const lowerTarget = amenityName.toLowerCase();
         return lowerAmenities.includes(lowerTarget) ? <CheckIcon className="text-green-500" /> : <span style={{color: '#ef4444', fontSize: '1.2rem'}}>×</span>;
+    };
+
+    // Calculate price per sqft
+    const getPricePerSqft = (property) => {
+        if (property.price && property.area) {
+            return `₹${Math.round(property.price / property.area).toLocaleString('en-IN')}`;
+        }
+        return 'N/A';
     };
 
     const commonAmenities = ["Parking", "Security", "Power Backup", "Gym", "Lift"];
@@ -61,9 +78,13 @@ const CompareModal = () => {
                                                 removeFromCompare(property.id);
                                                 if (compareList.length === 2) closeCompareModal();
                                             }}>Remove</button>
-                                            <img src={property.images?.[0] || 'https://via.placeholder.com/300'} alt={property.title} />
+                                            <img
+                                                src={getPropertyImage(property)}
+                                                alt={property.title}
+                                                onError={(e) => { e.target.onerror = null; e.target.src = fallbackSvg; }}
+                                            />
                                             <h3>{property.title}</h3>
-                                            <p className="compare-price">{formatPrice(property.priceRaw || property.price)}</p>
+                                            <p className="compare-price">{formatPrice(property.price)}</p>
                                         </div>
                                     </th>
                                 ))}
@@ -91,8 +112,24 @@ const CompareModal = () => {
                                 {compareList.map(p => <td key={p.id}>{p.area || 'N/A'}</td>)}
                             </tr>
                             <tr>
+                                <td>Price / sq.ft</td>
+                                {compareList.map(p => <td key={p.id}><strong>{getPricePerSqft(p)}</strong></td>)}
+                            </tr>
+                            <tr>
                                 <td>Bathrooms</td>
                                 {compareList.map(p => <td key={p.id}>{p.bathrooms || 'N/A'}</td>)}
+                            </tr>
+                            <tr>
+                                <td>Floor</td>
+                                {compareList.map(p => <td key={p.id}>{p.floor || 'N/A'}</td>)}
+                            </tr>
+                            <tr>
+                                <td>Furnishing</td>
+                                {compareList.map(p => <td key={p.id}>{p.furnishing || 'N/A'}</td>)}
+                            </tr>
+                            <tr>
+                                <td>Facing</td>
+                                {compareList.map(p => <td key={p.id}>{p.facing || 'N/A'}</td>)}
                             </tr>
 
                             <tr className="section-row"><td colSpan={compareList.length + 1}>Top Amenities</td></tr>

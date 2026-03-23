@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
+import toast from 'react-hot-toast';
 
 const CompareContext = createContext();
 
@@ -15,7 +16,7 @@ export const CompareProvider = ({ children }) => {
                 return prev.filter(p => p.id !== property.id);
             } else {
                 if (prev.length >= 4) {
-                    alert("You can only compare up to 4 properties at a time.");
+                    toast.error("You can only compare up to 4 properties at a time.");
                     return prev;
                 }
                 return [...prev, property];
@@ -36,7 +37,7 @@ export const CompareProvider = ({ children }) => {
         if (compareList.length > 1) {
             setShowCompareModal(true);
         } else {
-            alert("Please select at least 2 properties to compare.");
+            toast.error("Please select at least 2 properties to compare.");
         }
     };
 
@@ -58,3 +59,4 @@ export const CompareProvider = ({ children }) => {
         </CompareContext.Provider>
     );
 };
+

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCompare } from '../context/CompareContext';
+import { parsePropertyImages } from '../utils/imageUtils';
 import '../styles/CompareTool.css';
 
 const CloseIcon = () => (
@@ -9,10 +10,17 @@ const CloseIcon = () => (
     </svg>
 );
 
+const fallbackSvg = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><rect fill="#1e293b" width="150" height="150"/><path fill="#334155" d="M37 56l28-28 28 28v38h-56z"/><circle fill="#94a3b8" cx="94" cy="38" r="9"/></svg>`)}`;
+
 const CompareActionBanner = () => {
     const { compareList, removeFromCompare, clearCompare, openCompareModal } = useCompare();
 
     if (compareList.length === 0) return null;
+
+    const getThumbImage = (property) => {
+        const images = parsePropertyImages(property.photos || property.images);
+        return images.length > 0 ? images[0] : fallbackSvg;
+    };
 
     return (
         <div className="compare-banner animate-slide-up">
@@ -23,7 +31,11 @@ const CompareActionBanner = () => {
                             <button className="remove-thumb-btn" onClick={() => removeFromCompare(property.id)}>
                                 <CloseIcon />
                             </button>
-                            <img src={property.images?.[0] || 'https://via.placeholder.com/150'} alt={property.title} />
+                            <img
+                                src={getThumbImage(property)}
+                                alt={property.title}
+                                onError={(e) => { e.target.onerror = null; e.target.src = fallbackSvg; }}
+                            />
                             <span className="compare-thumb-title">{property.title.substring(0, 15)}...</span>
                         </div>
                     ))}

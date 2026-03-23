@@ -27,7 +27,30 @@ function Signup() {
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
+    if (e.target.name === 'email') setError(null);
   };
+
+  // Password strength calculator
+  const getPasswordStrength = (pwd) => {
+    if (!pwd) return { score: 0, label: '', color: '' };
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    const levels = [
+      { label: '', color: '' },
+      { label: 'Weak', color: '#ef4444' },
+      { label: 'Fair', color: '#f59e0b' },
+      { label: 'Good', color: '#eab308' },
+      { label: 'Strong', color: '#22c55e' },
+      { label: 'Excellent', color: '#10b981' },
+    ];
+    return { score, ...levels[score] };
+  };
+
+  const pwdStrength = getPasswordStrength(user.password);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -194,7 +217,21 @@ function Signup() {
               </div>
 
               <div className="form-group">
-                <input name="password" type="password" placeholder="Password" value={user.password} onChange={handleChange} required />
+                <input name="password" type="password" placeholder="Password (min 6 chars)" value={user.password} onChange={handleChange} required minLength={6} />
+                {user.password && (
+                  <div style={{ marginTop: '6px' }}>
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                      {[1,2,3,4,5].map(i => (
+                        <div key={i} style={{
+                          flex: 1, height: '3px', borderRadius: '2px',
+                          background: i <= pwdStrength.score ? pwdStrength.color : 'rgba(255,255,255,0.1)',
+                          transition: 'background 0.3s ease'
+                        }} />
+                      ))}
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: pwdStrength.color, fontWeight: 600 }}>{pwdStrength.label}</span>
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -213,7 +250,7 @@ function Signup() {
                 </div>
               </div>
               <div className="form-group">
-                <input name="phone" placeholder="Phone Number" value={user.phone} onChange={handleChange} required />
+                <input name="phone" placeholder="Phone Number" value={user.phone} onChange={handleChange} required pattern="[0-9]{10}" title="Enter a 10-digit phone number" />
               </div>
 
               {user.role === "AGENT" && (

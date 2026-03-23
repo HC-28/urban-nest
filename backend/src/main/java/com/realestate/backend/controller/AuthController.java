@@ -193,6 +193,20 @@ public class AuthController {
         try {
             String email = (String) payload.get("email");
             String otp = (String) payload.get("otp");
+            String name = (String) payload.get("name");
+            String password = (String) payload.get("password");
+            String role = (String) payload.get("role");
+
+            // Input validation
+            if (name == null || name.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Name is required"));
+            }
+            if (password == null || password.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Password is required"));
+            }
+            if (role == null || role.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Role is required"));
+            }
 
             if (!otpService.validateOtp(email, otp)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired OTP"));
@@ -209,9 +223,9 @@ public class AuthController {
 
             AppUser user = new AppUser();
             user.setEmail(email);
-            user.setName((String) payload.get("name"));
-            user.setPassword(encoder.encode((String) payload.get("password")));
-            user.setRole((String) payload.get("role"));
+            user.setName(name);
+            user.setPassword(encoder.encode(password));
+            user.setRole(role);
             user.setCity((String) payload.get("city"));
             user.setPhone((String) payload.get("phone"));
             user.setPincode((String) payload.get("pincode"));
@@ -289,24 +303,15 @@ public class AuthController {
                         .body(Map.of("error", "Only Gmail or UrbanNest login allowed"));
             }
 
-            System.out.println("[Login Debug] Attempting login for email: " + user.getEmail());
             AppUser dbUser = userRepository.findByEmail(user.getEmail()).orElse(null);
 
             if (dbUser == null) {
-                System.out.println("[Login Debug] User not found for email: " + user.getEmail());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Invalid credentials"));
             }
 
-            // Check if password matches hash
-            if (encoder.matches(user.getPassword(), dbUser.getPassword())) {
-                System.out.println("[Login Debug] Password match successful (hashed)");
-            } else if (dbUser.getPassword().equals(user.getPassword())) {
-                System.out.println("[Login Debug] Password match successful (plain text fallback)");
-                dbUser.setPassword(encoder.encode(user.getPassword()));
-                userRepository.save(dbUser);
-            } else {
-                System.out.println("[Login Debug] Password mismatch for: " + user.getEmail());
+            // Check if password matches hash (secure comparison only)
+            if (!encoder.matches(user.getPassword(), dbUser.getPassword())) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Invalid credentials"));
             }

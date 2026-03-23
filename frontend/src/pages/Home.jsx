@@ -317,9 +317,15 @@ function Hero({ onSearch }) {
                             </div>
                         </div>
                     )}
+                {/* Scroll Down Arrow */}
+                <div className="scroll-down" onClick={() => document.querySelector('.features')?.scrollIntoView({ behavior: 'smooth' })}>
+                    <div className="mouse-icon">
+                        <div className="wheel"></div>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
     );
 }
 
@@ -380,8 +386,7 @@ export default function Home() {
     const features = [
         { icon: "🏠", title: "Post Property", description: "List your property for free", cta: "Post Now", onClick: () => navigate("/post-property") },
         { icon: "👨‍💼", title: "Find Agents", description: "Connect with top agents", cta: "Find Agents", onClick: () => navigate("/agents") },
-        { icon: "🏙️", title: "Projects", description: "New residential projects", cta: "Explore", onClick: () => navigate("/properties?type=Projects") },
-        { icon: "📊", title: "Home Loans", description: "Get the best interest rates", cta: "Check Rates", onClick: () => navigate("/properties") },
+        { icon: "🏙️", title: "Projects", description: "New residential projects", cta: "Explore", onClick: () => navigate("/properties?type=Projects") }
     ];
 
     /* 3 Cities only */

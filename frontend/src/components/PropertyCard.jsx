@@ -159,10 +159,7 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
           <span className="heart-icon">{isSaved ? "♥" : "♡"}</span>
         </button>
 
-        {/* Verified badge */}
-        {property.isVerified && (
-          <span className="verified-badge">✓ Verified</span>
-        )}
+
 
         {/* Compare button */}
         <button
@@ -227,7 +224,7 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
             </span>
           </div>
           <span className="posted-date">
-            {getTimeAgo(property.postedDate || property.createdAt)}
+            {getTimeAgo(property.listedDate || property.createdAt)}
           </span>
         </div>
 

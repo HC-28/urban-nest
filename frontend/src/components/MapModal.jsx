@@ -300,7 +300,7 @@ function MapModal({ isOpen, onClose, initialProperty }) {
                         <span class="map-tooltip-value">${score}%</span>
                     </div>` : ''}
                 </div>
-                {!data ? '<div class="map-tooltip-no-data">Data pending...</div>' : ''}
+                ${!data ? '<div class="map-tooltip-no-data">Data pending...</div>' : ''}
             </div>`,
             { sticky: true, opacity: 1, direction: 'top', offset: [0, -10] }
         );
@@ -548,8 +548,31 @@ function MapModal({ isOpen, onClose, initialProperty }) {
                     )}
 
                     {/* Property Pin Markers */}
-                    {showPins && allProperties.map(p => {
-                        if (!p.latitude || !p.longitude) return null;
+                    {showPins && allProperties.map((p, index) => {
+                        let lat = p.latitude;
+                        let lng = p.longitude;
+
+                        if (!lat || !lng) {
+                            if (geoData && p.pinCode) {
+                                const feature = geoData.features.find(f => 
+                                    String(f.properties?.pin_code || f.properties?.pincode || f.properties?.PINCODE).trim() === String(p.pinCode).trim()
+                                );
+                                if (feature && feature.geometry) {
+                                    let coords = feature.geometry.coordinates;
+                                    if (feature.geometry.type === 'Polygon') coords = coords[0][0];
+                                    else if (feature.geometry.type === 'MultiPolygon') coords = coords[0][0][0];
+                                    
+                                    if (coords && coords.length >= 2) {
+                                        const offsetLat = (index % 5 - 2) * 0.001;
+                                        const offsetLng = ((index * 3) % 5 - 2) * 0.001;
+                                        lng = coords[0] + offsetLng;
+                                        lat = coords[1] + offsetLat;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!lat || !lng) return null;
 
                         const priceIcon = L.divIcon({
                             className: 'price-marker-icon',
@@ -566,7 +589,7 @@ function MapModal({ isOpen, onClose, initialProperty }) {
                         return (
                             <Marker
                                 key={p.id}
-                                position={[p.latitude, p.longitude]}
+                                position={[lat, lng]}
                                 icon={priceIcon}
                                 eventHandlers={{
                                     click: () => {

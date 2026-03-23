@@ -98,6 +98,7 @@
 html,
 body {
   min-height: 100vh;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -373,6 +374,85 @@ input:-webkit-autofill:active {
   50% {
     transform: translateY(-10px);
   }
+}
+
+/* ===== PAGE TRANSITIONS ===== */
+.page-enter {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* ===== SKELETON LOADER ===== */
+.skeleton {
+  background: linear-gradient(90deg, rgba(30,41,59,0.5) 25%, rgba(51,65,85,0.5) 50%, rgba(30,41,59,0.5) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+  height: 320px;
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+  width: 80%;
+}
+
+.skeleton-text.short {
+  width: 50%;
+}
+
+.skeleton-title {
+  height: 20px;
+  width: 65%;
+  margin-bottom: 12px;
+}
+
+/* ===== LAZY IMAGE FADE-IN ===== */
+img[loading="lazy"] {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+img[loading="lazy"].loaded,
+img[loading="lazy"]:not([data-src]) {
+  opacity: 1;
+}
+
+/* Force loaded state for images that have completed loading */
+img {
+  opacity: 1;
+}
+
+/* ===== FOCUS RING FOR ACCESSIBILITY ===== */
+:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===== SELECTION COLOR ===== */
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: #fff;
 }
 
 /* ===== RESPONSIVE UTILITIES ===== */

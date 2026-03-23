@@ -138,7 +138,8 @@ public class AdminController {
 
     /**
      * DELETE /api/admin/users/{id}
-     * Archive user to deleted_users table, then hard-delete from users.
+     * Soft-delete: archive user to deleted_users table, mark as deleted.
+     * The original user record is preserved in the users table.
      * Accepts optional query params: reason, adminId
      */
     @DeleteMapping("/users/{id}")
@@ -167,14 +168,11 @@ public class AdminController {
             archive.setDeletedBy(adminId);
             deletedUserRepository.save(archive);
 
-            // Manual cleanup of related data before hard-deleting the user
-            favoriteRepository.deleteByUser_Id(id);
-            propertyViewRepository.deleteByUser(user);
+            // Soft-delete: mark user as deleted (keep all data intact)
+            user.setDeletionRequested(true);
+            userRepository.save(user);
 
-            // Hard-delete from users (frees up the email for re-registration)
-            userRepository.deleteById(id);
-
-            return ResponseEntity.ok(Map.of("message", "User archived and deleted successfully"));
+            return ResponseEntity.ok(Map.of("message", "User archived and deactivated successfully"));
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Server error"));

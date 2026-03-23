@@ -294,15 +294,26 @@ function ProfilePage() {
     };
 
     const handleDeleteRequest = async () => {
-        const reason = window.prompt("Please tell us why you want to delete your account (optional):");
-        if (reason === null) return; 
-        if (!window.confirm("Are you sure you want to request account deletion? An admin will review your request.")) return;
+        const isAgent = user.role?.toUpperCase() === "AGENT";
+        const confirmMsg = isAgent
+            ? "As an agent, your deletion request will be reviewed by an admin (you may have active listings). Continue?"
+            : "Are you sure you want to delete your account? Your data will be archived and you'll be logged out.";
+        if (!window.confirm(confirmMsg)) return;
         try {
-            await userApi.patch(`/${user.id}`, { deletionRequested: true });
-            const updated = { ...user, deletionRequested: true };
-            localStorage.setItem("user", JSON.stringify(updated));
-            setUser(updated);
-            toast.success("Account deletion requested. An admin will process it shortly.");
+            const res = await userApi.post("/me/deletion-request");
+            if (res.data.status === "DELETED") {
+                // Buyer: instant deletion — log out
+                toast.success("Your account has been deleted. You can sign up again anytime.");
+                localStorage.removeItem("user");
+                localStorage.removeItem("token");
+                setTimeout(() => { window.location.href = "/"; }, 1500);
+            } else {
+                // Agent: pending admin approval
+                const updated = { ...user, deletionRequested: true };
+                localStorage.setItem("user", JSON.stringify(updated));
+                setUser(updated);
+                toast.success("Deletion request submitted. An admin will review it.");
+            }
         } catch {
             toast.error("Failed to submit deletion request. Please try again.");
         }
@@ -818,16 +829,20 @@ function ProfilePage() {
                                     {user.deletionRequested ? (
                                         <>
                                             <p style={{ color: '#FCA5A5', fontSize: '0.9rem', marginBottom: '15px' }}>
-                                                ⚠️ Your account deletion has been requested and is pending admin review.
+                                                {isAgent
+                                                    ? '⚠️ Your account deletion has been requested and is pending admin review. Your listings will be handled by the admin.'
+                                                    : '⚠️ Your account has been marked for deletion.'}
                                             </p>
                                             <button disabled style={{ padding: '10px 20px', background: '#991B1B', color: '#FCA5A5', border: 'none', borderRadius: '8px', cursor: 'not-allowed', opacity: 0.6 }}>
-                                                Deletion Requested
+                                                {isAgent ? 'Pending Admin Review' : 'Account Deleted'}
                                             </button>
                                         </>
                                     ) : (
                                         <>
                                             <p style={{ color: '#FCA5A5', fontSize: '0.9rem', marginBottom: '15px' }}>
-                                                Once your account is deleted, all your data will be archived. You can sign up again with the same email.
+                                                {isAgent
+                                                    ? 'As an agent, your deletion request will be reviewed by an admin. Active listings, chats, and appointments will be handled before deletion.'
+                                                    : 'Your account will be archived immediately. You can sign up again with the same email.'}
                                             </p>
                                             <button
                                                 onClick={handleDeleteRequest}
@@ -835,7 +850,7 @@ function ProfilePage() {
                                                 onMouseEnter={(e) => e.target.style.background = '#b91c1c'}
                                                 onMouseLeave={(e) => e.target.style.background = '#dc2626'}
                                             >
-                                                Request Account Deletion
+                                                {isAgent ? 'Request Account Deletion' : 'Delete My Account'}
                                             </button>
                                         </>
                                     )}

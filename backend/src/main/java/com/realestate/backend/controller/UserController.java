@@ -1,6 +1,8 @@
 package com.realestate.backend.controller;
 
 import com.realestate.backend.entity.AppUser;
+import com.realestate.backend.entity.DeletedUser;
+import com.realestate.backend.repository.DeletedUserRepository;
 import com.realestate.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -24,6 +27,9 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private DeletedUserRepository deletedUserRepository;
 
     @Autowired
     private com.realestate.backend.service.OtpService otpService;
@@ -213,7 +219,8 @@ public class UserController {
 
     /**
      * POST /api/users/me/deletion-request
-     * Request account deletion for self
+     * BUYER  → Instantly archived to deleted_users + soft-deleted (no admin needed)
+     * AGENT  → Flagged for admin approval (agents have listings, chats, appointments)
      */
     @PostMapping("/me/deletion-request")
     public ResponseEntity<?> requestDeletion() {
@@ -228,10 +235,39 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
             }
 
-            dbUser.setDeletionRequested(true);
-            userRepository.save(dbUser);
-            return ResponseEntity.ok(Map.of("message", "Deletion request submitted"));
+            if ("AGENT".equalsIgnoreCase(dbUser.getRole())) {
+                // Agents → admin approval required (has active listings/chats/appointments)
+                dbUser.setDeletionRequested(true);
+                userRepository.save(dbUser);
+                return ResponseEntity.ok(Map.of(
+                        "message", "Deletion request submitted for admin review",
+                        "status", "PENDING_APPROVAL"
+                ));
+            } else {
+                // Buyers → instant archive + soft-delete
+                DeletedUser archive = new DeletedUser();
+                archive.setOriginalUserId(dbUser.getId());
+                archive.setName(dbUser.getName());
+                archive.setEmail(dbUser.getEmail());
+                archive.setRole(dbUser.getRole());
+                archive.setPhone(dbUser.getPhone());
+                archive.setCity(dbUser.getCity());
+                archive.setAgencyName(dbUser.getAgencyName());
+                archive.setDeletedAt(LocalDateTime.now());
+                archive.setDeletionReason("USER_REQUEST");
+                archive.setDeletedBy(null); // Self-requested
+                deletedUserRepository.save(archive);
+
+                dbUser.setDeletionRequested(true);
+                userRepository.save(dbUser);
+
+                return ResponseEntity.ok(Map.of(
+                        "message", "Your account has been deleted successfully",
+                        "status", "DELETED"
+                ));
+            }
         } catch (Exception ex) {
+            ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Server error"));
         }
     }
