@@ -90,11 +90,11 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
     }
     try {
       if (isSaved) {
-        await favoritesApi.delete(`/?userId=${user.id}&propertyId=${propertyId}`);
+        await favoritesApi.delete(`?userId=${user.id}&propertyId=${propertyId}`);
         setIsSaved(false);
         if (onUnfav) onUnfav(propertyId);
       } else {
-        await favoritesApi.post(`/?userId=${user.id}&propertyId=${propertyId}`);
+        await favoritesApi.post(`?userId=${user.id}&propertyId=${propertyId}`);
         setIsSaved(true);
       }
     } catch (error) {
