@@ -14,39 +14,16 @@ import { useInView } from 'react-intersection-observer';
 import { Helmet } from "react-helmet-async";
 
 /* ─── SVG Icons ─── */
-const SearchIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-    </svg>
-);
+import { FiSearch, FiArrowRight, FiChevronDown, FiSliders } from "react-icons/fi";
 
-const ArrowRightIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-        <polyline points="12 5 19 12 12 19"></polyline>
-    </svg>
-);
+/* ─── SVG Icon Wrappers (Migrated to React-Icons) ─── */
+const SearchIcon = () => <FiSearch size={20} /> ;
 
-const ChevronDownIcon = ({ className }) => (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="6 9 12 15 18 9"></polyline>
-    </svg>
-);
+const ArrowRightIcon = () => <FiArrowRight size={20} /> ;
 
-const SlidersIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="4" y1="21" x2="4" y2="14"></line>
-        <line x1="4" y1="10" x2="4" y2="3"></line>
-        <line x1="12" y1="21" x2="12" y2="12"></line>
-        <line x1="12" y1="8" x2="12" y2="3"></line>
-        <line x1="20" y1="21" x2="20" y2="16"></line>
-        <line x1="20" y1="12" x2="20" y2="3"></line>
-        <line x1="1" y1="14" x2="7" y2="14"></line>
-        <line x1="9" y1="8" x2="15" y2="8"></line>
-        <line x1="17" y1="16" x2="23" y2="16"></line>
-    </svg>
-);
+const ChevronDownIcon = ({ className }) => <FiChevronDown className={className} size={20} /> ;
+
+const SlidersIcon = () => <FiSliders size={20} /> ;
 
 /* ─── Feature Card ─── */
 function FeatureBox({ icon, title, description, cta, onClick }) {
@@ -317,24 +294,18 @@ function Hero({ onSearch }) {
                             </div>
                         </div>
                     )}
-                </div>
-                {/* Scroll Down Arrow — sibling of hero-search, inside hero-inner */}
-                <div className="scroll-down" onClick={() => document.querySelector('.features')?.scrollIntoView({ behavior: 'smooth' })}>
-                    <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="rgba(255, 255, 255, 0.7)"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="scroll-arrow"
-                        style={{ animation: 'bounce 1.5s infinite' }}
-                    >
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </div>
+                </div> {/* Closing .hero-search */}
+                </div> {/* Closing .hero-inner */}
+
+            {/* Scroll Down Arrow — absolutely positioned relative to .hero */}
+            <div className="scroll-down" onClick={() => document.querySelector('.features')?.scrollIntoView({ behavior: 'smooth' })}>
+                <FiChevronDown 
+                    size={32} 
+                    color="rgba(255, 255, 255, 0.85)" 
+                    strokeWidth="3" 
+                    className="scroll-arrow" 
+                    style={{ animation: 'bounce 1.5s infinite', display: 'block' }} 
+                />
             </div>
         </section>
     );

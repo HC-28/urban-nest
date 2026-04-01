@@ -7,22 +7,12 @@ import { formatPrice as defaultFormatPrice } from "../utils/priceUtils";
 import { parsePropertyImages } from "../utils/imageUtils";
 import { useCompare } from "../context/CompareContext";
 
-const MapPinIcon = ({ "aria-hidden": ariaHidden }) => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden={ariaHidden}>
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-    <circle cx="12" cy="10" r="3"></circle>
-  </svg>
-);
+import { FiMapPin, FiRepeat, FiEdit2 } from "react-icons/fi";
 
-const CompareIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="16 3 21 3 21 8"></polyline>
-        <line x1="4" y1="20" x2="21" y2="3"></line>
-        <polyline points="21 16 21 21 16 21"></polyline>
-        <line x1="15" y1="15" x2="21" y2="21"></line>
-        <line x1="4" y1="4" x2="9" y2="9"></line>
-    </svg>
-);
+/* ─── SVG Icon Wrappers (Migrated to React-Icons) ─── */
+const MapPinIcon = ({ "aria-hidden": ariaHidden }) => <FiMapPin size={14} aria-hidden={ariaHidden} />;
+
+const CompareIcon = () => <FiRepeat size={16} />;
 
 function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, onUnfav, showFeaturedBadge = false }) {
   const navigate = useNavigate();
@@ -185,10 +175,7 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
               onClick={(e) => { e.stopPropagation(); navigate(`/edit-property/${propertyId}`); }}
               title="Edit Property"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
+              <FiEdit2 size={16} />
             </button>
           </div>
         )}

@@ -48,6 +48,18 @@ public class AuthController {
                 email.matches("^[a-zA-Z0-9._%+-]+@urbannest\\.com$"));
     }
 
+    @PostMapping("/check-user")
+    public ResponseEntity<?> checkUser(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        if (email != null) {
+            email = email.toLowerCase();
+        }
+        if (userRepository.findByEmail(email).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email already exists"));
+        }
+        return ResponseEntity.ok(Map.of("message", "Email is available"));
+    }
+
     @PostMapping("/google")
     public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> payload) {
         try {
@@ -59,7 +71,7 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid Google Token"));
             }
 
-            String email = googleUser.getEmail();
+            String email = googleUser.getEmail().toLowerCase();
             String name = (String) googleUser.get("name");
 
             AppUser user = userRepository.findByEmail(email).orElseGet(() -> {
@@ -68,7 +80,6 @@ public class AuthController {
                 newUser.setName(name);
                 newUser.setRole(requestedRole.toUpperCase());
                 newUser.setEmailVerified(true);
-                // Agents still need manual verification if that's the policy
                 if ("AGENT".equalsIgnoreCase(requestedRole)) {
                     newUser.setVerified(false);
                 } else {
@@ -89,6 +100,7 @@ public class AuthController {
     @PostMapping("/request-otp")
     public ResponseEntity<?> requestOtp(@RequestParam String email) {
         try {
+            if (email != null) email = email.toLowerCase();
             if (!isValidEmail(email)) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid email domain"));
             }
@@ -104,6 +116,7 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
+        if (email != null) email = email.toLowerCase();
         String code = payload.get("otp");
 
         if (otpService.validateOtp(email, code)) {
@@ -119,6 +132,7 @@ public class AuthController {
 
     @PostMapping("/register-otp")
     public ResponseEntity<?> requestRegisterOtp(@RequestParam String email) {
+        if (email != null) email = email.toLowerCase();
         if (!isValidEmail(email)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid email domain"));
         }
@@ -133,6 +147,7 @@ public class AuthController {
 
     @PostMapping("/reset-password-otp")
     public ResponseEntity<?> requestResetPasswordOtp(@RequestParam String email) {
+        if (email != null) email = email.toLowerCase();
         if (!isValidEmail(email)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid email domain"));
         }
@@ -192,6 +207,7 @@ public class AuthController {
     public ResponseEntity<?> signup(@RequestBody Map<String, Object> payload) {
         try {
             String email = (String) payload.get("email");
+            if (email != null) email = email.toLowerCase();
             String otp = (String) payload.get("otp");
             String name = (String) payload.get("name");
             String password = (String) payload.get("password");
@@ -298,12 +314,15 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid request body"));
             }
 
-            if (!isValidEmail(user.getEmail())) {
+            String email = user.getEmail();
+            if (email != null) email = email.toLowerCase();
+
+            if (!isValidEmail(email)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "Only Gmail or UrbanNest login allowed"));
             }
 
-            AppUser dbUser = userRepository.findByEmail(user.getEmail()).orElse(null);
+            AppUser dbUser = userRepository.findByEmail(email).orElse(null);
 
             if (dbUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

@@ -1,24 +1,22 @@
 package com.realestate.backend.controller;
 
-import com.realestate.backend.entity.AppUser;
-import com.realestate.backend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Debug controller — ADMIN-ONLY. Exposes auth context info only.
+ * The old /api/debug/reset-password endpoint was REMOVED (security vulnerability:
+ * it allowed anyone to set any password to plaintext without authentication).
+ */
 @RestController
 @RequestMapping("/api/debug")
 public class DebugController {
 
-    @Autowired
-    private UserRepository userRepository;
-
+    /** GET /api/debug/auth — Returns the authenticated user's JWT context (admin only) */
     @GetMapping("/auth")
     public Map<String, Object> getAuth() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -31,20 +29,5 @@ public class DebugController {
                 "authorities", auth.getAuthorities().stream()
                         .map(a -> a.getAuthority())
                         .collect(Collectors.toList()));
-    }
-
-    // Removed list-users for security
-
-
-    @GetMapping("/reset-password")
-    public Map<String, Object> resetPassword(@RequestParam String email, @RequestParam String password) {
-        Optional<AppUser> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isPresent()) {
-            AppUser user = userOpt.get();
-            user.setPassword(password); // Plain text fallback
-            userRepository.save(user);
-            return Map.of("message", "Password reset for " + email);
-        }
-        return Map.of("error", "User not found");
     }
 }

@@ -43,17 +43,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/agents/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                         .requestMatchers("/api/analytics/**").permitAll()
-                        .requestMatchers("/api/debug/**").permitAll()
+                        // Favorites: read is public, write requires login
                         .requestMatchers(HttpMethod.GET, "/api/favorites/status").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/favorites/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/favorites/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/favorites/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/favorites/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/favorites/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
 
-                        // Admin-only endpoints
+                        // Admin-only endpoints (debug requires admin login)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/debug/**").hasRole("ADMIN")
 
                         // Everything else requires authentication
                         .anyRequest().authenticated())

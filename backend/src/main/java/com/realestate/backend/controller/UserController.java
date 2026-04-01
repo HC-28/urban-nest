@@ -196,11 +196,8 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
             }
 
-            // Verify current password
+            // Verify current password (BCrypt only — no plaintext fallback)
             boolean isMatch = encoder.matches(currentPassword, dbUser.getPassword());
-            if (!isMatch && dbUser.getPassword().equals(currentPassword)) {
-                isMatch = true; // Fallback for unmigrated users
-            }
 
             if (!isMatch) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
