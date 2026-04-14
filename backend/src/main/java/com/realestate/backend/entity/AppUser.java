@@ -1,6 +1,8 @@
 package com.realestate.backend.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "users")
@@ -15,6 +17,7 @@ public class AppUser {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     // BUYER or AGENT
@@ -29,29 +32,6 @@ public class AppUser {
 
     private String pincode;
 
-    // Professional info for Agents
-    @Column(name = "bio", columnDefinition = "TEXT")
-    private String bio;
-
-    @Column(name = "agency_name")
-    private String agencyName;
-
-    @Column(name = "experience")
-    private String experience;
-
-    @Column(name = "specialties")
-    private String specialties;
-
-    @Column(name = "reviews")
-    private Integer reviews = 0;
-
-    @Column(name = "rating")
-    private Double rating = 0.0;
-
-    // Admin approval for Agents (false = pending, true = approved)
-    @Column(name = "verified", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
-    private boolean verified = true;
-
     // Email verification status
     @Column(name = "email_verified", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean emailVerified = false;
@@ -60,11 +40,18 @@ public class AppUser {
     @Column(name = "deletion_requested", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean deletionRequested = false;
 
+    @JsonIgnore
     @Column(name = "verification_token")
     private String verificationToken;
 
     @Column(name = "created_at")
     private java.time.LocalDateTime createdAt;
+
+    @Column(name = "verified", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean verified = false;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private AgentProfile agentProfile;
 
     @PrePersist
     protected void onCreate() {
@@ -153,46 +140,6 @@ public class AppUser {
         this.pincode = pincode;
     }
 
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-
-    public String getAgencyName() {
-        return agencyName;
-    }
-
-    public void setAgencyName(String agencyName) {
-        this.agencyName = agencyName;
-    }
-
-    public String getExperience() {
-        return experience;
-    }
-
-    public void setExperience(String experience) {
-        this.experience = experience;
-    }
-
-    public String getSpecialties() {
-        return specialties;
-    }
-
-    public void setSpecialties(String specialties) {
-        this.specialties = specialties;
-    }
-
-    public boolean isVerified() {
-        return verified;
-    }
-
-    public void setVerified(boolean verified) {
-        this.verified = verified;
-    }
-
     public boolean isEmailVerified() {
         return emailVerified;
     }
@@ -213,23 +160,86 @@ public class AppUser {
         return createdAt;
     }
 
-    public Integer getReviews() {
-        return reviews;
-    }
-
-    public void setReviews(Integer reviews) {
-        this.reviews = reviews;
-    }
-
-    public Double getRating() {
-        return rating;
-    }
-
-    public void setRating(Double rating) {
-        this.rating = rating;
-    }
-
     public void setCreatedAt(java.time.LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
+    public AgentProfile getAgentProfile() {
+        return agentProfile;
+    }
+
+    public void setAgentProfile(AgentProfile agentProfile) {
+        this.agentProfile = agentProfile;
+    }
+
+    // ── Convenience methods for Agent functionality ──────────────────────────
+
+    public int getReviews() {
+        return agentProfile != null ? agentProfile.getReviews() : 0;
+    }
+
+    public void setReviews(int reviews) {
+        ensureAgentProfile();
+        agentProfile.setReviews(reviews);
+    }
+
+    public double getRating() {
+        return agentProfile != null ? agentProfile.getRating() : 0.0;
+    }
+
+    public void setRating(double rating) {
+        ensureAgentProfile();
+        agentProfile.setRating(rating);
+    }
+
+    public String getSpecialties() {
+        return agentProfile != null ? agentProfile.getSpecialties() : null;
+    }
+
+    public Integer getExperience() {
+        return agentProfile != null ? agentProfile.getExperience() : null;
+    }
+
+    public void setExperience(Integer experience) {
+        ensureAgentProfile();
+        agentProfile.setExperience(experience);
+    }
+
+    public void setSpecialties(String specialties) {
+        ensureAgentProfile();
+        agentProfile.setSpecialties(specialties);
+    }
+
+    public String getBio() {
+        return agentProfile != null ? agentProfile.getBio() : null;
+    }
+
+    public void setBio(String bio) {
+        ensureAgentProfile();
+        agentProfile.setBio(bio);
+    }
+
+    public String getAgencyName() {
+        return agentProfile != null ? agentProfile.getAgencyName() : "Independent";
+    }
+
+    public void setAgencyName(String agencyName) {
+        ensureAgentProfile();
+        agentProfile.setAgencyName(agencyName);
+    }
+
+    private void ensureAgentProfile() {
+        if (this.agentProfile == null) {
+            this.agentProfile = new AgentProfile();
+            this.agentProfile.setUser(this);
+        }
     }
 }

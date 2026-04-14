@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import com.realestate.backend.dto.ApiResponse;
+import com.realestate.backend.dto.UserSummaryDTO;
+import com.realestate.backend.dto.UserProfileDTO;
 
 /**
  * User profile management.
@@ -52,23 +55,12 @@ public class UserController {
      * Get public basic profile info
      */
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getUserById(@PathVariable Long id) {
-        try {
-            AppUser dbUser = userRepository.findById(id).orElse(null);
-            if (dbUser == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
-            }
-            return ResponseEntity.ok(Map.of(
-                    "id", dbUser.getId(),
-                    "name", dbUser.getName() != null ? dbUser.getName() : "Agent",
-                    "email", dbUser.getEmail(),
-                    "profilePicture", dbUser.getProfilePicture() != null ? dbUser.getProfilePicture() : "",
-                    "phone", dbUser.getPhone() != null ? dbUser.getPhone() : "",
-                    "agencyName", dbUser.getAgencyName() != null ? dbUser.getAgencyName() : ""));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Server error"));
+    public ResponseEntity<ApiResponse<UserSummaryDTO>> getUserById(@PathVariable Long id) {
+        AppUser dbUser = userRepository.findById(id).orElse(null);
+        if (dbUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("User not found"));
         }
+        return ResponseEntity.ok(ApiResponse.success(UserSummaryDTO.from(dbUser)));
     }
 
     /**
@@ -76,47 +68,42 @@ public class UserController {
      * Update own profile
      */
     @PutMapping(value = "/me/profile", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateProfile(@RequestBody AppUser user) {
-        try {
-            String email = getAuthenticatedEmail();
-            if (email == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized"));
-            }
-
-            AppUser dbUser = userRepository.findByEmail(email).orElse(null);
-
-            if (dbUser == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
-            }
-
-            // Update basic info
-            if (user.getName() != null)
-                dbUser.setName(user.getName());
-            if (user.getPhone() != null)
-                dbUser.setPhone(user.getPhone());
-            if (user.getCity() != null)
-                dbUser.setCity(user.getCity());
-            if (user.getPincode() != null)
-                dbUser.setPincode(user.getPincode());
-
-            // Professional info if Agent
-            if ("AGENT".equalsIgnoreCase(dbUser.getRole())) {
-                if (user.getBio() != null)
-                    dbUser.setBio(user.getBio());
-                if (user.getAgencyName() != null)
-                    dbUser.setAgencyName(user.getAgencyName());
-                if (user.getExperience() != null)
-                    dbUser.setExperience(user.getExperience());
-                if (user.getSpecialties() != null)
-                    dbUser.setSpecialties(user.getSpecialties());
-            }
-
-            userRepository.save(dbUser);
-            return ResponseEntity.ok(dbUser);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Server error"));
+    public ResponseEntity<ApiResponse<UserProfileDTO>> updateProfile(@RequestBody AppUser user) {
+        String email = getAuthenticatedEmail();
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized"));
         }
+
+        AppUser dbUser = userRepository.findByEmail(email).orElse(null);
+
+        if (dbUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("User not found"));
+        }
+
+        // Update basic info
+        if (user.getName() != null)
+            dbUser.setName(user.getName());
+        if (user.getPhone() != null)
+            dbUser.setPhone(user.getPhone());
+        if (user.getCity() != null)
+            dbUser.setCity(user.getCity());
+        if (user.getPincode() != null)
+            dbUser.setPincode(user.getPincode());
+
+        // Professional info if Agent
+        if ("AGENT".equalsIgnoreCase(dbUser.getRole())) {
+            if (user.getBio() != null)
+                dbUser.setBio(user.getBio());
+            if (user.getAgencyName() != null)
+                dbUser.setAgencyName(user.getAgencyName());
+            if (user.getExperience() != null)
+                dbUser.setExperience(user.getExperience());
+            if (user.getSpecialties() != null)
+                dbUser.setSpecialties(user.getSpecialties());
+        }
+
+        userRepository.save(dbUser);
+        return ResponseEntity.ok(ApiResponse.success(UserProfileDTO.from(dbUser)));
     }
 
     /**
@@ -124,40 +111,34 @@ public class UserController {
      * Update profile picture separately (base64 image).
      */
     @PatchMapping(value = "/me/avatar", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateProfilePicture(@RequestBody Map<String, String> request) {
-        try {
-            String email = getAuthenticatedEmail();
-            if (email == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized"));
-            }
-
-            String profilePicture = request.get("profilePicture");
-
-            if (profilePicture == null) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "profilePicture is required"));
-            }
-
-            if (!profilePicture.startsWith("data:image/")) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Invalid image format - must be base64 encoded image"));
-            }
-
-            AppUser dbUser = userRepository.findByEmail(email).orElse(null);
-
-            if (dbUser == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
-            }
-
-            dbUser.setProfilePicture(profilePicture);
-            userRepository.save(dbUser);
-
-            return ResponseEntity.ok(dbUser);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+    public ResponseEntity<ApiResponse<UserProfileDTO>> updateProfilePicture(@RequestBody Map<String, String> request) {
+        String email = getAuthenticatedEmail();
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized"));
         }
+
+        String profilePicture = request.get("profilePicture");
+
+        if (profilePicture == null) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("profilePicture is required"));
+        }
+
+        if (!profilePicture.startsWith("data:image/")) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Invalid image format - must be base64 encoded image"));
+        }
+
+        AppUser dbUser = userRepository.findByEmail(email).orElse(null);
+
+        if (dbUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("User not found"));
+        }
+
+        dbUser.setProfilePicture(profilePicture);
+        userRepository.save(dbUser);
+
+        return ResponseEntity.ok(ApiResponse.success(UserProfileDTO.from(dbUser)));
     }
 
     /**
@@ -165,53 +146,48 @@ public class UserController {
      * Change own password. requires current password AND OTP.
      */
     @PutMapping(value = "/me/password", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
-        try {
-            String email = getAuthenticatedEmail();
-            if (email == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized"));
-            }
-
-            String currentPassword = request.get("currentPassword");
-            String newPassword = request.get("newPassword");
-            String otp = request.get("otp");
-
-            if (currentPassword == null || newPassword == null || otp == null) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Current password, new password, and OTP code are required"));
-            }
-
-            if (!otpService.validateOtp(email, otp)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired OTP"));
-            }
-
-            if (newPassword.length() < 6) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "New password must be at least 6 characters"));
-            }
-
-            AppUser dbUser = userRepository.findByEmail(email).orElse(null);
-
-            if (dbUser == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
-            }
-
-            // Verify current password (BCrypt only — no plaintext fallback)
-            boolean isMatch = encoder.matches(currentPassword, dbUser.getPassword());
-
-            if (!isMatch) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Current password is incorrect"));
-            }
-
-            dbUser.setPassword(encoder.encode(newPassword));
-            userRepository.save(dbUser);
-
-            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Server error"));
+    public ResponseEntity<ApiResponse<Map<String, String>>> changePassword(@RequestBody Map<String, String> request) {
+        String email = getAuthenticatedEmail();
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized"));
         }
+
+        String currentPassword = request.get("currentPassword");
+        String newPassword = request.get("newPassword");
+        String otp = request.get("otp");
+
+        if (currentPassword == null || newPassword == null || otp == null) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Current password, new password, and OTP code are required"));
+        }
+
+        if (!otpService.validateOtp(email, otp)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Invalid or expired OTP"));
+        }
+
+        if (newPassword.length() < 6) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("New password must be at least 6 characters"));
+        }
+
+        AppUser dbUser = userRepository.findByEmail(email).orElse(null);
+
+        if (dbUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("User not found"));
+        }
+
+        // Verify current password (BCrypt only — no plaintext fallback)
+        boolean isMatch = encoder.matches(currentPassword, dbUser.getPassword());
+
+        if (!isMatch) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Current password is incorrect"));
+        }
+
+        dbUser.setPassword(encoder.encode(newPassword));
+        userRepository.save(dbUser);
+
+        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Password changed successfully")));
     }
 
     /**
@@ -220,52 +196,47 @@ public class UserController {
      * AGENT  → Flagged for admin approval (agents have listings, chats, appointments)
      */
     @PostMapping("/me/deletion-request")
-    public ResponseEntity<?> requestDeletion() {
-        try {
-            String email = getAuthenticatedEmail();
-            if (email == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized"));
-            }
+    public ResponseEntity<ApiResponse<Map<String, String>>> requestDeletion() {
+        String email = getAuthenticatedEmail();
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized"));
+        }
 
-            AppUser dbUser = userRepository.findByEmail(email).orElse(null);
-            if (dbUser == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
-            }
+        AppUser dbUser = userRepository.findByEmail(email).orElse(null);
+        if (dbUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("User not found"));
+        }
 
-            if ("AGENT".equalsIgnoreCase(dbUser.getRole())) {
-                // Agents → admin approval required (has active listings/chats/appointments)
-                dbUser.setDeletionRequested(true);
-                userRepository.save(dbUser);
-                return ResponseEntity.ok(Map.of(
-                        "message", "Deletion request submitted for admin review",
-                        "status", "PENDING_APPROVAL"
-                ));
-            } else {
-                // Buyers → instant archive + soft-delete
-                DeletedUser archive = new DeletedUser();
-                archive.setOriginalUserId(dbUser.getId());
-                archive.setName(dbUser.getName());
-                archive.setEmail(dbUser.getEmail());
-                archive.setRole(dbUser.getRole());
-                archive.setPhone(dbUser.getPhone());
-                archive.setCity(dbUser.getCity());
-                archive.setAgencyName(dbUser.getAgencyName());
-                archive.setDeletedAt(LocalDateTime.now());
-                archive.setDeletionReason("USER_REQUEST");
-                archive.setDeletedBy(null); // Self-requested
-                deletedUserRepository.save(archive);
+        if ("AGENT".equalsIgnoreCase(dbUser.getRole())) {
+            // Agents → admin approval required (has active listings/chats/appointments)
+            dbUser.setDeletionRequested(true);
+            userRepository.save(dbUser);
+            return ResponseEntity.ok(ApiResponse.success(Map.of(
+                    "message", "Deletion request submitted for admin review",
+                    "status", "PENDING_APPROVAL"
+            )));
+        } else {
+            // Buyers → instant archive + soft-delete
+            DeletedUser archive = new DeletedUser();
+            archive.setOriginalUserId(dbUser.getId());
+            archive.setName(dbUser.getName());
+            archive.setEmail(dbUser.getEmail());
+            archive.setRole(dbUser.getRole());
+            archive.setPhone(dbUser.getPhone());
+            archive.setCity(dbUser.getCity());
+            archive.setAgencyName(dbUser.getAgencyName());
+            archive.setDeletedAt(LocalDateTime.now());
+            archive.setDeletionReason("USER_REQUEST");
+            archive.setDeletedBy(null); // Self-requested
+            deletedUserRepository.save(archive);
 
-                dbUser.setDeletionRequested(true);
-                userRepository.save(dbUser);
+            dbUser.setDeletionRequested(true);
+            userRepository.save(dbUser);
 
-                return ResponseEntity.ok(Map.of(
-                        "message", "Your account has been deleted successfully",
-                        "status", "DELETED"
-                ));
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Server error"));
+            return ResponseEntity.ok(ApiResponse.success(Map.of(
+                    "message", "Your account has been deleted successfully",
+                    "status", "DELETED"
+            )));
         }
     }
 }

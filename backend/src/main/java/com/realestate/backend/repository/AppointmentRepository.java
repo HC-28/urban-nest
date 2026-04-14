@@ -14,28 +14,48 @@ import java.util.List;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
-        List<Appointment> findByPropertyId(Long propertyId);
+        List<Appointment> findByProperty_Id(Long propertyId);
 
-        List<Appointment> findByBuyerId(Long buyerId);
+        List<Appointment> findByBuyer_Id(Long buyerId);
 
-        List<Appointment> findByAgentId(Long agentId);
+        List<Appointment> findByAgent_Id(Long agentId);
 
-        List<Appointment> findByBuyerIdAndPropertyId(Long buyerId, Long propertyId);
+        default List<Appointment> findByAgentId(Long agentId) {
+                return findByAgent_Id(agentId);
+        }
+
+        default List<Appointment> findByBuyerId(Long buyerId) {
+                return findByBuyer_Id(buyerId);
+        }
+
+        default List<Appointment> findByPropertyId(Long propertyId) {
+                return findByProperty_Id(propertyId);
+        }
+
+        default List<Appointment> findByBuyerIdAndPropertyId(Long buyerId, Long propertyId) {
+                return findByBuyer_IdAndProperty_Id(buyerId, propertyId);
+        }
+
+        default List<Appointment> findByPropertyIdAndStatusIn(Long propertyId, List<String> statuses) {
+                return findByProperty_IdAndStatusIn(propertyId, statuses);
+        }
+
+        List<Appointment> findByBuyer_IdAndProperty_Id(Long buyerId, Long propertyId);
 
         List<Appointment> findByStatus(String status);
 
-        List<Appointment> findByAgentIdAndAppointmentDate(Long agentId, LocalDate date);
+        List<Appointment> findByAgent_IdAndAppointmentDate(Long agentId, LocalDate date);
 
-        List<Appointment> findByPropertyIdAndAppointmentDate(Long propertyId, LocalDate date);
+        List<Appointment> findByProperty_IdAndAppointmentDate(Long propertyId, LocalDate date);
 
-        long countByPropertyId(Long propertyId);
+        long countByProperty_Id(Long propertyId);
 
         // Find all active appointments for a property (for cancellation when sold)
-        List<Appointment> findByPropertyIdAndStatusIn(Long propertyId, List<String> statuses);
+        List<Appointment> findByProperty_IdAndStatusIn(Long propertyId, List<String> statuses);
 
         // Buyer time-conflict check: same buyer, same date, same time, different
         // property
-        @Query("SELECT a FROM Appointment a WHERE a.buyerId = :buyerId " +
+        @Query("SELECT a FROM Appointment a WHERE a.buyer.id = :buyerId " +
                         "AND a.appointmentDate = :date AND a.appointmentTime = :time " +
                         "AND a.status NOT IN ('cancelled', 'expired')")
         List<Appointment> findConflictingBuyerAppointments(

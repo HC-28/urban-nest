@@ -13,19 +13,23 @@ import java.util.List;
 public interface AgentSlotRepository extends JpaRepository<AgentSlot, Long> {
 
     // All slots for a specific property (available + booked)
-    List<AgentSlot> findByPropertyId(Long propertyId);
+    List<AgentSlot> findByProperty_Id(Long propertyId);
 
     // Only available (unbooked) slots for a property from today onwards
     // INCLUDING global slots (where propertyId is null) for the same agent
-    @Query("SELECT s FROM AgentSlot s WHERE (s.propertyId = :propertyId OR s.propertyId IS NULL) " +
-            "AND s.agentId = :agentId AND s.isBooked = false AND s.slotDate >= :fromDate")
+    @Query("SELECT s FROM AgentSlot s WHERE (s.property.id = :propertyId OR s.property IS NULL) " +
+            "AND s.agent.id = :agentId AND s.isBooked = false AND s.slotDate >= :fromDate")
     List<AgentSlot> findAvailableSlots(@Param("propertyId") Long propertyId,
             @Param("agentId") Long agentId,
             @Param("fromDate") LocalDate fromDate);
 
     // All slots for an agent
-    List<AgentSlot> findByAgentId(Long agentId);
+    List<AgentSlot> findByAgent_Id(Long agentId);
+
+    default List<AgentSlot> findByAgentId(Long agentId) {
+        return findByAgent_Id(agentId);
+    }
 
     // All available slots for a property on a given date
-    List<AgentSlot> findByPropertyIdAndSlotDateAndIsBookedFalse(Long propertyId, LocalDate date);
+    List<AgentSlot> findByProperty_IdAndSlotDateAndIsBookedFalse(Long propertyId, LocalDate date);
 }

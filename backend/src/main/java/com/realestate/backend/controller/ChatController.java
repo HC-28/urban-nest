@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import com.realestate.backend.dto.ApiResponse;
+import com.realestate.backend.dto.ChatMessageDTO;
 
 /**
  * Chat messaging between buyers and agents.
@@ -32,12 +34,12 @@ public class ChatController {
 
     /** POST /api/chat/messages — Send a message */
     @PostMapping("/messages")
-    public ResponseEntity<?> sendMessage(@RequestBody ChatMessage message) {
+    public ResponseEntity<ApiResponse<ChatMessageDTO>> sendMessage(@RequestBody ChatMessage message) {
 
         if (message.getMessage() == null || message.getMessage().trim().isEmpty()) {
             return ResponseEntity
                     .badRequest()
-                    .body("Message cannot be empty");
+                    .body(ApiResponse.error("Message cannot be empty"));
         }
 
         if (message.getBuyerId() == null ||
@@ -46,7 +48,7 @@ public class ChatController {
 
             return ResponseEntity
                     .badRequest()
-                    .body("Invalid chat data");
+                    .body(ApiResponse.error("Invalid chat data"));
         }
 
         ChatMessage saved = chatRepo.save(message);
@@ -79,7 +81,7 @@ public class ChatController {
             });
         }
 
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(ApiResponse.success(ChatMessageDTO.from(saved)));
     }
 
     /**
@@ -87,38 +89,40 @@ public class ChatController {
      * agentId)
      */
     @GetMapping("/messages")
-    public List<ChatMessage> getConversation(
+    public ResponseEntity<ApiResponse<List<ChatMessageDTO>>> getConversation(
             @RequestParam Long propertyId,
             @RequestParam Long buyerId,
             @RequestParam Long agentId) {
-        return chatRepo.findByPropertyIdAndBuyerIdAndAgentIdOrderByCreatedAtAsc(
+        List<ChatMessage> conversation = chatRepo.findByPropertyIdAndBuyerIdAndAgentIdOrderByCreatedAtAsc(
                 propertyId, buyerId, agentId);
+        List<ChatMessageDTO> dtos = conversation.stream().map(ChatMessageDTO::from).toList();
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     /** GET /api/chat/agent/{agentId} — Agent inbox */
     @GetMapping("/agent/{agentId}")
-    public List<ChatMessage> getChatsForAgent(@PathVariable Long agentId) {
-        return chatRepo.findByAgentIdOrderByCreatedAtDesc(agentId);
+    public ResponseEntity<ApiResponse<List<ChatMessageDTO>>> getChatsForAgent(@PathVariable Long agentId) {
+        List<ChatMessage> chats = chatRepo.findByAgentIdOrderByCreatedAtDesc(agentId);
+        List<ChatMessageDTO> dtos = chats.stream().map(ChatMessageDTO::from).toList();
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     @GetMapping("/buyer/{buyerId}")
-    public List<ChatMessage> getChatsForBuyer(@PathVariable Long buyerId) {
-        return chatRepo.findByBuyerIdOrderByCreatedAtDesc(buyerId);
+    public ResponseEntity<ApiResponse<List<ChatMessageDTO>>> getChatsForBuyer(@PathVariable Long buyerId) {
+        List<ChatMessage> chats = chatRepo.findByBuyerIdOrderByCreatedAtDesc(buyerId);
+        List<ChatMessageDTO> dtos = chats.stream().map(ChatMessageDTO::from).toList();
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     /** POST /api/chat/seen — Mark messages as seen */
     @PostMapping("/seen")
-    public ResponseEntity<?> markAsSeen(@RequestBody Map<String, Object> payload) {
-        try {
-            Long propertyId = Long.valueOf(payload.get("propertyId").toString());
-            Long buyerId = Long.valueOf(payload.get("buyerId").toString());
-            Long agentId = Long.valueOf(payload.get("agentId").toString());
-            String userRole = payload.get("userRole").toString();
+    public ResponseEntity<ApiResponse<Void>> markAsSeen(@RequestBody Map<String, Object> payload) {
+        Long propertyId = Long.valueOf(payload.get("propertyId").toString());
+        Long buyerId = Long.valueOf(payload.get("buyerId").toString());
+        Long agentId = Long.valueOf(payload.get("agentId").toString());
+        String userRole = payload.get("userRole").toString();
 
-            chatRepo.markAsSeen(propertyId, buyerId, agentId, userRole);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error updating seen status: " + e.getMessage());
-        }
+        chatRepo.markAsSeen(propertyId, buyerId, agentId, userRole);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

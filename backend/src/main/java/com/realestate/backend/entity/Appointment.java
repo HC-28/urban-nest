@@ -13,14 +13,17 @@ public class Appointment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "property_id", nullable = false)
-    private Long propertyId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "property_id", nullable = false)
+    private Property property;
 
-    @Column(name = "buyer_id", nullable = false)
-    private Long buyerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "buyer_id", nullable = false)
+    private AppUser buyer;
 
-    @Column(name = "agent_id", nullable = false)
-    private Long agentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agent_id", nullable = false)
+    private AppUser agent;
 
     @Column(name = "appointment_date", nullable = true)
     private LocalDate appointmentDate;
@@ -30,15 +33,6 @@ public class Appointment {
 
     @Column(name = "duration_minutes")
     private Integer durationMinutes = 60;
-
-    @Column(name = "buyer_name", nullable = false)
-    private String buyerName;
-
-    @Column(name = "buyer_email", nullable = false)
-    private String buyerEmail;
-
-    @Column(name = "buyer_phone")
-    private String buyerPhone;
 
     @Column(name = "status")
     private String status = "pending"; // pending, confirmed, cancelled, completed
@@ -97,29 +91,28 @@ public class Appointment {
     public void setId(Long id) {
         this.id = id;
     }
-
-    public Long getPropertyId() {
-        return propertyId;
+    public Property getProperty() {
+        return property;
     }
 
-    public void setPropertyId(Long propertyId) {
-        this.propertyId = propertyId;
+    public void setProperty(Property property) {
+        this.property = property;
     }
 
-    public Long getBuyerId() {
-        return buyerId;
+    public AppUser getBuyer() {
+        return buyer;
     }
 
-    public void setBuyerId(Long buyerId) {
-        this.buyerId = buyerId;
+    public void setBuyer(AppUser buyer) {
+        this.buyer = buyer;
     }
 
-    public Long getAgentId() {
-        return agentId;
+    public AppUser getAgent() {
+        return agent;
     }
 
-    public void setAgentId(Long agentId) {
-        this.agentId = agentId;
+    public void setAgent(AppUser agent) {
+        this.agent = agent;
     }
 
     public LocalDate getAppointmentDate() {
@@ -144,30 +137,6 @@ public class Appointment {
 
     public void setDurationMinutes(Integer durationMinutes) {
         this.durationMinutes = durationMinutes;
-    }
-
-    public String getBuyerName() {
-        return buyerName;
-    }
-
-    public void setBuyerName(String buyerName) {
-        this.buyerName = buyerName;
-    }
-
-    public String getBuyerEmail() {
-        return buyerEmail;
-    }
-
-    public void setBuyerEmail(String buyerEmail) {
-        this.buyerEmail = buyerEmail;
-    }
-
-    public String getBuyerPhone() {
-        return buyerPhone;
-    }
-
-    public void setBuyerPhone(String buyerPhone) {
-        this.buyerPhone = buyerPhone;
     }
 
     public String getStatus() {
@@ -240,5 +209,74 @@ public class Appointment {
 
     public void setSoldAt(java.time.LocalDateTime soldAt) {
         this.soldAt = soldAt;
+    }
+
+    /** Convenience: returns buyer's email without null checks in controllers */
+    public String getBuyerEmail() {
+        return buyer != null ? buyer.getEmail() : null;
+    }
+
+    // ── Convenience ID accessors used by controllers ──────────────────────────
+
+    public Long getAgentId() {
+        return agent != null ? agent.getId() : null;
+    }
+
+    public Long getBuyerId() {
+        return buyer != null ? buyer.getId() : null;
+    }
+
+    public Long getPropertyId() {
+        return property != null ? property.getId() : null;
+    }
+
+    public String getBuyerName() {
+        return buyer != null ? buyer.getName() : null;
+    }
+
+    public String getBuyerPhone() {
+        return buyer != null ? buyer.getPhone() : null;
+    }
+
+    public void setBuyerPhone(String buyerPhone) {
+        if (this.buyer == null) {
+            this.buyer = new AppUser();
+        }
+        this.buyer.setPhone(buyerPhone);
+    }
+
+    public void setBuyerName(String buyerName) {
+        if (this.buyer == null) {
+            this.buyer = new AppUser();
+        }
+        this.buyer.setName(buyerName);
+    }
+
+    public void setAgentId(Long agentId) {
+        if (this.agent == null) {
+            this.agent = new AppUser();
+        }
+        this.agent.setId(agentId);
+    }
+
+    public void setBuyerEmail(String buyerEmail) {
+        if (this.buyer == null) {
+            this.buyer = new AppUser();
+        }
+        this.buyer.setEmail(buyerEmail);
+    }
+
+    public void setBuyerId(Long buyerId) {
+        if (this.buyer == null) {
+            this.buyer = new AppUser();
+        }
+        this.buyer.setId(buyerId);
+    }
+
+    public void setPropertyId(Long propertyId) {
+        if (this.property == null) {
+            this.property = new Property();
+        }
+        this.property.setId(propertyId);
     }
 }

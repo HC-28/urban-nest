@@ -1,11 +1,11 @@
 package com.realestate.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "property")
-@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Property {
 
     @Id
@@ -18,15 +18,18 @@ public class Property {
     private String description;
 
     private String type;
-    private double price;
+
+    @Min(value = 1, message = "Price must be greater than zero")
+    private Double price;
 
     @Column(name = "photos", columnDefinition = "TEXT")
     private String photos;
 
-    private double area;
-    private int bhk;
-    private int bathrooms;
-    private int balconies;
+    @Min(value = 1, message = "Area must be greater than zero")
+    private Double area;
+    private Integer bhk;
+    private Integer bathrooms;
+    private Integer balconies;
     private String floor;
     private String totalFloors;
     private String facing;
@@ -46,29 +49,29 @@ public class Property {
     @Column(name = "pin_code", nullable = false)
     private String pinCode; // Changed to String to preserve leading zeros
 
-    private Long agentId;
-    private String agentName;
-    private String agentEmail;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "agent_id", nullable = false)
+    private AppUser agent;
 
-    @Column(name = "is_active")
-    private boolean isActive = true;
+    @Column(name = "active")
+    private Boolean active = true;
 
     // Purpose: "Sale" or "Rent"
     private String purpose;
 
     // Featured property flag (agents can feature up to 3 properties)
-    @Column(name = "is_featured")
-    private boolean isFeatured = false;
+    @Column(name = "featured")
+    private Boolean featured = false;
 
     // Analytics tracking fields
     @Column(name = "views")
-    private int views = 0;
+    private Integer views = 0;
 
     @Column(name = "favorites")
-    private int favorites = 0;
+    private Integer favorites = 0;
 
     @Column(name = "inquiries")
-    private int inquiries = 0;
+    private Integer inquiries = 0;
 
     @Column(name = "listed_date")
     private java.time.LocalDateTime listedDate;
@@ -77,11 +80,13 @@ public class Property {
     private java.time.LocalDateTime lastViewedAt;
 
     // --- Sold Property Fields ---
-    @Column(name = "is_sold")
-    private boolean isSold = false;
+    @Column(name = "sold")
+    private Boolean sold = false;
 
-    @Column(name = "sold_to_user_id")
-    private Long soldToUserId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sold_to_user_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private AppUser soldToUser;
 
     @Column(name = "sold_at")
     private java.time.LocalDateTime soldAt;
@@ -151,11 +156,11 @@ public class Property {
         this.type = type;
     }
 
-    public double getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 
@@ -167,35 +172,35 @@ public class Property {
         this.photos = photos;
     }
 
-    public double getArea() {
+    public Double getArea() {
         return area;
     }
 
-    public void setArea(double area) {
+    public void setArea(Double area) {
         this.area = area;
     }
 
-    public int getBhk() {
+    public Integer getBhk() {
         return bhk;
     }
 
-    public void setBhk(int bhk) {
+    public void setBhk(Integer bhk) {
         this.bhk = bhk;
     }
 
-    public int getBathrooms() {
+    public Integer getBathrooms() {
         return bathrooms;
     }
 
-    public void setBathrooms(int bathrooms) {
+    public void setBathrooms(Integer bathrooms) {
         this.bathrooms = bathrooms;
     }
 
-    public int getBalconies() {
+    public Integer getBalconies() {
         return balconies;
     }
 
-    public void setBalconies(int balconies) {
+    public void setBalconies(Integer balconies) {
         this.balconies = balconies;
     }
 
@@ -271,36 +276,24 @@ public class Property {
         this.amenities = amenities;
     }
 
-    public Long getAgentId() {
-        return agentId;
+    public AppUser getAgent() {
+        return agent;
     }
 
-    public void setAgentId(Long agentId) {
-        this.agentId = agentId;
+    public void setAgent(AppUser agent) {
+        this.agent = agent;
     }
 
-    public String getAgentName() {
-        return agentName;
+    public Boolean getActive() {
+        return active != null ? active : true;
+    }
+    
+    public Boolean isActive() {
+        return active != null ? active : true;
     }
 
-    public void setAgentName(String agentName) {
-        this.agentName = agentName;
-    }
-
-    public String getAgentEmail() {
-        return agentEmail;
-    }
-
-    public void setAgentEmail(String agentEmail) {
-        this.agentEmail = agentEmail;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 
     public String getPinCode() {
@@ -319,36 +312,40 @@ public class Property {
         this.purpose = purpose;
     }
 
-    public boolean isFeatured() {
-        return isFeatured;
+    public Boolean getFeatured() {
+        return featured != null ? featured : false;
+    }
+    
+    public Boolean isFeatured() {
+        return featured != null ? featured : false;
     }
 
-    public void setFeatured(boolean featured) {
-        isFeatured = featured;
+    public void setFeatured(Boolean featured) {
+        this.featured = featured;
     }
 
     // Analytics getters and setters
-    public int getViews() {
+    public Integer getViews() {
         return views;
     }
 
-    public void setViews(int views) {
+    public void setViews(Integer views) {
         this.views = views;
     }
 
-    public int getFavorites() {
+    public Integer getFavorites() {
         return favorites;
     }
 
-    public void setFavorites(int favorites) {
+    public void setFavorites(Integer favorites) {
         this.favorites = favorites;
     }
 
-    public int getInquiries() {
+    public Integer getInquiries() {
         return inquiries;
     }
 
-    public void setInquiries(int inquiries) {
+    public void setInquiries(Integer inquiries) {
         this.inquiries = inquiries;
     }
 
@@ -368,20 +365,24 @@ public class Property {
         this.lastViewedAt = lastViewedAt;
     }
 
-    public boolean isSold() {
-        return isSold;
+    public Boolean getSold() {
+        return sold != null ? sold : false;
+    }
+    
+    public Boolean isSold() {
+        return sold != null ? sold : false;
     }
 
-    public void setSold(boolean sold) {
-        isSold = sold;
+    public void setSold(Boolean sold) {
+        this.sold = sold;
     }
 
-    public Long getSoldToUserId() {
-        return soldToUserId;
+    public AppUser getSoldToUser() {
+        return soldToUser;
     }
 
-    public void setSoldToUserId(Long soldToUserId) {
-        this.soldToUserId = soldToUserId;
+    public void setSoldToUser(AppUser soldToUser) {
+        this.soldToUser = soldToUser;
     }
 
     public java.time.LocalDateTime getSoldAt() {
@@ -450,8 +451,36 @@ public class Property {
 
     // Virtual getter for frontend compatibility
     public String getStatus() {
-        if (isSold)
+        if (Boolean.TRUE.equals(sold))
             return "SOLD";
-        return isActive ? "LISTED" : "UNLISTED";
+        return Boolean.TRUE.equals(active) ? "LISTED" : "UNLISTED";
+    }
+
+    // ── Convenience ID accessors used by controllers ──────────────────────────
+
+    public Long getAgentId() {
+        return agent != null ? agent.getId() : null;
+    }
+
+    public String getAgentName() {
+        return agent != null ? agent.getName() : null;
+    }
+
+    public void setAgentId(Long agentId) {
+        if (this.agent == null) {
+            this.agent = new AppUser();
+        }
+        this.agent.setId(agentId);
+    }
+
+    public Long getSoldToUserId() {
+        return soldToUser != null ? soldToUser.getId() : null;
+    }
+
+    public void setSoldToUserId(Long soldToUserId) {
+        if (this.soldToUser == null) {
+            this.soldToUser = new AppUser();
+        }
+        this.soldToUser.setId(soldToUserId);
     }
 }

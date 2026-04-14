@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,6 +23,8 @@ import java.util.List;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -33,16 +37,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            System.out.println(
-                    "[JWT Debug] Token received: " + (token.length() > 10 ? token.substring(0, 10) + "..." : "short"));
 
             try {
                 if (jwtUtil.isTokenValid(token)) {
                     String email = jwtUtil.extractEmail(token);
                     String role = jwtUtil.extractRole(token);
                     Long userId = jwtUtil.extractUserId(token);
-                    System.out.println(
-                            "[JWT Debug] Valid token. Email: " + email + ", Role: " + role + ", UserId: " + userId);
+
+                    // DEBUG level — will be silent in production when log level is WARN/INFO
+                    logger.debug("[JWT] Valid token for user: {} | Role: {} | UserId: {}", email, role, userId);
 
                     if (role != null) {
                         String roleName = role.trim().toUpperCase();
@@ -50,8 +53,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             roleName = "ROLE_" + roleName;
                         }
 
-                        System.out.println("[JWT Debug] Setting authority: " + roleName);
-                        // Create authentication token with user's role
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                 email,
                                 userId, // store userId as credentials for easy access
@@ -59,21 +60,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     } else {
-                        System.out.println("[JWT Debug] Role is NULL in token");
+                        logger.warn("[JWT] Token valid but role claim is missing for user: {}", email);
                     }
                 } else {
-                    System.out.println("[JWT Debug] Token is NOT valid");
+                    logger.debug("[JWT] Token is not valid or expired for request: {}", request.getRequestURI());
                 }
-            } catch (Exception e) {
-                System.out.println("[JWT Debug] Exception: " + e.getMessage());
-                e.printStackTrace();
-                // Invalid token — continue without authentication, security context will be
-                // empty
+            } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                logger.debug("[JWT] Token expired");
                 SecurityContextHolder.clearContext();
-            }
-        } else {
-            if (authHeader != null) {
-                System.out.println("[JWT Debug] Invalid Auth header format: " + authHeader);
+            } catch (io.jsonwebtoken.security.SignatureException e) {
+                logger.warn("[JWT] Token signature invalid — possible tampering attempt on: {}", request.getRequestURI());
+                SecurityContextHolder.clearContext();
+            } catch (Exception e) {
+                logger.error("[JWT] Unexpected error during token validation: {}", e.getMessage());
+                SecurityContextHolder.clearContext();
             }
         }
 

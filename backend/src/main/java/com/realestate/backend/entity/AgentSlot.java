@@ -17,11 +17,13 @@ public class AgentSlot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "agent_id", nullable = false)
-    private Long agentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agent_id", nullable = false)
+    private AppUser agent;
 
-    @Column(name = "property_id", nullable = true)
-    private Long propertyId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "property_id", nullable = true)
+    private Property property;
 
     @Column(name = "slot_date", nullable = false)
     private LocalDate slotDate;
@@ -53,20 +55,20 @@ public class AgentSlot {
         this.id = id;
     }
 
-    public Long getAgentId() {
-        return agentId;
+    public AppUser getAgent() {
+        return agent;
     }
 
-    public void setAgentId(Long agentId) {
-        this.agentId = agentId;
+    public void setAgent(AppUser agent) {
+        this.agent = agent;
     }
 
-    public Long getPropertyId() {
-        return propertyId;
+    public Property getProperty() {
+        return property;
     }
 
-    public void setPropertyId(Long propertyId) {
-        this.propertyId = propertyId;
+    public void setProperty(Property property) {
+        this.property = property;
     }
 
     public LocalDate getSlotDate() {
@@ -107,5 +109,32 @@ public class AgentSlot {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    /** Convenience: returns property ID (null for global/agent-level slots) */
+    public Long getPropertyId() {
+        return property != null ? property.getId() : null;
+    }
+
+    public void setPropertyId(Long propertyId) {
+        if (propertyId == null) {
+            this.property = null;
+        } else {
+            if (this.property == null) {
+                this.property = new Property();
+            }
+            this.property.setId(propertyId);
+        }
+    }
+
+    public Long getAgentId() {
+        return agent != null ? agent.getId() : null;
+    }
+
+    public void setAgentId(Long agentId) {
+        if (this.agent == null) {
+            this.agent = new AppUser();
+        }
+        this.agent.setId(agentId);
     }
 }

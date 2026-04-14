@@ -19,6 +19,8 @@ import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.realestate.backend.dto.ApiResponse;
+import com.realestate.backend.dto.PropertyListDTO;
 
 /**
  * Manage user favorites.
@@ -41,88 +43,61 @@ public class FavoriteController {
 
     /** GET /api/favorites/user/{userId} — Get user's favorite properties */
     @GetMapping(value = "/user/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getUserFavorites(@PathVariable Long userId) {
-        try {
-            List<Favorite> favorites = favoriteRepository.findByUser_Id(userId);
-            List<Property> properties = new ArrayList<>();
-            for (Favorite fav : favorites) {
-                properties.add(fav.getProperty());
-            }
-            return ResponseEntity.ok(properties);
-        } catch (Exception ex) {
-            logger.error("Exception in FavoriteController: ", ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
-        }
+    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getUserFavorites(@PathVariable Long userId) {
+        List<Favorite> favorites = favoriteRepository.findByUser_Id(userId);
+        List<PropertyListDTO> dtos = favorites.stream()
+                .map(fav -> PropertyListDTO.from(fav.getProperty()))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     /** GET /api/favorites/status — Check if a property is favorited */
     @GetMapping(value = "/status", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> checkFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
-        try {
-            boolean exists = favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId);
-            return ResponseEntity.ok(Map.of("isFavorite", exists));
-        } catch (Exception ex) {
-            logger.error("Exception in FavoriteController: ", ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
-        }
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
+        boolean exists = favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("isFavorite", exists)));
     }
 
     /** POST /api/favorites — Add a favorite */
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public ResponseEntity<?> addFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
-        try {
-            long count = favoriteRepository.countByUser_Id(userId);
-            if (count >= 10) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "You can only favorite up to 10 properties."));
-            }
-
-            if (favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId)) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("error", "Property already in favorites"));
-            }
-
-            AppUser user = userRepository.findById(userId).orElse(null);
-            Property property = propertyRepository.findById(propertyId).orElse(null);
-
-            if (user == null || property == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "User or Property not found"));
-            }
-
-            Favorite favorite = new Favorite(user, property);
-            favoriteRepository.save(favorite);
-
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of("message", "Added to favorites"));
-
-        } catch (Exception ex) {
-            logger.error("Exception in FavoriteController: ", ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error: " + ex.getMessage()));
+    public ResponseEntity<ApiResponse<Map<String, String>>> addFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
+        long count = favoriteRepository.countByUser_Id(userId);
+        if (count >= 10) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("You can only favorite up to 10 properties."));
         }
+
+        if (favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error("Property already in favorites"));
+        }
+
+        AppUser user = userRepository.findById(userId).orElse(null);
+        Property property = propertyRepository.findById(propertyId).orElse(null);
+
+        if (user == null || property == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("User or Property not found"));
+        }
+
+        Favorite favorite = new Favorite(user, property);
+        favoriteRepository.save(favorite);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(Map.of("message", "Added to favorites")));
     }
 
     /** DELETE /api/favorites — Remove a favorite */
     @DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public ResponseEntity<?> removeFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
-        try {
-            if (!favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId)) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Favorite not found"));
-            }
-
-            favoriteRepository.deleteByUser_IdAndProperty_Id(userId, propertyId);
-            return ResponseEntity.ok(Map.of("message", "Removed from favorites"));
-
-        } catch (Exception ex) {
-            logger.error("Exception in FavoriteController: ", ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+    public ResponseEntity<ApiResponse<Map<String, String>>> removeFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
+        if (!favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Favorite not found"));
         }
+
+        favoriteRepository.deleteByUser_IdAndProperty_Id(userId, propertyId);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Removed from favorites")));
     }
 }

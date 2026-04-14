@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import com.realestate.backend.dto.ApiResponse;
 
 /**
  * Analytics: heatmap data, view tracking, inquiry tracking, recently viewed.
@@ -21,84 +22,54 @@ public class AnalyticsController {
 
     /** GET /api/analytics/heatmap/{city} — Heatmap data for a city */
     @GetMapping("/heatmap/{city}")
-    public ResponseEntity<?> getHeatmapData(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getHeatmapData(
             @PathVariable String city,
             @RequestParam(required = false, defaultValue = "price") String mode,
             @RequestParam(required = false) String userType,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String purpose) {
-        try {
-            if (mode.equals("price") && userType != null) {
-                mode = userType.equalsIgnoreCase("agent") ? "demand" : "price";
-            }
+        // Dynamic heatmap fetch based on city, mode, and optional property filters
+        List<Map<String, Object>> heatmapData = analyticsService.getHeatmapData(city, mode, type, purpose);
 
-            List<Map<String, Object>> heatmapData = analyticsService.getHeatmapData(city, mode, type, purpose);
-
-            return ResponseEntity.ok(Map.of(
-                    "city", city,
-                    "mode", mode,
-                    "data", heatmapData));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error fetching heatmap data: " + ex.getMessage()));
-        }
+        return ResponseEntity.ok(ApiResponse.success(Map.of(
+                "city", city,
+                "mode", mode,
+                "data", heatmapData)));
     }
 
     /** POST /api/analytics/compute/{city} — Trigger score computation */
     @PostMapping("/compute/{city}")
-    public ResponseEntity<?> computeScores(@PathVariable String city) {
-        try {
-            analyticsService.computeScoresForCity(city);
-            return ResponseEntity.ok(Map.of(
-                    "message", "Scores computed successfully for " + city,
-                    "city", city));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error computing scores: " + ex.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<Map<String, String>>> computeScores(@PathVariable String city) {
+        analyticsService.computeScoresForCity(city);
+        return ResponseEntity.ok(ApiResponse.success(Map.of(
+                "message", "Scores computed successfully for " + city,
+                "city", city)));
     }
 
     /** POST /api/analytics/track/view/{propertyId} — Track a property view */
     @PostMapping("/track/view/{propertyId}")
-    public ResponseEntity<?> trackView(
+    public ResponseEntity<ApiResponse<Map<String, String>>> trackView(
             @PathVariable Long propertyId,
             @RequestParam(required = false) Long userId) {
-        try {
-            if (userId != null) {
-                analyticsService.trackView(propertyId, userId);
-            } else {
-                analyticsService.trackView(propertyId);
-            }
-            return ResponseEntity.ok(Map.of("message", "View tracked"));
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error tracking view: " + ex.getMessage()));
+        if (userId != null) {
+            analyticsService.trackView(propertyId, userId);
+        } else {
+            analyticsService.trackView(propertyId);
         }
+        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "View tracked")));
     }
 
     /** GET /api/analytics/recent — Recently viewed properties for a user */
     @GetMapping("/recent")
-    public ResponseEntity<?> getRecentlyViewed(@RequestParam Long userId) {
-        try {
-            List<?> properties = analyticsService.getRecentlyViewedProperties(userId);
-            return ResponseEntity.ok(properties);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error fetching recent views: " + ex.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<List<?>>> getRecentlyViewed(@RequestParam Long userId) {
+        List<?> properties = analyticsService.getRecentlyViewedProperties(userId);
+        return ResponseEntity.ok(ApiResponse.success(properties));
     }
 
     /** POST /api/analytics/track/inquiry/{propertyId} — Track a property inquiry */
     @PostMapping("/track/inquiry/{propertyId}")
-    public ResponseEntity<?> trackInquiry(@PathVariable Long propertyId) {
-        try {
-            analyticsService.trackInquiry(propertyId);
-            return ResponseEntity.ok(Map.of("message", "Inquiry tracked"));
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error tracking inquiry: " + ex.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<Map<String, String>>> trackInquiry(@PathVariable Long propertyId) {
+        analyticsService.trackInquiry(propertyId);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Inquiry tracked")));
     }
 }

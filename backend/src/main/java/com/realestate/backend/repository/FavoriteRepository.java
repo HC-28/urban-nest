@@ -14,6 +14,10 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
     List<Favorite> findByProperty_Id(Long propertyId);
 
+    default List<Favorite> findByPropertyId(Long propertyId) {
+        return findByProperty_Id(propertyId);
+    }
+
     void deleteByUser_IdAndProperty_Id(Long userId, Long propertyId);
 
     @jakarta.transaction.Transactional

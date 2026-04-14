@@ -16,8 +16,10 @@ target/
 *.iml
 .vscode/
 
-# Logs
+# Logs & Temporary Documents
 *.log
+*.txt
+*.sql
 npm-debug.log*
 
 # OS files
@@ -27,16 +29,22 @@ Thumbs.db
 # Frontend build files
 frontend/dist/
 
-# Vite output files
-vite_out.txt
-vite_err.txt
+# Scripts and Temporary data
+*.ps1
+*.py
+*.pyc
+*.json
+!package.json
+!package-lock.json
+!vercel.json
+!geo_data.json
+!pom.xml
 
-# Database scripts — too large for git, apply manually to Render DB
-*.sql
+# Markdown (Documentation)
+*.md
+!README.md
+!**/README.md
 
 # Sensitive backend config — all credential/secret files ignored
 backend/src/main/resources/application.properties
 **/application.properties
-
-# Data seeding script — contains download logic, not part of app source
-backend/generate_sql.py

@@ -1,8 +1,8 @@
 package com.realestate.backend.controller;
 
 import com.realestate.backend.entity.Property;
+import com.realestate.backend.entity.AppUser;
 import com.realestate.backend.repository.PropertyRepository;
-
 import com.realestate.backend.entity.Appointment;
 import com.realestate.backend.entity.ChatMessage;
 import com.realestate.backend.entity.Favorite;
@@ -12,6 +12,11 @@ import com.realestate.backend.repository.FavoriteRepository;
 import com.realestate.backend.repository.AgentSlotRepository;
 import com.realestate.backend.repository.UserRepository;
 import com.realestate.backend.service.EmailService;
+import com.realestate.backend.service.AnalyticsService;
+import com.realestate.backend.dto.ApiResponse;
+import com.realestate.backend.dto.PropertyListDTO;
+import com.realestate.backend.dto.PropertyDetailDTO;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,7 +36,7 @@ import java.util.*;
 public class PropertyController {
 
     @Autowired
-    private com.realestate.backend.service.AnalyticsService analyticsService;
+    private AnalyticsService analyticsService;
 
     @Autowired
     private PropertyRepository propertyRepository;
@@ -55,16 +60,11 @@ public class PropertyController {
     private EmailService emailService;
 
     /**
-     * Extract the authenticated user's ID from the JWT token (stored in
-     * SecurityContext).
-     * Returns null if no authentication is present.
-     * Validates that the caller has ROLE_AGENT or ROLE_ADMIN.
+     * Helper: Extract the authenticated user's ID from the JWT token.
      */
     private Long getAuthenticatedAgentId() {
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth.getCredentials() == null)
-            return null;
-        // credentials stores userId (set by JwtAuthenticationFilter)
+        if (auth == null || auth.getCredentials() == null) return null;
         try {
             return (Long) auth.getCredentials();
         } catch (ClassCastException e) {
@@ -72,616 +72,409 @@ public class PropertyController {
         }
     }
 
+    /**
+     * Helper: Check if the authenticated user is an AGENT or ADMIN.
+     */
     private boolean isAgentOrAdmin() {
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null)
-            return false;
+        if (auth == null) return false;
         return auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_AGENT") || a.getAuthority().equals("ROLE_ADMIN"));
     }
 
     /** GET /api/properties — All active, unsold properties with optional filters */
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = {"", "/"}, produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getAllProperties(
+    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getAllProperties(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String purpose,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Integer bhk,
+            @RequestParam(required = false) String minPrice,
+            @RequestParam(required = false) String maxPrice,
+            @RequestParam(required = false) String bhk,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String pincode,
             @RequestParam(required = false) List<String> amenities) {
-        try {
-            List<Property> properties = propertyRepository.findByIsActiveTrueAndIsSoldFalse();
+        
+        List<Property> properties = propertyRepository.findVisibleProperties();
 
-            // Server-side filtering
-            if (city != null && !city.isBlank()) {
-                String c = city.toLowerCase();
-                properties = properties.stream()
-                        .filter(p -> p.getCity() != null && p.getCity().toLowerCase().equals(c))
-                        .toList();
-            }
-            if (type != null && !type.isBlank() && !type.equalsIgnoreCase("All")) {
-                String t = type.toLowerCase();
-                properties = properties.stream()
-                        .filter(p -> p.getType() != null && p.getType().toLowerCase().equals(t))
-                        .toList();
-            }
-            if (purpose != null && !purpose.isBlank()) {
-                String pu = purpose.toLowerCase();
-                properties = properties.stream()
-                        .filter(p -> {
-                            String pp = p.getPurpose() != null ? p.getPurpose().toLowerCase() : "sale";
-                            return pp.contains(pu) || pu.contains(pp);
-                        })
-                        .toList();
-            }
-            if (minPrice != null) {
-                properties = properties.stream()
-                        .filter(p -> p.getPrice() >= minPrice)
-                        .toList();
-            }
-            if (maxPrice != null) {
-                properties = properties.stream()
-                        .filter(p -> p.getPrice() <= maxPrice)
-                        .toList();
-            }
-            if (bhk != null && bhk > 0) {
-                properties = properties.stream()
-                        .filter(p -> p.getBhk() == bhk)
-                        .toList();
-            }
-            if (pincode != null && !pincode.isBlank()) {
-                properties = properties.stream()
-                        .filter(p -> pincode.equals(p.getPinCode()))
-                        .toList();
-            }
-            if (search != null && !search.isBlank()) {
-                String s = search.toLowerCase();
-                properties = properties.stream()
-                        .filter(p -> {
-                            String title = p.getTitle() != null ? p.getTitle().toLowerCase() : "";
-                            String loc = p.getLocation() != null ? p.getLocation().toLowerCase() : "";
-                            String desc = p.getDescription() != null ? p.getDescription().toLowerCase() : "";
-                            return title.contains(s) || loc.contains(s) || desc.contains(s);
-                        })
-                        .toList();
-            }
-            if (amenities != null && !amenities.isEmpty()) {
-                properties = properties.stream()
-                        .filter(p -> {
-                            if (p.getAmenities() == null || p.getAmenities().isBlank())
-                                return false;
-                            String propAmenities = p.getAmenities().toLowerCase();
-                            // Property must contain all requested amenities to match
-                            return amenities.stream().allMatch(a -> propAmenities.contains(a.toLowerCase()));
-                        })
-                        .toList();
-            }
-
-            return ResponseEntity.ok(properties);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+        // Filter by City
+        if (city != null && !city.isBlank()) {
+            String c = city.toLowerCase();
+            properties = properties.stream()
+                    .filter(p -> p.getCity() != null && p.getCity().toLowerCase().equals(c))
+                    .toList();
         }
+        
+        // Filter by Type (Apartment, House, etc)
+        if (type != null && !type.isBlank() && !type.equalsIgnoreCase("All")) {
+            String t = type.toLowerCase();
+            properties = properties.stream()
+                    .filter(p -> p.getType() != null && p.getType().toLowerCase().equals(t))
+                    .toList();
+        }
+
+        // Filter by Purpose (Rent, Sale)
+        if (purpose != null && !purpose.isBlank() && !purpose.equalsIgnoreCase("All")) {
+            String pu = purpose.toLowerCase();
+            properties = properties.stream()
+                    .filter(p -> {
+                        String pp = p.getPurpose() != null ? p.getPurpose().toLowerCase() : "sale";
+                        return pp.contains(pu) || pu.contains(pp);
+                    })
+                    .toList();
+        }
+        
+        // Price and BHK filters
+        Double minP = null;
+        if (minPrice != null && !minPrice.isBlank() && !minPrice.equalsIgnoreCase("All")) {
+            try { minP = Double.parseDouble(minPrice); } catch (Exception ignored) {}
+        }
+        Double maxP = null;
+        if (maxPrice != null && !maxPrice.isBlank() && !maxPrice.equalsIgnoreCase("All")) {
+            try { maxP = Double.parseDouble(maxPrice); } catch (Exception ignored) {}
+        }
+        Integer bhkNum = null;
+        if (bhk != null && !bhk.isBlank() && !bhk.equalsIgnoreCase("All")) {
+            try { bhkNum = Integer.parseInt(bhk); } catch (Exception ignored) {}
+        }
+
+        if (minP != null) {
+            final Double finalMinP = minP;
+            properties = properties.stream().filter(p -> p.getPrice() >= finalMinP).toList();
+        }
+        if (maxP != null) {
+            final Double finalMaxP = maxP;
+            properties = properties.stream().filter(p -> p.getPrice() <= finalMaxP).toList();
+        }
+        if (bhkNum != null && bhkNum > 0) {
+            final Integer finalBhkNum = bhkNum;
+            properties = properties.stream().filter(p -> p.getBhk() == finalBhkNum).toList();
+        }
+        if (pincode != null && !pincode.isBlank()) {
+            properties = properties.stream().filter(p -> pincode.equals(p.getPinCode())).toList();
+        }
+
+        // Text search
+        if (search != null && !search.isBlank()) {
+            String s = search.toLowerCase();
+            properties = properties.stream()
+                    .filter(p -> {
+                        String title = p.getTitle() != null ? p.getTitle().toLowerCase() : "";
+                        String loc = p.getLocation() != null ? p.getLocation().toLowerCase() : "";
+                        String desc = p.getDescription() != null ? p.getDescription().toLowerCase() : "";
+                        return title.contains(s) || loc.contains(s) || desc.contains(s);
+                    })
+                    .toList();
+        }
+
+        // Amenities check (And logic: must have all selected)
+        if (amenities != null && !amenities.isEmpty()) {
+            properties = properties.stream()
+                    .filter(p -> {
+                        if (p.getAmenities() == null || p.getAmenities().isBlank()) return false;
+                        String propAmenities = p.getAmenities().toLowerCase();
+                        return amenities.stream().allMatch(a -> propAmenities.contains(a.toLowerCase()));
+                    })
+                    .toList();
+        }
+
+        List<PropertyListDTO> dtos = properties.stream().map(PropertyListDTO::from).toList();
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     /** GET /api/properties/featured — Featured properties for home page */
     @GetMapping(value = "/featured", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getFeaturedProperties() {
-        try {
-            List<Property> featuredProperties = propertyRepository.findByIsActiveTrueAndIsSoldFalse().stream()
-                    .filter(Property::isFeatured)
-                    .toList();
-            return ResponseEntity.ok(featuredProperties);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
-        }
+    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getFeaturedProperties() {
+        List<PropertyListDTO> featuredProperties = propertyRepository.findVisibleProperties().stream()
+                .filter(Property::getFeatured)
+                .map(PropertyListDTO::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(featuredProperties));
     }
 
     /** GET /api/properties/trending — Trending properties based on views */
     @GetMapping(value = "/trending", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getTrendingProperties() {
-        try {
-            // Simply use top 6 properties by views as trending
-            List<Property> trending = propertyRepository.findByIsActiveTrueAndIsSoldFalse().stream()
-                    .sorted(Comparator.comparingInt(Property::getViews).reversed())
-                    .limit(6)
-                    .toList();
-            return ResponseEntity.ok(trending);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
-        }
+    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getTrendingProperties() {
+        List<PropertyListDTO> trending = propertyRepository.findVisibleProperties().stream()
+                .sorted(Comparator.comparingInt(Property::getViews).reversed())
+                .limit(6)
+                .map(PropertyListDTO::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(trending));
     }
 
     /** GET /api/properties/agent/{agentId} — Properties by agent (for dashboard) */
     @GetMapping(value = "/agent/{agentId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getPropertiesByAgent(@PathVariable Long agentId) {
-        try {
-            List<Property> properties = propertyRepository.findByAgentId(agentId);
-            return ResponseEntity.ok(properties);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
-        }
+    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getPropertiesByAgent(@PathVariable Long agentId) {
+        List<PropertyListDTO> properties = propertyRepository.findByAgentId(agentId).stream()
+                .map(PropertyListDTO::from).toList();
+        return ResponseEntity.ok(ApiResponse.success(properties));
     }
 
     /** GET /api/properties/{id} — Single property by ID */
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getPropertyById(@PathVariable Long id, @RequestParam(required = false) Long userId,
+    public ResponseEntity<ApiResponse<PropertyDetailDTO>> getPropertyById(@PathVariable Long id, 
+            @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String role) {
-        if (id == null)
-            return ResponseEntity.badRequest().body(Map.of("error", "ID is required"));
-        try {
-            Property property = propertyRepository.findById(id).orElse(null);
-            if (property == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Property not found"));
-            }
-
-            // Sold visibility check
-            if (property.isSold()) {
-                boolean isAllowed = false;
-                if (role != null && role.equalsIgnoreCase("ADMIN")) {
-                    isAllowed = true;
-                } else if (userId != null) {
-                    if (userId.equals(property.getAgentId())) {
-                        isAllowed = true;
-                    } else if (userId.equals(property.getSoldToUserId())) {
-                        isAllowed = true;
-                    } else {
-                        // Allow any user who had a chat on this property (buyer who inquired)
-                        boolean hasChatted = chatMessageRepository
-                                .findByPropertyId(id)
-                                .stream()
-                                .anyMatch(c -> userId.equals(c.getBuyerId()) || userId.equals(c.getAgentId()));
-                        if (hasChatted)
-                            isAllowed = true;
-                    }
-                }
-                if (!isAllowed) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("error", "This property is SOLD and no longer publicly available."));
-                }
-            }
-
-            // Track view for active, unsold properties
-            if (!property.isSold() && property.isActive()) {
-                try {
-                    analyticsService.trackView(id, userId);
-                } catch (Exception ignored) {
-                    // Non-critical: don't fail the request if tracking fails
-                }
-            }
-
-            return ResponseEntity.ok(property);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+        
+        Property property = propertyRepository.findById(id).orElse(null);
+        if (property == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
         }
+
+        // Sold visibility check
+        if (property.getSold()) {
+            boolean isAllowed = false;
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                isAllowed = true;
+            } else if (userId != null) {
+                if (userId.equals(property.getAgentId()) || userId.equals(property.getSoldToUserId())) {
+                    isAllowed = true;
+                }
+            }
+            if (!isAllowed) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("This property is SOLD and no longer publicly available."));
+            }
+        }
+
+        // Track view for active, unsold properties
+        if (!property.getSold() && property.getActive()) {
+            try {
+                analyticsService.trackView(id, userId);
+            } catch (Exception ignored) {}
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(PropertyDetailDTO.from(property)));
     }
 
     /** POST /api/properties — Add new property */
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> addProperty(@RequestBody Property property, @RequestParam Long agentId) {
-        if (agentId == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Agent ID is required"));
+    public ResponseEntity<ApiResponse<PropertyDetailDTO>> addProperty(@RequestBody Property property, @RequestParam Long agentId) {
+        if (!isAgentOrAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Only agents can post properties"));
         }
-        try {
-            // Server-side role validation: ensure caller is AGENT or ADMIN
-            if (!isAgentOrAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Only agents can post properties"));
+        
+        Long authId = getAuthenticatedAgentId();
+        if (authId != null && !authId.equals(agentId)) {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            if (!isAdmin) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("You can only post properties for yourself"));
             }
-            // Verify the JWT user matches the agentId param (admins can post on behalf)
-            Long authenticatedId = getAuthenticatedAgentId();
-            if (authenticatedId != null && !authenticatedId.equals(agentId)) {
-                var auth = org.springframework.security.core.context.SecurityContextHolder.getContext()
-                        .getAuthentication();
-                boolean isAdmin = auth.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-                if (!isAdmin) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("error", "You can only post properties under your own account"));
-                }
-            }
-            property.setAgentId(agentId);
-            Property savedProperty = propertyRepository.save(property);
-
-            if (savedProperty.getCity() != null) {
-                analyticsService.computeScoresForCity(savedProperty.getCity());
-            }
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedProperty);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error while adding property"));
         }
+
+        AppUser agent = userRepository.findById(agentId).orElse(null);
+        if (agent == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Agent not found"));
+        
+        property.setAgent(agent);
+        Property savedProperty = propertyRepository.save(property);
+
+        if (savedProperty.getCity() != null) analyticsService.computeScoresForCity(savedProperty.getCity());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(PropertyDetailDTO.from(savedProperty)));
     }
 
-    /** PUT /api/properties/{id} — Update property (agent only) */
+    /** PUT /api/properties/{id} — Update property */
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateProperty(@PathVariable Long id, @RequestBody Property updatedProperty,
-            @RequestParam Long agentId) {
-        if (id == null || agentId == null)
-            return ResponseEntity.badRequest().body(Map.of("error", "IDs are required"));
-        try {
-            Property property = propertyRepository.findById(id).orElse(null);
-            if (property == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Property not found"));
-            }
+    public ResponseEntity<ApiResponse<PropertyDetailDTO>> updateProperty(@PathVariable Long id, @RequestBody Property up, @RequestParam Long agentId) {
+        Property property = propertyRepository.findById(id).orElse(null);
+        if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
 
-            if (!property.getAgentId().equals(agentId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "You can only update your own properties"));
-            }
-
-            if (updatedProperty.getTitle() != null)
-                property.setTitle(updatedProperty.getTitle());
-            if (updatedProperty.getDescription() != null)
-                property.setDescription(updatedProperty.getDescription());
-            if (updatedProperty.getType() != null)
-                property.setType(updatedProperty.getType());
-            if (updatedProperty.getPrice() > 0)
-                property.setPrice(updatedProperty.getPrice());
-            if (updatedProperty.getArea() > 0)
-                property.setArea(updatedProperty.getArea());
-            if (updatedProperty.getPhotos() != null)
-                property.setPhotos(updatedProperty.getPhotos());
-            if (updatedProperty.getBhk() > 0)
-                property.setBhk(updatedProperty.getBhk());
-            if (updatedProperty.getBathrooms() > 0)
-                property.setBathrooms(updatedProperty.getBathrooms());
-            if (updatedProperty.getBalconies() >= 0)
-                property.setBalconies(updatedProperty.getBalconies());
-            if (updatedProperty.getFloor() != null)
-                property.setFloor(updatedProperty.getFloor());
-            if (updatedProperty.getTotalFloors() != null)
-                property.setTotalFloors(updatedProperty.getTotalFloors());
-            if (updatedProperty.getFacing() != null)
-                property.setFacing(updatedProperty.getFacing());
-            if (updatedProperty.getFurnishing() != null)
-                property.setFurnishing(updatedProperty.getFurnishing());
-            if (updatedProperty.getAge() != null)
-                property.setAge(updatedProperty.getAge());
-            if (updatedProperty.getCity() != null)
-                property.setCity(updatedProperty.getCity());
-            if (updatedProperty.getLocation() != null)
-                property.setLocation(updatedProperty.getLocation());
-            if (updatedProperty.getAddress() != null)
-                property.setAddress(updatedProperty.getAddress());
-            if (updatedProperty.getPinCode() != null)
-                property.setPinCode(updatedProperty.getPinCode());
-            if (updatedProperty.getAmenities() != null)
-                property.setAmenities(updatedProperty.getAmenities());
-            if (updatedProperty.getPurpose() != null)
-                property.setPurpose(updatedProperty.getPurpose());
-            if (updatedProperty.getLatitude() != null)
-                property.setLatitude(updatedProperty.getLatitude());
-            if (updatedProperty.getLongitude() != null)
-                property.setLongitude(updatedProperty.getLongitude());
-
-            Property savedProperty = propertyRepository.save(property);
-
-            if (savedProperty.getCity() != null) {
-                analyticsService.computeScoresForCity(savedProperty.getCity());
-            }
-
-            return ResponseEntity.ok(savedProperty);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error while updating property"));
+        if (!property.getAgentId().equals(agentId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
+
+        if (up.getTitle() != null) property.setTitle(up.getTitle());
+        if (up.getDescription() != null) property.setDescription(up.getDescription());
+        if (up.getType() != null) property.setType(up.getType());
+        if (up.getPrice() > 0) property.setPrice(up.getPrice());
+        if (up.getArea() > 0) property.setArea(up.getArea());
+        if (up.getPhotos() != null) property.setPhotos(up.getPhotos());
+        if (up.getBhk() > 0) property.setBhk(up.getBhk());
+        if (up.getBathrooms() > 0) property.setBathrooms(up.getBathrooms());
+        if (up.getBalconies() >= 0) property.setBalconies(up.getBalconies());
+        if (up.getFloor() != null) property.setFloor(up.getFloor());
+        if (up.getTotalFloors() != null) property.setTotalFloors(up.getTotalFloors());
+        if (up.getFacing() != null) property.setFacing(up.getFacing());
+        if (up.getFurnishing() != null) property.setFurnishing(up.getFurnishing());
+        if (up.getAge() != null) property.setAge(up.getAge());
+        if (up.getCity() != null) property.setCity(up.getCity());
+        if (up.getLocation() != null) property.setLocation(up.getLocation());
+        if (up.getAddress() != null) property.setAddress(up.getAddress());
+        if (up.getPinCode() != null) property.setPinCode(up.getPinCode());
+        if (up.getAmenities() != null) property.setAmenities(up.getAmenities());
+        if (up.getPurpose() != null) property.setPurpose(up.getPurpose());
+        if (up.getLatitude() != null) property.setLatitude(up.getLatitude());
+        if (up.getLongitude() != null) property.setLongitude(up.getLongitude());
+
+        Property saved = propertyRepository.save(property);
+        if (saved.getCity() != null) analyticsService.computeScoresForCity(saved.getCity());
+        
+        return ResponseEntity.ok(ApiResponse.success(PropertyDetailDTO.from(saved)));
     }
 
-    /** DELETE /api/properties/{id} — Soft delete (set isActive to false) */
+    /** DELETE /api/properties/{id} — Soft delete */
     @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> deleteProperty(@PathVariable Long id, @RequestParam Long agentId) {
-        if (id == null || agentId == null)
-            return ResponseEntity.badRequest().body(Map.of("error", "IDs are required"));
-        try {
-            Property property = propertyRepository.findById(id).orElse(null);
-            if (property == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Property not found"));
-            }
+    public ResponseEntity<ApiResponse<Map<String, String>>> deleteProperty(@PathVariable Long id, @RequestParam Long agentId) {
+        Property property = propertyRepository.findById(id).orElse(null);
+        if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
 
-            if (!property.getAgentId().equals(agentId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "You can only delete your own properties"));
-            }
-
-            property.setActive(false);
-            propertyRepository.save(property);
-
-            if (property.getCity() != null) {
-                analyticsService.computeScoresForCity(property.getCity());
-            }
-
-            return ResponseEntity.ok(Map.of("message", "Property removed from listings"));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+        if (!property.getAgentId().equals(agentId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
+
+        property.setActive(false);
+        propertyRepository.save(property);
+
+        if (property.getCity() != null) analyticsService.computeScoresForCity(property.getCity());
+        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Deleted successfully")));
     }
 
-    /** PUT /api/properties/{id}/sold — Mark property as sold */
+    /** PUT /api/properties/{id}/sold — Finalize sale */
     @PutMapping(value = "/{id}/sold", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> markPropertyAsSold(@PathVariable Long id, @RequestParam Long agentId,
-            @RequestParam(required = false) Long buyerId) {
-        try {
-            Property property = propertyRepository.findById(id).orElse(null);
-            if (property == null)
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Property not found"));
+    public ResponseEntity<ApiResponse<PropertyDetailDTO>> markPropertyAsSold(@PathVariable Long id, @RequestParam Long agentId, @RequestParam(required = false) Long buyerId) {
+        Property property = propertyRepository.findById(id).orElse(null);
+        if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
 
-            if (!property.getAgentId().equals(agentId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Not authorized"));
-            }
-
-            property.setSold(true);
-            property.setSoldAt(LocalDateTime.now());
-            if (buyerId != null) {
-                property.setSoldToUserId(buyerId);
-            }
-            property.setActive(false);
-
-            propertyRepository.save(property);
-
-            // Cancel any active appointments and free slots
-            List<String> activeStatuses = Arrays.asList("pending", "confirmed", "awaiting_buyer", "awaiting_agent");
-            List<Appointment> pendingAppointments = appointmentRepository.findByPropertyIdAndStatusIn(id,
-                    activeStatuses);
-
-            Set<String> notifyEmails = new HashSet<>();
-
-            for (Appointment appt : pendingAppointments) {
-                appt.setStatus("cancelled");
-                appointmentRepository.save(appt);
-                if (appt.getSlotId() != null) {
-                    agentSlotRepository.findById(appt.getSlotId()).ifPresent(s -> {
-                        s.setBooked(false);
-                        agentSlotRepository.save(s);
-                    });
-                }
-                if (appt.getBuyerEmail() != null) {
-                    notifyEmails.add(appt.getBuyerEmail());
-                }
-            }
-
-            // Also find all favoriters
-            List<Favorite> favorites = favoriteRepository.findByProperty_Id(id);
-            for (Favorite fav : favorites) {
-                userRepository.findById(fav.getUser().getId()).ifPresent(u -> {
-                    if (u.getEmail() != null)
-                        notifyEmails.add(u.getEmail());
-                });
-            }
-
-            // Also find all chatters
-            List<ChatMessage> chats = chatMessageRepository.findByPropertyId(id);
-            for (ChatMessage chat : chats) {
-                userRepository.findById(chat.getBuyerId()).ifPresent(u -> {
-                    if (u.getEmail() != null)
-                        notifyEmails.add(u.getEmail());
-                });
-            }
-
-            // Exclude the actual winner if a buyerId was passed
-            if (buyerId != null) {
-                userRepository.findById(buyerId).ifPresent(winner -> notifyEmails.remove(winner.getEmail()));
-            }
-
-            if (!notifyEmails.isEmpty()) {
-                emailService.sendSoldNotificationToInquirers(new ArrayList<>(notifyEmails), property.getTitle());
-            }
-
-            if (property.getCity() != null) {
-                analyticsService.computeScoresForCity(property.getCity());
-            }
-
-            return ResponseEntity.ok(property);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+        if (!property.getAgentId().equals(agentId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
+
+        property.setSold(true);
+        property.setSoldAt(LocalDateTime.now());
+        if (buyerId != null) property.setSoldToUserId(buyerId);
+        property.setActive(false);
+        property.setFeatured(false);
+
+        propertyRepository.save(property);
+
+        // Cancel appointments and notify
+        List<String> activeStatuses = Arrays.asList("pending", "confirmed", "awaiting_buyer", "awaiting_agent");
+        List<Appointment> pending = appointmentRepository.findByPropertyIdAndStatusIn(id, activeStatuses);
+
+        Set<String> notifyEmails = new HashSet<>();
+        for (Appointment appt : pending) {
+            appt.setStatus("cancelled");
+            appointmentRepository.save(appt);
+            if (appt.getSlotId() != null) {
+                agentSlotRepository.findById(appt.getSlotId()).ifPresent(s -> {
+                    s.setBooked(false);
+                    agentSlotRepository.save(s);
+                });
+            }
+            if (appt.getBuyerEmail() != null) notifyEmails.add(appt.getBuyerEmail());
+        }
+
+        // Favorites and Chats
+        favoriteRepository.findByProperty_Id(id).forEach(fav -> {
+            if (fav.getUser().getEmail() != null) notifyEmails.add(fav.getUser().getEmail());
+        });
+        chatMessageRepository.findByPropertyId(id).forEach(chat -> {
+            userRepository.findById(chat.getBuyerId()).ifPresent(u -> {
+                if (u.getEmail() != null) notifyEmails.add(u.getEmail());
+            });
+        });
+
+        if (buyerId != null) userRepository.findById(buyerId).ifPresent(winner -> notifyEmails.remove(winner.getEmail()));
+
+        if (!notifyEmails.isEmpty()) {
+            emailService.sendSoldNotificationToInquirers(new ArrayList<>(notifyEmails), property.getTitle());
+        }
+
+        if (property.getCity() != null) analyticsService.computeScoresForCity(property.getCity());
+        return ResponseEntity.ok(ApiResponse.success(PropertyDetailDTO.from(property)));
     }
 
-    /** PUT /api/properties/{id}/relist — Relist a property */
+    /** PUT /api/properties/{id}/relist — Relist property */
     @PutMapping(value = "/{id}/relist", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> relistProperty(@PathVariable Long id, @RequestParam Long agentId) {
-        try {
-            Property property = propertyRepository.findById(id).orElse(null);
-            if (property == null)
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Property not found"));
+    public ResponseEntity<ApiResponse<PropertyDetailDTO>> relistProperty(@PathVariable Long id, @RequestParam Long agentId) {
+        Property property = propertyRepository.findById(id).orElse(null);
+        if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Not found"));
 
-            if (!property.getAgentId().equals(agentId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Not authorized"));
-            }
-
-            property.setSold(false);
-            property.setSoldAt(null);
-            property.setSoldToUserId(null);
-            property.setActive(true);
-
-            propertyRepository.save(property);
-
-            if (property.getCity() != null) {
-                analyticsService.computeScoresForCity(property.getCity());
-            }
-
-            return ResponseEntity.ok(property);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+        if (!property.getAgentId().equals(agentId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
+
+        property.setSold(false);
+        property.setSoldAt(null);
+        property.setSoldToUserId(null);
+        property.setActive(true);
+
+        propertyRepository.save(property);
+        if (property.getCity() != null) analyticsService.computeScoresForCity(property.getCity());
+        return ResponseEntity.ok(ApiResponse.success(PropertyDetailDTO.from(property)));
     }
 
-    /**
-     * GET /api/properties/top — Top 5 properties by pincode (for map mini-panel)
-     */
-    @GetMapping(value = "/top", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getTopProperties(@RequestParam String pincode,
-            @RequestParam(defaultValue = "price") String mode) {
-        try {
-            List<Property> properties;
-            switch (mode) {
-                case "inventory":
-                    properties = propertyRepository
-                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(pincode);
-                    break;
-                case "market_activity":
-                case "demand":
-                    properties = propertyRepository
-                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(pincode);
-                    break;
-                case "buyer_opportunity":
-                    properties = propertyRepository
-                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByPriceAsc(pincode);
-                    break;
-                case "liquidity":
-                    // Liquidity = fast-selling areas → show newest listings (recently listed =
-                    // active market)
-                    properties = propertyRepository
-                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByListedDateDesc(pincode);
-                    break;
-                case "saturation":
-                    // Saturation = competition level → show most viewed (competitive) properties
-                    properties = propertyRepository
-                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByViewsDesc(pincode);
-                    break;
-                case "price":
-                default:
-                    properties = propertyRepository
-                            .findTop5ByPinCodeAndIsActiveTrueAndIsSoldFalseOrderByPriceDesc(pincode);
-                    break;
-            }
-            return ResponseEntity.ok(properties);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
-        }
-    }
-
-    /** GET /api/properties/count-by-pincode — Property counts by pincode for map */
+    /** GET /api/properties/count-by-pincode — Map aggregate counts */
     @GetMapping(value = "/count-by-pincode", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getPropertyCountByPincode(
+    public ResponseEntity<ApiResponse<Map<String, Map<String, Object>>>> getPropertyCountByPincode(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String purpose,
             @RequestParam(required = false) String type) {
-        try {
-            List<Object[]> results;
+        
+        List<Object[]> results;
+        boolean hasCity = city != null && !city.isEmpty();
+        boolean hasPurpose = purpose != null && !purpose.isEmpty();
+        boolean hasType = type != null && !type.isEmpty();
 
-            boolean hasCity = city != null && !city.isEmpty();
-            boolean hasPurpose = purpose != null && !purpose.isEmpty();
-            boolean hasType = type != null && !type.isEmpty();
+        if (hasCity && hasPurpose && hasType) results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurposeAndTypeWithEngagement(city, purpose, type);
+        else if (hasCity && hasPurpose) results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurposeWithEngagement(city, purpose);
+        else if (hasCity && hasType) results = propertyRepository.countActivePropertiesByPinCodeAndCityAndType(city, type);
+        else if (hasCity) results = propertyRepository.countActivePropertiesByPinCodeAndCity(city);
+        else if (hasPurpose && hasType) results = propertyRepository.countActivePropertiesByPinCodeAndPurposeAndType(purpose, type);
+        else if (hasPurpose) results = propertyRepository.countActivePropertiesByPinCodeAndPurpose(purpose);
+        else if (hasType) results = propertyRepository.countActivePropertiesByPinCodeAndType(type);
+        else results = propertyRepository.countActivePropertiesByPinCode();
 
-            if (hasCity && hasPurpose && hasType) {
-                results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurposeAndTypeWithEngagement(city, purpose,
-                        type);
-            } else if (hasCity && hasPurpose) {
-                results = propertyRepository.countActivePropertiesByPinCodeAndCityAndPurposeWithEngagement(city, purpose);
-            } else if (hasCity && hasType) {
-                results = propertyRepository.countActivePropertiesByPinCodeAndCityAndType(city, type);
-            } else if (hasCity) {
-                results = propertyRepository.countActivePropertiesByPinCodeAndCity(city);
-            } else if (hasPurpose && hasType) {
-                results = propertyRepository.countActivePropertiesByPinCodeAndPurposeAndType(purpose, type);
-            } else if (hasPurpose) {
-                results = propertyRepository.countActivePropertiesByPinCodeAndPurpose(purpose);
-            } else if (hasType) {
-                results = propertyRepository.countActivePropertiesByPinCodeAndType(type);
-            } else {
-                results = propertyRepository.countActivePropertiesByPinCode();
-            }
-
-            Map<String, Map<String, Object>> map = new HashMap<>();
-            for (Object[] row : results) {
-                String pinCode = row[0].toString();
-                Long count = (Long) row[1];
-                Double avgPricePerSqFt = row[2] != null ? (Double) row[2] : 0.0;
-
-                Map<String, Object> data = new HashMap<>();
-                data.put("count", count);
-                data.put("avgPrice", Math.round(avgPricePerSqFt * 100.0) / 100.0);
-
-                map.put(pinCode, data);
-            }
-            return ResponseEntity.ok(map);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+        Map<String, Map<String, Object>> map = new HashMap<>();
+        for (Object[] row : results) {
+            String pinCode = row[0].toString();
+            Map<String, Object> data = new HashMap<>();
+            data.put("count", row[1]);
+            data.put("avgPrice", row[2] != null ? Math.round((Double) row[2] * 100.0) / 100.0 : 0.0);
+            map.put(pinCode, data);
         }
+        return ResponseEntity.ok(ApiResponse.success(map));
     }
 
-    /**
-     * PUT /api/properties/{id}/feature — Toggle featured status (max 3 per agent)
-     */
+    /** PUT /api/properties/{id}/feature — Spotlight toggle */
     @PutMapping(value = "/{id}/feature", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> toggleFeaturedStatus(@PathVariable Long id, @RequestParam Long agentId) {
-        if (id == null || agentId == null)
-            return ResponseEntity.badRequest().body(Map.of("error", "IDs are required"));
-        try {
-            Property property = propertyRepository.findById(id).orElse(null);
-            if (property == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Property not found"));
-            }
+    public ResponseEntity<ApiResponse<Map<String, Object>>> toggleFeaturedStatus(@PathVariable Long id, @RequestParam Long agentId) {
+        Property property = propertyRepository.findById(id).orElse(null);
+        if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Not found"));
 
-            if (!property.getAgentId().equals(agentId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "You can only feature your own properties"));
-            }
-
-            if (!property.isFeatured()) {
-                List<Property> featuredProperties = propertyRepository.findByAgentId(agentId).stream()
-                        .filter(Property::isFeatured)
-                        .toList();
-
-                if (featuredProperties.size() >= 3) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(Map.of("error",
-                                    "You can only feature up to 3 properties. Please unfeature one first."));
-                }
-
-                property.setFeatured(true);
-            } else {
-                property.setFeatured(false);
-            }
-
-            propertyRepository.save(property);
-
-            return ResponseEntity.ok(Map.of(
-                    "message",
-                    property.isFeatured() ? "Property featured successfully" : "Property unfeatured successfully",
-                    "isFeatured", property.isFeatured()));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Server error"));
+        if (!property.getAgentId().equals(agentId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
+
+        if (Boolean.TRUE.equals(property.getSold())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Cannot feature sold property"));
+        }
+
+        List<Property> agentFeatured = propertyRepository.findByAgentId(agentId).stream()
+                .filter(p -> Boolean.TRUE.equals(p.getFeatured()))
+                .toList();
+
+        if (!Boolean.TRUE.equals(property.getFeatured())) {
+            if (agentFeatured.size() >= 3) {
+                Property first = agentFeatured.get(0);
+                first.setFeatured(false);
+                propertyRepository.save(first);
+            }
+            property.setFeatured(true);
+        } else {
+            property.setFeatured(false);
+        }
+
+        propertyRepository.save(property);
+        return ResponseEntity.ok(ApiResponse.success(Map.of(
+            "message", property.getFeatured() ? "Featured" : "Unfeatured",
+            "featured", property.getFeatured()
+        )));
     }
 }

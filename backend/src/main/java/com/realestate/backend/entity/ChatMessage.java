@@ -11,14 +11,17 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "property_id", nullable = false)
-    private Long propertyId;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "property_id", nullable = false)
+    private Property property;
 
-    @Column(name = "buyer_id", nullable = false)
-    private Long buyerId;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "buyer_id", nullable = false)
+    private AppUser buyer;
 
-    @Column(name = "agent_id", nullable = false)
-    private Long agentId;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "agent_id", nullable = false)
+    private AppUser agent;
 
     @Column(nullable = false)
     private String sender;
@@ -53,28 +56,28 @@ public class ChatMessage {
         this.seen = seen;
     }
 
-    public Long getPropertyId() {
-        return propertyId;
+    public Property getProperty() {
+        return property;
     }
 
-    public void setPropertyId(Long propertyId) {
-        this.propertyId = propertyId;
+    public void setProperty(Property property) {
+        this.property = property;
     }
 
-    public Long getBuyerId() {
-        return buyerId;
+    public AppUser getBuyer() {
+        return buyer;
     }
 
-    public void setBuyerId(Long buyerId) {
-        this.buyerId = buyerId;
+    public void setBuyer(AppUser buyer) {
+        this.buyer = buyer;
     }
 
-    public Long getAgentId() {
-        return agentId;
+    public AppUser getAgent() {
+        return agent;
     }
 
-    public void setAgentId(Long agentId) {
-        this.agentId = agentId;
+    public void setAgent(AppUser agent) {
+        this.agent = agent;
     }
 
     public String getSender() {
@@ -95,5 +98,47 @@ public class ChatMessage {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    // ── Convenience ID accessors used by controllers ──────────────────────────
+
+    public Long getBuyerId() {
+        return buyer != null ? buyer.getId() : null;
+    }
+
+    public Long getAgentId() {
+        return agent != null ? agent.getId() : null;
+    }
+
+    public Long getPropertyId() {
+        return property != null ? property.getId() : null;
+    }
+
+    /** Used by controllers that build chat messages with plain IDs (not full objects).
+     *  These set transient-style ID fields for serialisation only.
+     *  Actual FK is still the @ManyToOne field above.
+     */
+    public void setBuyerId(Long buyerId) {
+        if (this.buyer == null) {
+            AppUser u = new AppUser();
+            u.setId(buyerId);
+            this.buyer = u;
+        }
+    }
+
+    public void setAgentId(Long agentId) {
+        if (this.agent == null) {
+            AppUser u = new AppUser();
+            u.setId(agentId);
+            this.agent = u;
+        }
+    }
+
+    public void setPropertyId(Long propertyId) {
+        if (this.property == null) {
+            Property p = new Property();
+            p.setId(propertyId);
+            this.property = p;
+        }
     }
 }

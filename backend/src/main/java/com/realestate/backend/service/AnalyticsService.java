@@ -71,8 +71,8 @@ public class AnalyticsService {
      */
     @Transactional
     public void computeScoresForCity(String city) {
-        // Get all active, unsold properties for this city (case-insensitive)
-        List<Property> properties = propertyRepository.findByCityIgnoreCaseAndIsActiveTrueAndIsSoldFalse(city);
+        // Get all active, unsold properties for this city (case-insensitive + approval check)
+        List<Property> properties = propertyRepository.findByCityVisible(city);
 
         // ALWAYS load existing scores for this city to ensure we reset any that no
         // longer
@@ -200,7 +200,7 @@ public class AnalyticsService {
 
         // Agent count
         long agentCount = pincodeProperties.stream()
-                .map(Property::getAgentId)
+                .map(p -> p.getAgent() != null ? p.getAgent().getId() : null)
                 .filter(Objects::nonNull)
                 .distinct()
                 .count();
