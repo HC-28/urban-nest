@@ -23,8 +23,8 @@ public class AppUser {
     // BUYER or AGENT
     private String role;
 
-    @Column(name = "profile_picture", columnDefinition = "TEXT")
-    private String profilePicture;
+    @Column(name = "profile_picture_url", columnDefinition = "TEXT")
+    private String profilePictureUrl;
 
     private String city;
 
@@ -108,12 +108,12 @@ public class AppUser {
         this.role = role;
     }
 
-    public String getProfilePicture() {
-        return profilePicture;
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
     }
 
-    public void setProfilePicture(String profilePicture) {
-        this.profilePicture = profilePicture;
+    public void setProfilePictureUrl(String profilePictureUrl) {
+        this.profilePictureUrl = profilePictureUrl;
     }
 
     public String getCity() {

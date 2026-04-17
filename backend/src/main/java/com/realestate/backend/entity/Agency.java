@@ -16,8 +16,8 @@ public class Agency {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @Column(name = "logo", columnDefinition = "TEXT")
-    private String logo;
+    @Column(name = "logo_url", columnDefinition = "TEXT")
+    private String logoUrl;
 
     @Column(name = "license_number")
     private String licenseNumber;
@@ -50,8 +50,8 @@ public class Agency {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public String getLogo() { return logo; }
-    public void setLogo(String logo) { this.logo = logo; }
+    public String getLogoUrl() { return logoUrl; }
+    public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }
 
     public String getLicenseNumber() { return licenseNumber; }
     public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }

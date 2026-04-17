@@ -46,7 +46,7 @@ public class AgentController {
             agentData.put("id", agent.getId());
             agentData.put("name", agent.getName());
             agentData.put("email", agent.getEmail());
-            agentData.put("image", agent.getProfilePicture());
+            agentData.put("image", agent.getProfilePictureUrl());
 
             List<Property> agentProperties = propertyRepository.findByAgentId(agent.getId());
 

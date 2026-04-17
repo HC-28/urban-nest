@@ -4,6 +4,7 @@ import { userApi, favoritesApi, propertyApi } from "../../services/api";
 import "./ProfileDrawer.css";
 import PropertyCard from "../property/PropertyCard";
 import { formatPrice } from "../../utils/priceUtils";
+import toast from "react-hot-toast";
 
 /* ─── SVG Icons ─── */
 const GridIcon = ({ size = 16 }) => (
@@ -150,28 +151,42 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64Image = reader.result;
-      setPreviewImage(base64Image);
-      setIsUploadingPicture(true);
-      setError(""); // Clear any previous errors
-      try {
-        await userApi.patch("/me/avatar", {
-          profilePicture: base64Image
-        });
-        const updatedUser = { ...user, profilePicture: base64Image };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        if (onUserUpdate) onUserUpdate(updatedUser);
-        setPreviewImage(null);
-      } catch (err) {
-        setError("Failed to update picture. Please try again.");
-        setPreviewImage(null);
-      } finally {
-        setIsUploadingPicture(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    setIsUploadingPicture(true);
+    setError(""); // Clear any previous errors
+    
+    // Create a preview immediately for better UX
+    const previewUrl = URL.createObjectURL(file);
+    setPreviewImage(previewUrl);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+      
+      // 1. Upload to Cloudinary via our backend
+      const uploadRes = await propertyApi.post("/api/upload", uploadFormData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      
+      const imageUrl = uploadRes.data.data.imageUrl;
+      
+      // 2. Update user profile with the new URL
+      await userApi.patch("/me/avatar", {
+        profilePicture: imageUrl
+      });
+      
+      const updatedUser = { ...user, profilePicture: imageUrl };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      if (onUserUpdate) onUserUpdate(updatedUser);
+      
+      toast.success("Profile picture updated!");
+    } catch (err) {
+      console.error("Profile picture upload failed:", err);
+      setError("Failed to update picture. Please try again.");
+      setPreviewImage(null);
+    } finally {
+      setIsUploadingPicture(false);
+      URL.revokeObjectURL(previewUrl);
+    }
   };
 
   const userStats = {

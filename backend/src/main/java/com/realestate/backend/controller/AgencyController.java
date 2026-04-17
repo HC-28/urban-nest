@@ -59,7 +59,7 @@ public class AgencyController {
             Map<String, Object> map = new java.util.HashMap<>();
             map.put("id", agency.getId());
             map.put("name", agency.getName());
-            map.put("logo", agency.getLogo());
+            map.put("logo", agency.getLogoUrl());
             map.put("licenseNumber", agency.getLicenseNumber());
             map.put("agencyCode", agency.getAgencyCode());
             map.put("bio", agency.getBio());

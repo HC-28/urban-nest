@@ -22,8 +22,8 @@ public class Property {
     @Min(value = 1, message = "Price must be greater than zero")
     private Double price;
 
-    @Column(name = "photos", columnDefinition = "TEXT")
-    private String photos;
+    @Column(name = "property_images", columnDefinition = "TEXT")
+    private String propertyImages;
 
     @Min(value = 1, message = "Area must be greater than zero")
     private Double area;
@@ -164,12 +164,12 @@ public class Property {
         this.price = price;
     }
 
-    public String getPhotos() {
-        return photos;
+    public String getPropertyImages() {
+        return propertyImages;
     }
 
-    public void setPhotos(String photos) {
-        this.photos = photos;
+    public void setPropertyImages(String propertyImages) {
+        this.propertyImages = propertyImages;
     }
 
     public Double getArea() {

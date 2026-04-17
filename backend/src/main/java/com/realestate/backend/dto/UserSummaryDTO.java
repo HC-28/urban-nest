@@ -26,7 +26,7 @@ public class UserSummaryDTO {
         dto.id = user.getId();
         dto.name = user.getName();
         dto.email = user.getEmail();
-        dto.profilePicture = user.getProfilePicture();
+        dto.profilePicture = user.getProfilePictureUrl();
         dto.role = user.getRole();
         dto.city = user.getCity();
         dto.phone = user.getPhone();

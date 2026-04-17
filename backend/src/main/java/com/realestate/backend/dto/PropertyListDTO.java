@@ -60,7 +60,7 @@ public class PropertyListDTO {
         dto.city = p.getCity();
         dto.location = p.getLocation();
         dto.pinCode = p.getPinCode();
-        dto.photos = p.getPhotos();
+        dto.photos = p.getPropertyImages();
         dto.bhk = p.getBhk();
         dto.bathrooms = p.getBathrooms();
         dto.furnishing = p.getFurnishing();
@@ -84,7 +84,7 @@ public class PropertyListDTO {
                     p.getAgent().getId(),
                     p.getAgent().getName(),
                     p.getAgent().getEmail(),
-                    p.getAgent().getProfilePicture());
+                    p.getAgent().getProfilePictureUrl());
             dto.isVerified = p.getAgent().isVerified();
         }
         return dto;

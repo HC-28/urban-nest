@@ -76,7 +76,7 @@ public class PropertyDetailDTO {
         dto.location = p.getLocation();
         dto.address = p.getAddress();
         dto.pinCode = p.getPinCode();
-        dto.photos = p.getPhotos();
+        dto.photos = p.getPropertyImages();
         dto.bhk = p.getBhk();
         dto.bathrooms = p.getBathrooms();
         dto.balconies = p.getBalconies();
@@ -108,7 +108,7 @@ public class PropertyDetailDTO {
             dto.agentId = p.getAgent().getId();
             dto.agentName = p.getAgent().getName();
             dto.agentEmail = p.getAgent().getEmail();
-            dto.agentProfilePicture = p.getAgent().getProfilePicture();
+            dto.agentProfilePicture = p.getAgent().getProfilePictureUrl();
             dto.agentPhone = p.getAgent().getPhone();
             dto.agentCity = p.getAgent().getCity();
             dto.isVerified = p.getAgent().isVerified();

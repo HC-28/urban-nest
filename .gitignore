@@ -26,6 +26,9 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# Media & Assets
+frontend/public/assets/
+
 # Frontend build files
 frontend/dist/
 

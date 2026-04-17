@@ -15,39 +15,39 @@ export function parsePropertyImages(photos) {
     // If already an array, return as-is
     if (Array.isArray(photos)) return photos;
 
-    // If it's a string, check if it contains base64 images
+    // If it's a string, check if it contains base64 images or URLs
     if (typeof photos === 'string') {
+        // Handle empty or very short strings early
+        if (!photos || photos.trim() === "") return [];
+
         // Handle potential JSON string from some DB configurations
         if (photos.startsWith('[') && photos.endsWith(']')) {
             try {
                 const parsed = JSON.parse(photos);
                 if (Array.isArray(parsed)) return parsed;
             } catch (e) {
-                // Ignore parse error
+                // Ignore parse error and try comma splitting
             }
         }
 
-        // Check if it looks like a URL or Base64
-        if (photos.startsWith('http') || photos.startsWith('data:image')) {
-            if (photos.includes('data:image')) {
-                const parts = photos.split('data:image');
-                const images = [];
-                for (let i = 1; i < parts.length; i++) {
-                    let img = 'data:image' + parts[i];
-                    if (img.endsWith(',')) img = img.slice(0, -1);
-                    images.push(img);
-                }
-                return images;
+        // 1. Check for Base64 bundle (our previous format)
+        if (photos.includes('data:image')) {
+            const parts = photos.split('data:image');
+            const images = [];
+            for (let i = 1; i < parts.length; i++) {
+                let img = 'data:image' + parts[i];
+                if (img.endsWith(',')) img = img.slice(0, -1);
+                images.push(img);
             }
-            return [photos];
+            return images;
         }
 
-        // If it's just a short string (like an OID "12345"), ignore it
-        if (photos.length < 50 && !photos.includes('/')) {
-            return [];
+        // 2. Check for comma-separated Cloudinary/HTTP URLs
+        if (photos.includes(',') || photos.startsWith('http')) {
+            return photos.split(',').map(s => s.trim()).filter(s => s.length > 0);
         }
 
-        // Fallback: return as is, hoping it's a URL
+        // Fallback: return as is if it looks like something valid
         return [photos];
     }
 

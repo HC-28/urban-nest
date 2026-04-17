@@ -185,45 +185,6 @@ function PostProperty() {
     }
     return title;
   };
-  const compressImage = (file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          let width = img.width;
-          let height = img.height;
-
-          // Max dimensions
-          const MAX_WIDTH = 1200;
-          const MAX_HEIGHT = 1200;
-
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // Resolve with compressed base64
-          resolve(canvas.toDataURL("image/jpeg", 0.7)); // 0.7 quality
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  };
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -239,20 +200,35 @@ function PostProperty() {
     setUploadingImages(true);
 
     try {
-      const uploadPromises = newFiles.map(file => compressImage(file));
-      const compressedImages = await Promise.all(uploadPromises);
+      const uploadedUrls = [];
+      for (const file of newFiles) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+        
+        // Upload to our backend's Cloudinary storage endpoint
+        const response = await propertyApi.post("/api/upload", uploadFormData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        });
+        
+        if (response.data && response.data.data.imageUrl) {
+          uploadedUrls.push(response.data.data.imageUrl);
+        }
+      }
 
       setFormData(prev => ({
         ...prev,
-        images: [...prev.images, ...compressedImages].slice(0, 10)
+        images: [...prev.images, ...uploadedUrls].slice(0, 10)
       }));
 
       if (files.length > remainingSlots) {
         toast.error(`Only ${remainingSlots} images were added (limit 10)`);
       }
+      toast.success("Images uploaded successfully");
     } catch (err) {
-      console.error("Image processing error:", err);
-      toast.error("Failed to process some images");
+      console.error("Image upload error:", err);
+      toast.error("Failed to upload some images");
     } finally {
       setUploadingImages(false);
       e.target.value = "";
@@ -296,7 +272,7 @@ function PostProperty() {
         totalFloors: formData.totalFloors || null,
         launchDate: formData.launchDate || null,
         possessionStarts: formData.possessionStarts || null,
-        photos: formData.images.join(","), // Base64 strings joined by comma
+        propertyImages: formData.images.join(","), // Cloudinary URLs joined by comma
         agentId: user?.id || null,
         isActive: true,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,

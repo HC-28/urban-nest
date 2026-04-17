@@ -41,6 +41,13 @@ const IMAGE_URL = import.meta.env.VITE_API_URL
     ? import.meta.env.VITE_API_URL.replace("/api", "/uploads/")
     : "http://localhost:8083/uploads/";
 
+// Helper to handle both legacy local uploads and new Cloudinary URLs
+const getImageUrl = (url) => {
+    if (!url) return "/property-placeholder.jpg";
+    if (url.startsWith("http") || url.startsWith("data:")) return url;
+    return `${IMAGE_URL}${encodeURIComponent(url)}`;
+};
+
 function AdminDashboard() {
     const user = JSON.parse(localStorage.getItem("user") || "null");
     const navigate = useNavigate();
@@ -1037,7 +1044,7 @@ function AdminDashboard() {
                                                     <tr key={agg.id}>
                                                         <td>
                                                             {agg.logo ? (
-                                                                <img src={agg.logo} alt="" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+                                                                <img src={getImageUrl(agg.logo)} alt="" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
                                                             ) : (
                                                                 <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                                     {agg.name.charAt(0)}

@@ -124,18 +124,15 @@ public class UserController {
                     .body(ApiResponse.error("profilePicture is required"));
         }
 
-        if (!profilePicture.startsWith("data:image/")) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Invalid image format - must be base64 encoded image"));
-        }
-
+        // Remove base64 restriction since we now use Cloudinary URLs
+        
         AppUser dbUser = userRepository.findByEmail(email).orElse(null);
 
         if (dbUser == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("User not found"));
         }
 
-        dbUser.setProfilePicture(profilePicture);
+        dbUser.setProfilePictureUrl(profilePicture);
         userRepository.save(dbUser);
 
         return ResponseEntity.ok(ApiResponse.success(UserProfileDTO.from(dbUser)));

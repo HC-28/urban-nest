@@ -178,7 +178,7 @@ public class AuthController {
         response.put("name", dbUser.getName());
         response.put("email", dbUser.getEmail());
         response.put("role", dbUser.getRole());
-        response.put("profilePicture", dbUser.getProfilePicture());
+        response.put("profilePicture", dbUser.getProfilePictureUrl());
         response.put("city", dbUser.getCity());
         response.put("phone", dbUser.getPhone());
         response.put("pincode", dbUser.getPincode());
@@ -236,7 +236,7 @@ public class AuthController {
         user.setCity((String) payload.get("city"));
         user.setPhone((String) payload.get("phone"));
         user.setPincode((String) payload.get("pincode"));
-        user.setProfilePicture((String) payload.get("profilePicture"));
+        user.setProfilePictureUrl((String) payload.get("profilePicture"));
         user.setAgencyName((String) payload.get("agencyName"));
 
         // Verification status

@@ -29,7 +29,7 @@ public class AgencyDTO {
         dto.licenseNumber = agency.getLicenseNumber();
         dto.bio = agency.getBio();
         dto.status = agency.getStatus();
-        dto.logo = agency.getLogo();
+        dto.logo = agency.getLogoUrl();
         if (agency.getAdmin() != null) {
             dto.adminUserId = agency.getAdmin().getId();
             dto.adminName = agency.getAdmin().getName();

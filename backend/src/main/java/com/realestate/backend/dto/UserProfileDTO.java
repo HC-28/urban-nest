@@ -31,7 +31,7 @@ public class UserProfileDTO {
         dto.name = user.getName();
         dto.email = user.getEmail();
         dto.role = user.getRole();
-        dto.profilePicture = user.getProfilePicture();
+        dto.profilePicture = user.getProfilePictureUrl();
         dto.city = user.getCity();
         dto.phone = user.getPhone();
         dto.pincode = user.getPincode();

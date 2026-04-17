@@ -322,7 +322,7 @@ public class PropertyController {
         if (up.getType() != null) property.setType(up.getType());
         if (up.getPrice() > 0) property.setPrice(up.getPrice());
         if (up.getArea() > 0) property.setArea(up.getArea());
-        if (up.getPhotos() != null) property.setPhotos(up.getPhotos());
+        if (up.getPropertyImages() != null) property.setPropertyImages(up.getPropertyImages());
         if (up.getBhk() > 0) property.setBhk(up.getBhk());
         if (up.getBathrooms() > 0) property.setBathrooms(up.getBathrooms());
         if (up.getBalconies() >= 0) property.setBalconies(up.getBalconies());

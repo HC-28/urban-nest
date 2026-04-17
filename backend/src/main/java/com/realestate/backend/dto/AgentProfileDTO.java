@@ -34,7 +34,7 @@ public class AgentProfileDTO {
         dto.email = agent.getEmail();
         dto.phone = agent.getPhone();
         dto.city = agent.getCity();
-        dto.profilePicture = agent.getProfilePicture();
+        dto.profilePicture = agent.getProfilePictureUrl();
         dto.bio = agent.getBio();
         dto.agencyName = agent.getAgencyName();
         dto.specialties = agent.getSpecialties();
