@@ -17,6 +17,7 @@ public class AgencyDTO {
     private Long adminUserId;
     private String adminName;
     private String adminEmail;
+    private String logo;
     private String createdAt;
 
     public static AgencyDTO from(Agency agency) {
@@ -28,6 +29,7 @@ public class AgencyDTO {
         dto.licenseNumber = agency.getLicenseNumber();
         dto.bio = agency.getBio();
         dto.status = agency.getStatus();
+        dto.logo = agency.getLogo();
         if (agency.getAdmin() != null) {
             dto.adminUserId = agency.getAdmin().getId();
             dto.adminName = agency.getAdmin().getName();
@@ -46,6 +48,7 @@ public class AgencyDTO {
     public String getLicenseNumber() { return licenseNumber; }
     public String getBio() { return bio; }
     public String getStatus() { return status; }
+    public String getLogo() { return logo; }
     public Long getAdminUserId() { return adminUserId; }
     public String getAdminName() { return adminName; }
     public String getAdminEmail() { return adminEmail; }
@@ -58,6 +61,7 @@ public class AgencyDTO {
     public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
     public void setBio(String bio) { this.bio = bio; }
     public void setStatus(String status) { this.status = status; }
+    public void setLogo(String logo) { this.logo = logo; }
     public void setAdminUserId(Long adminUserId) { this.adminUserId = adminUserId; }
     public void setAdminName(String adminName) { this.adminName = adminName; }
     public void setAdminEmail(String adminEmail) { this.adminEmail = adminEmail; }

@@ -215,6 +215,34 @@ public class PropertyController {
         return ResponseEntity.ok(ApiResponse.success(properties));
     }
 
+    /** GET /api/properties/top?pincode=... — Support Map Sidebar */
+    @GetMapping(value = "/top", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Transactional(readOnly = true)
+    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getTopPropertiesByPincode(
+            @RequestParam String pincode,
+            @RequestParam(required = false) String mode,
+            @RequestParam(required = false) String purpose) {
+        
+        List<Property> properties = propertyRepository.findVisibleProperties().stream()
+                .filter(p -> pincode.equals(p.getPinCode()))
+                .toList();
+        
+        // Filter by purpose if specified
+        if (purpose != null && !purpose.isBlank() && !purpose.equalsIgnoreCase("All")) {
+            final String pu = purpose.toLowerCase();
+            properties = properties.stream().filter(p -> p.getPurpose().toLowerCase().contains(pu)).toList();
+        }
+
+        // Sort by views (simple "top" logic)
+        List<PropertyListDTO> dtos = properties.stream()
+                .sorted(Comparator.comparingInt(Property::getViews).reversed())
+                .limit(10)
+                .map(PropertyListDTO::from)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success(dtos));
+    }
+
     /** GET /api/properties/{id} — Single property by ID */
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<PropertyDetailDTO>> getPropertyById(@PathVariable Long id, 
