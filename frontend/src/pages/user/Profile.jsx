@@ -184,7 +184,7 @@ function ProfilePage() {
 
     const fetchMyProperties = async () => {
         try {
-            const res = await propertyApi.get(`/agent/${user.id}`);
+            const res = await propertyApi.getMyProperties();
             const sorted = [...res.data].sort((a, b) => {
                 if (a.featured && !b.featured) return -1;
                 if (!a.featured && b.featured) return 1;
@@ -252,7 +252,7 @@ function ProfilePage() {
 
     const fetchFavorites = async () => {
         try {
-            const res = await favoritesApi.get(`/user/${user.id}`);
+            const res = await favoritesApi.getMyFavorites();
             setFavorites(res.data);
         } catch (err) {
             console.error("Error fetching favorites", err);

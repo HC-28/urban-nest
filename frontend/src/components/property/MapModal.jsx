@@ -307,7 +307,7 @@ function MapModal({ isOpen, onClose, initialProperty }) {
                         <span class="map-tooltip-label">Active Listings</span>
                         <span class="map-tooltip-value">${activeListings}</span>
                     </div>
-                    ${data?.score != null ? `
+                    ${(data?.score != null && heatmapMode !== 'price') ? `
                     <div class="map-tooltip-stat">
                         <span class="map-tooltip-label">Market Score</span>
                         <div class="map-tooltip-score-bar">
@@ -440,14 +440,17 @@ function MapModal({ isOpen, onClose, initialProperty }) {
                         <div className="toolbar-divider" />
 
                         {/* Actions Section */}
-                        <div className="toolbar-section">
-                            <button className={`toolbar-icon-btn info-btn ${showInfo ? 'active' : ''}`} onClick={() => setShowInfo(!showInfo)} title="Market Score Guide">
-                                ℹ️
+                        <div className="toolbar-section map-actions-section">
+                            <button className={`toolbar-icon-btn info-btn-pill ${showInfo ? 'active' : ''}`} onClick={() => setShowInfo(!showInfo)} title="Market Score Guide">
+                                <span className="btn-icon">ℹ️</span>
+                                <span className="btn-text">Guide</span>
                             </button>
-                            <button className="toolbar-icon-btn close-btn-map" onClick={onClose} title="Close Map">✕</button>
                         </div>
                     </div>
                 </div>
+
+                {/* ─── Dedicated Close Button ─── */}
+                <button className="map-absolute-close" onClick={onClose} title="Close Map">✕</button>
 
                 {/* ─── Score Info Panel ─── */}
                 {showInfo && SCORE_DESCRIPTIONS[heatmapMode] && (

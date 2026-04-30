@@ -19,9 +19,7 @@ export default function BuyerChats() {
     const buyerId = user?.id;
 
     useEffect(() => {
-        if (!buyerId) return;
-
-        chatApi.get(`/buyer/${buyerId}`)
+        chatApi.getMyChatsAsBuyer()
             .then(res => {
                 const data = res.data || [];
                 setChats(data);
@@ -40,8 +38,8 @@ export default function BuyerChats() {
 
         uniquePropertyIds.forEach(pid => {
             if (!propertyMap[pid]) {
-                // Include userId+role so sold properties are accessible to the buyer who bought them
-                propertyApi.get(`/${pid}?userId=${buyerId}&role=BUYER`).then(res => {
+                // Remove manual buyerId+role from URL
+                propertyApi.get(`/${pid}`).then(res => {
                     // Only store valid property objects, not error response objects
                     if (res.data && res.data.id) {
                         setPropertyMap(prev => ({ ...prev, [pid]: res.data }));

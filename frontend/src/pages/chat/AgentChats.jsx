@@ -19,8 +19,7 @@ export default function AgentChats() {
     const agentId = user?.id;
 
     const fetchInquiries = () => {
-        if (!agentId) return;
-        chatApi.get(`/agent/${agentId}`).then(res => {
+        chatApi.getMyChatsAsAgent().then(res => {
             setChats(res.data);
             setLoading(false);
         }).catch(() => setLoading(false));
@@ -39,8 +38,8 @@ export default function AgentChats() {
 
         uniquePropertyIds.forEach(pid => {
             if (!propertyMap[pid]) {
-                // Include userId+role so sold properties are accessible to the agent
-                propertyApi.get(`/${pid}?userId=${agentId}&role=AGENT`).then(res => {
+                // Remove manual userId+role from URL
+                propertyApi.get(`/${pid}`).then(res => {
                     // Only store valid property objects, not error responses
                     if (res.data && res.data.id) {
                         setPropertyMap(prev => ({ ...prev, [pid]: res.data }));

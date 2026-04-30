@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import com.realestate.backend.dto.ApiResponse;
 import com.realestate.backend.dto.AgentReviewDTO;
+import com.realestate.backend.util.SecurityUtils;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -51,10 +52,12 @@ public class AgentReviewController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Map<String, String>>> submitReview(@RequestBody Map<String, Object> payload) {
         Long agentId = Long.valueOf(payload.get("agentId").toString());
-        Long buyerId = Long.valueOf(payload.get("buyerId").toString());
         Long propertyId = Long.valueOf(payload.get("propertyId").toString());
         int rating = Integer.parseInt(payload.get("rating").toString());
         String text = payload.getOrDefault("reviewText", "").toString();
+
+        Long buyerId = SecurityUtils.getAuthenticatedUserId();
+        if (buyerId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
 
         if (rating < 1 || rating > 5) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Rating must be between 1 and 5"));

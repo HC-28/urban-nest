@@ -41,14 +41,13 @@ export default function BuyerPropertyChat() {
     const fetchMessages = () => {
         chatApi
             .get("/messages", {
-                params: { propertyId, buyerId, agentId }
+                params: { propertyId, agentId }
             })
             .then(res => {
                 setMessages(res.data);
                 // Mark agent messages as seen
                 chatApi.post("/seen", {
                     propertyId,
-                    buyerId,
                     agentId,
                     userRole: "BUYER"
                 }).catch(err => console.error("Mark seen error:", err));
@@ -63,13 +62,13 @@ export default function BuyerPropertyChat() {
         }
 
         // Initial fetches
-        propertyApi.get(`/${propertyId}?userId=${buyerId}&role=BUYER`).then(res => setProperty(res.data)).catch(err => console.error("Property error:", err));
+        propertyApi.get(`/${propertyId}`).then(res => setProperty(res.data)).catch(err => console.error("Property error:", err));
         userApi.get(`/${agentId}`).then(res => setAgent(res.data)).catch(err => console.error("Agent error:", err));
 
         // Fetch conversation & stop loading
         chatApi
             .get("/messages", {
-                params: { propertyId, buyerId, agentId }
+                params: { propertyId, agentId }
             })
             .then(res => {
                 setMessages(res.data);
@@ -91,7 +90,6 @@ export default function BuyerPropertyChat() {
         try {
             const res = await chatApi.post("/messages", {
                 propertyId,
-                buyerId,
                 agentId,
                 sender: "BUYER",
                 message: text
@@ -111,7 +109,6 @@ export default function BuyerPropertyChat() {
         try {
             const res = await chatApi.post("/messages", {
                 propertyId,
-                buyerId,
                 agentId,
                 sender: "BUYER",
                 message: `⭐ FEEDBACK: ${emoji} ${label} - The buyer rated this experience as ${label.toLowerCase()}.`

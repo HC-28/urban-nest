@@ -22,8 +22,11 @@ export default function AppointmentActionPanel({
     const fetchAppointmentStatus = async () => {
         setLoading(true);
         try {
-            // Fetch appointments for buyer, filter by this property/agent
-            const res = await appointmentApi.get(`/buyer/${buyerId}`);
+            // Fetch appointments using hardened session-based endpoint
+            const res = userRole === "BUYER" 
+                ? await appointmentApi.getMyBuyerAppointments()
+                : await appointmentApi.getMyAgentAppointments();
+
             if (res.data && Array.isArray(res.data)) {
                 const activeAppt = res.data.find(a =>
                     String(a.propertyId) === String(propertyId) &&
@@ -51,7 +54,6 @@ export default function AppointmentActionPanel({
     const handleBookRequest = async () => {
         try {
             await appointmentApi.post("", {
-                buyerId: buyerId,
                 propertyId: propertyId
             });
             toast.success("Appointment request sent! Agent will assign a slot.");
@@ -64,7 +66,6 @@ export default function AppointmentActionPanel({
     const handleAgentBookWithSlot = async (slotId) => {
         try {
             await appointmentApi.post("", {
-                buyerId: buyerId,
                 propertyId: propertyId,
                 slotId: slotId
             });
@@ -112,7 +113,6 @@ export default function AppointmentActionPanel({
             if (answer === "YES") {
                 await chatApi.post("/messages", {
                     propertyId,
-                    buyerId,
                     agentId,
                     sender: "SYSTEM",
                     message: "🚨 UPDATE: This property has been officially SOLD to a verified buyer. Thank you for your interest."

@@ -12,6 +12,7 @@ import com.realestate.backend.repository.UserRepository;
 import com.realestate.backend.repository.ChatMessageRepository;
 import com.realestate.backend.service.AnalyticsService;
 import com.realestate.backend.service.EmailService;
+import com.realestate.backend.util.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,13 @@ public class AppointmentController {
     @Autowired
     private ChatMessageRepository chatMessageRepository;
 
+    @Autowired
+    private SecurityUtils securityUtils;
+
+    private boolean isAdmin() {
+        return securityUtils.hasRole("ADMIN");
+    }
+
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
@@ -53,14 +61,9 @@ public class AppointmentController {
     @PostMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> bookAppointment(@RequestBody Map<String, Object> request) {
         Object slotIdObj = request.get("slotId");
-        Object buyerIdObj = request.get("buyerId");
-
-        if (buyerIdObj == null) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Missing required field: buyerId."));
-        }
-
-        Long buyerId = Long.valueOf(buyerIdObj.toString());
+        Long buyerId = SecurityUtils.getAuthenticatedUserId();
+        if (buyerId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+        
         Long slotId = (slotIdObj != null) ? Long.valueOf(slotIdObj.toString()) : null;
 
         // 1. Validate slot
@@ -216,6 +219,12 @@ public class AppointmentController {
         Appointment appt = appointmentRepository.findById(id).orElse(null);
         if (appt == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Appt not found"));
+
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (!appt.getAgentId().equals(authId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("You are not the agent for this appointment"));
+        }
+
         if (!"pending".equals(appt.getStatus()))
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Only pending requests can be assigned/confirmed."));
@@ -267,6 +276,11 @@ public class AppointmentController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Appointment not found"));
 
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (!appt.getAgentId().equals(authId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        }
+
         if (!"confirmed".equals(appt.getStatus())) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Appointment must be in confirmed status"));
@@ -295,6 +309,12 @@ public class AppointmentController {
         if (appt == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Appointment not found"));
+
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (!appt.getBuyerId().equals(authId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        }
+
         if (!"confirmed".equals(appt.getStatus()) && !"awaiting_buyer".equals(appt.getStatus())) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("This appointment is not awaiting buyer confirmation"));
@@ -344,6 +364,12 @@ public class AppointmentController {
         if (appt == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Appointment not found"));
+
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (!appt.getAgentId().equals(authId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        }
+
         if (!"awaiting_agent".equals(appt.getStatus())) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("This appointment is not awaiting agent confirmation"));
@@ -463,8 +489,11 @@ public class AppointmentController {
     }
 
     /** GET /api/appointments/buyer/{buyerId} — Buyer's appointments */
-    @GetMapping("/buyer/{buyerId}")
-    public ResponseEntity<ApiResponse<List<AppointmentDTO>>> getBuyerAppointments(@PathVariable Long buyerId) {
+    @GetMapping("/buyer/me")
+    public ResponseEntity<ApiResponse<List<AppointmentDTO>>> getMyBuyerAppointments() {
+        Long buyerId = SecurityUtils.getAuthenticatedUserId();
+        if (buyerId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+        
         List<Appointment> appts = appointmentRepository.findByBuyerId(buyerId);
         List<AppointmentDTO> result = new ArrayList<>();
         for (Appointment a : appts) {
@@ -481,8 +510,11 @@ public class AppointmentController {
     }
 
     /** GET /api/appointments/agent/{agentId} — Agent's appointments */
-    @GetMapping("/agent/{agentId}")
-    public ResponseEntity<ApiResponse<List<AppointmentDTO>>> getAgentAppointments(@PathVariable Long agentId) {
+    @GetMapping("/agent/me")
+    public ResponseEntity<ApiResponse<List<AppointmentDTO>>> getMyAgentAppointments() {
+        Long agentId = SecurityUtils.getAuthenticatedUserId();
+        if (agentId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+        
         List<Appointment> appts = appointmentRepository.findByAgentId(agentId);
         List<AppointmentDTO> result = new ArrayList<>();
         for (Appointment a : appts) {
@@ -505,6 +537,12 @@ public class AppointmentController {
         if (appt == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Appointment not found"));
+
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (!appt.getBuyerId().equals(authId) && !appt.getAgentId().equals(authId) && !isAdmin()) {
+             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        }
+        
         appt.setStatus("cancelled");
         appointmentRepository.save(appt);
         unlockSlot(appt.getSlotId());

@@ -74,16 +74,31 @@ export const adminApi = createApi("/admin");
 export const propertyApi = createApi("/properties", { timeout: 60000 }); // 60s for images
 propertyApi.getFeatured = () => propertyApi.get("/featured");
 propertyApi.getTrending = () => propertyApi.get("/trending");
-propertyApi.toggleFeature = (id, agentId) => propertyApi.put(`/${id}/feature?agentId=${agentId}`);
+propertyApi.toggleFeature = (id) => propertyApi.put(`/${id}/feature`);
+propertyApi.getMyProperties = () => propertyApi.get("/agent/me");
+propertyApi.relist = (id) => propertyApi.put(`/${id}/relist`);
+propertyApi.markSold = (id) => propertyApi.put(`/${id}/sold`);
 export const agentsApi = createApi("/agents");
 export const favoritesApi = createApi("/favorites");
+favoritesApi.getMyFavorites = () => favoritesApi.get("/me");
+favoritesApi.checkStatus = (propertyId) => favoritesApi.get(`/status?propertyId=${propertyId}`);
 export const chatApi = createApi("/chat", { timeout: 30000 }); // 30s for chat attachments
+chatApi.getMyChatsAsAgent = () => chatApi.get("/agent/me");
+chatApi.getMyChatsAsBuyer = () => chatApi.get("/buyer/me");
 export const analyticsApi = createApi("/analytics", { timeout: 15000 });
 export const appointmentApi = createApi("/appointments");
+appointmentApi.getMyAgentAppointments = () => appointmentApi.get("/agent/me");
+appointmentApi.getMyBuyerAppointments = () => appointmentApi.get("/buyer/me");
 export const slotsApi = createApi("/slots");
+slotsApi.getMySlots = () => slotsApi.get("/agent/me");
 export const contactApi = createApi("/contact");
 export const reviewsApi = createApi("/reviews");
 export const agencyApi = createApi("/agencies");
+agencyApi.getMe = () => agencyApi.get("/me");
+agencyApi.getPendingAgents = () => agencyApi.get("/pending-agents");
+agencyApi.register = (data) => agencyApi.post("/register", data);
+agencyApi.approveAgent = (id) => agencyApi.post(`/approve-agent/${id}`);
+agencyApi.rejectAgent = (id) => agencyApi.post(`/reject-agent/${id}`);
 
 // ---------------- Default Export ----------------
 export default {

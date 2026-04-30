@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import com.realestate.backend.dto.ApiResponse;
 import com.realestate.backend.dto.AgentSlotDTO;
+import com.realestate.backend.util.SecurityUtils;
 
 /**
  * Manages agent availability slots.
@@ -30,17 +31,35 @@ public class AgentSlotController {
     @Autowired
     private PropertyRepository propertyRepository;
 
+    @Autowired
+    private SecurityUtils securityUtils;
+
+    private boolean isAdmin() {
+        return securityUtils.hasRole("ADMIN");
+    }
+
     /** POST /api/slots — Agent creates a new availability slot */
     @PostMapping
     public ResponseEntity<ApiResponse<AgentSlotDTO>> createSlot(@RequestBody Map<String, Object> body) {
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+        
         AgentSlot slot = new AgentSlot();
-        slot.setAgentId(Long.parseLong(body.get("agentId").toString()));
-        Object propertyId = body.get("propertyId");
-        if (propertyId != null && !propertyId.toString().isEmpty() && !propertyId.toString().equals("-1")) {
-            slot.setPropertyId(Long.parseLong(propertyId.toString()));
+        slot.setAgentId(authId);
+        
+        Object propertyIdObj = body.get("propertyId");
+        if (propertyIdObj != null && !propertyIdObj.toString().isEmpty() && !propertyIdObj.toString().equals("-1")) {
+            Long propertyId = Long.parseLong(propertyIdObj.toString());
+            // Verify property ownership
+            Property p = propertyRepository.findById(propertyId).orElse(null);
+            if (p != null && !p.getAgentId().equals(authId) && !isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("You are not the agent of this property"));
+            }
+            slot.setPropertyId(propertyId);
         } else {
             slot.setPropertyId(null); // Global slot
         }
+        
         slot.setSlotDate(LocalDate.parse(body.get("slotDate").toString()));
         slot.setSlotTime(java.time.LocalTime.parse(body.get("slotTime").toString()));
         if (body.containsKey("durationMinutes")) {
@@ -64,8 +83,11 @@ public class AgentSlotController {
     }
 
     /** GET /api/slots/agent/{agentId} — All slots for an agent */
-    @GetMapping("/agent/{agentId}")
-    public ResponseEntity<ApiResponse<List<AgentSlotDTO>>> getAgentSlots(@PathVariable Long agentId) {
+    @GetMapping("/agent/me")
+    public ResponseEntity<ApiResponse<List<AgentSlotDTO>>> getMySlots() {
+        Long agentId = SecurityUtils.getAuthenticatedUserId();
+        if (agentId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+        
         List<AgentSlot> slots = agentSlotRepository.findByAgentId(agentId);
         List<AgentSlotDTO> dtos = slots.stream().map(AgentSlotDTO::from).collect(java.util.stream.Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success(dtos));
@@ -78,6 +100,12 @@ public class AgentSlotController {
         if (slot == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Slot not found"));
+        
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (!slot.getAgentId().equals(authId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        }
+
         if (slot.isBooked())
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Cannot delete a booked slot"));
@@ -92,6 +120,11 @@ public class AgentSlotController {
         if (slot == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Slot not found"));
         
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (!slot.getAgentId().equals(authId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        }
+
         if (slot.isBooked())
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Cannot edit a booked slot"));
 
@@ -105,9 +138,15 @@ public class AgentSlotController {
             slot.setDurationMinutes(Integer.parseInt(body.get("durationMinutes").toString()));
         }
         if (body.containsKey("propertyId")) {
-            Object propertyId = body.get("propertyId");
-            if (propertyId != null && !propertyId.toString().isEmpty() && !propertyId.toString().equals("-1")) {
-                slot.setPropertyId(Long.parseLong(propertyId.toString()));
+            Object propertyIdObj = body.get("propertyId");
+            if (propertyIdObj != null && !propertyIdObj.toString().isEmpty() && !propertyIdObj.toString().equals("-1")) {
+                Long propertyId = Long.parseLong(propertyIdObj.toString());
+                // Verify property ownership
+                Property p = propertyRepository.findById(propertyId).orElse(null);
+                if (p != null && !p.getAgentId().equals(authId) && !isAdmin()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("You are not the agent of this property"));
+                }
+                slot.setPropertyId(propertyId);
             } else {
                 slot.setPropertyId(null);
             }

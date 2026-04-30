@@ -149,16 +149,24 @@ public class AgencyController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getMyAgency(@RequestParam Long agentId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMyAgency() {
+        Long agentId = getAuthenticatedUserId();
+        if (agentId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+        
         Optional<AppUser> agentOpt = userRepository.findById(agentId);
         if (agentOpt.isPresent()) {
             AgentProfile profile = agentProfileRepository.findByUser(agentOpt.get())
                     .orElse(null);
             if (profile != null && profile.getAgency() != null) {
                 // Include the agency status for the agent
+                boolean isVerified = "JOINED".equals(profile.getAgencyStatus()) && 
+                                    profile.getAgency() != null && 
+                                    "APPROVED".equals(profile.getAgency().getStatus());
+                
                 return ResponseEntity.ok(ApiResponse.success(Map.of(
                     "agency", AgencyDTO.from(profile.getAgency()),
-                    "agencyStatus", profile.getAgencyStatus()
+                    "agencyStatus", profile.getAgencyStatus(),
+                    "verified", isVerified
                 )));
             }
         }
@@ -168,7 +176,10 @@ public class AgencyController {
     // --- OWNER APPROVAL ENDPOINTS ---
 
     @GetMapping("/pending-agents")
-    public ResponseEntity<ApiResponse<java.util.List<Map<String, Object>>>> getPendingAgents(@RequestParam Long ownerId) {
+    public ResponseEntity<ApiResponse<java.util.List<Map<String, Object>>>> getPendingAgents() {
+        Long ownerId = getAuthenticatedUserId();
+        if (ownerId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+        
         Optional<Agency> agencyOpt = agencyRepository.findByAdminId(ownerId);
         if (agencyOpt.isEmpty()) {
              return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Agency not found or you are not an owner"));

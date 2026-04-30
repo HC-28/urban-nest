@@ -35,7 +35,7 @@ export default function PropertyChat() {
     useEffect(() => {
         // 1. Fetch Property
         propertyApi
-            .get(`/${propertyId}?userId=${user?.id || ""}&role=${user?.role || ""}`)
+            .get(`/${propertyId}`)
             .then(res => {
                 setProperty(res.data);
                 if (!agentId) setAgentId(res.data.agentId);
@@ -90,8 +90,8 @@ export default function PropertyChat() {
         try {
             const res = await chatApi.post("/messages", {
                 propertyId,
-                buyerId,
                 agentId,
+                buyerId,
                 sender: currentUserRole,
                 message: text
             });
@@ -109,8 +109,8 @@ export default function PropertyChat() {
         try {
             const res = await chatApi.post("/messages", {
                 propertyId,
-                buyerId,
                 agentId,
+                buyerId,
                 sender: currentUserRole,
                 message: "🚨 **ADMIN ASSISTANCE REQUESTED**"
             });
@@ -286,8 +286,8 @@ export default function PropertyChat() {
                                             try {
                                                 await chatApi.post("/messages", {
                                                     propertyId,
-                                                    buyerId,
                                                     agentId,
+                                                    buyerId,
                                                     sender: "BUYER",
                                                     message: `⭐ FEEDBACK: ${originalText}`
                                                 });

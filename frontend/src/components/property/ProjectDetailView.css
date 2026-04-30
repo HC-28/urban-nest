@@ -184,6 +184,76 @@
   color: #94a3b8;
 }
 
+/* ─── Inventory Table ─── */
+.project-inventory-card {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.inventory-table th, .inventory-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 1rem;
+}
+
+.inventory-table th {
+  background: rgba(0, 0, 0, 0.2);
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+
+.inventory-table tr:last-child td {
+  border-bottom: none;
+}
+
+.inventory-table .status-label {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.inventory-table .status-label.available {
+  background: rgba(16, 185, 129, 0.1); color: #10b981;
+}
+.inventory-table .status-label.limited {
+  background: rgba(245, 158, 11, 0.1); color: #f59e0b;
+}
+.inventory-table .status-label.standby {
+  background: rgba(239, 68, 68, 0.1); color: #ef4444;
+}
+
+.inquire-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.inquire-btn.outline {
+  background: transparent;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+}
+.inquire-btn:hover {
+  background: #2563eb;
+  color: white;
+}
+
 /* ─── High-End Gallery ─── */
 .project-gallery-grid {
   display: grid;

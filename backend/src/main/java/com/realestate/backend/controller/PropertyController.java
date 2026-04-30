@@ -11,11 +11,13 @@ import com.realestate.backend.repository.ChatMessageRepository;
 import com.realestate.backend.repository.FavoriteRepository;
 import com.realestate.backend.repository.AgentSlotRepository;
 import com.realestate.backend.repository.UserRepository;
+import com.realestate.backend.repository.AgentProfileRepository;
 import com.realestate.backend.service.EmailService;
 import com.realestate.backend.service.AnalyticsService;
 import com.realestate.backend.dto.ApiResponse;
 import com.realestate.backend.dto.PropertyListDTO;
 import com.realestate.backend.dto.PropertyDetailDTO;
+import com.realestate.backend.util.SecurityUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -59,27 +61,14 @@ public class PropertyController {
     @Autowired
     private EmailService emailService;
 
-    /**
-     * Helper: Extract the authenticated user's ID from the JWT token.
-     */
-    private Long getAuthenticatedAgentId() {
-        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth.getCredentials() == null) return null;
-        try {
-            return (Long) auth.getCredentials();
-        } catch (ClassCastException e) {
-            return null;
-        }
-    }
+    @Autowired
+    private AgentProfileRepository agentProfileRepository;
 
-    /**
-     * Helper: Check if the authenticated user is an AGENT or ADMIN.
-     */
-    private boolean isAgentOrAdmin() {
-        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return false;
-        return auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_AGENT") || a.getAuthority().equals("ROLE_ADMIN"));
+    @Autowired
+    private SecurityUtils securityUtils;
+
+    private boolean isAdmin() {
+        return securityUtils.hasRole("ADMIN");
     }
 
     /** GET /api/properties — All active, unsold properties with optional filters */
@@ -163,7 +152,9 @@ public class PropertyController {
                         String title = p.getTitle() != null ? p.getTitle().toLowerCase() : "";
                         String loc = p.getLocation() != null ? p.getLocation().toLowerCase() : "";
                         String desc = p.getDescription() != null ? p.getDescription().toLowerCase() : "";
-                        return title.contains(s) || loc.contains(s) || desc.contains(s);
+                        String agentName = (p.getAgent() != null && p.getAgent().getName() != null) ? p.getAgent().getName().toLowerCase() : "";
+                        String agencyName = (p.getAgent() != null && p.getAgent().getAgencyName() != null) ? p.getAgent().getAgencyName().toLowerCase() : "";
+                        return title.contains(s) || loc.contains(s) || desc.contains(s) || agentName.contains(s) || agencyName.contains(s);
                     })
                     .toList();
         }
@@ -206,10 +197,13 @@ public class PropertyController {
         return ResponseEntity.ok(ApiResponse.success(trending));
     }
 
-    /** GET /api/properties/agent/{agentId} — Properties by agent (for dashboard) */
-    @GetMapping(value = "/agent/{agentId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    /** GET /api/properties/agent/me — My properties (for dashboard) */
+    @GetMapping(value = "/agent/me", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional(readOnly = true)
-    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getPropertiesByAgent(@PathVariable Long agentId) {
+    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getMyProperties() {
+        Long agentId = SecurityUtils.getAuthenticatedUserId();
+        if (agentId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+
         List<PropertyListDTO> properties = propertyRepository.findByAgentId(agentId).stream()
                 .map(PropertyListDTO::from).toList();
         return ResponseEntity.ok(ApiResponse.success(properties));
@@ -245,36 +239,29 @@ public class PropertyController {
 
     /** GET /api/properties/{id} — Single property by ID */
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<PropertyDetailDTO>> getPropertyById(@PathVariable Long id, 
-            @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) String role) {
+    public ResponseEntity<ApiResponse<PropertyDetailDTO>> getPropertyById(@PathVariable Long id) {
         
         Property property = propertyRepository.findById(id).orElse(null);
         if (property == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
         }
 
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+
         // Sold visibility check
         if (property.getSold()) {
-            boolean isAllowed = false;
-            if ("ADMIN".equalsIgnoreCase(role)) {
-                isAllowed = true;
-            } else if (userId != null) {
-                if (userId.equals(property.getAgentId()) || userId.equals(property.getSoldToUserId())) {
-                    isAllowed = true;
-                }
-            }
+            boolean isAllowed = isAdmin() || (authId != null && (property.getAgentId().equals(authId) || authId.equals(property.getSoldToUserId())));
+
             if (!isAllowed) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(ApiResponse.error("This property is SOLD and no longer publicly available."));
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("This property is sold and no longer public."));
             }
         }
 
-        // Track view for active, unsold properties
-        if (!property.getSold() && property.getActive()) {
-            try {
-                analyticsService.trackView(id, userId);
-            } catch (Exception ignored) {}
+        // Tracking (only for public viewing)
+        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+            property.setViews(property.getViews() + 1);
+            propertyRepository.save(property);
+            analyticsService.trackView(id);
         }
 
         return ResponseEntity.ok(ApiResponse.success(PropertyDetailDTO.from(property)));
@@ -283,17 +270,21 @@ public class PropertyController {
     /** POST /api/properties — Add new property */
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<PropertyDetailDTO>> addProperty(@RequestBody Property property, @RequestParam Long agentId) {
-        if (!isAgentOrAdmin()) {
+        if (!securityUtils.hasRole("AGENT") && !securityUtils.hasRole("ADMIN")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Only agents can post properties"));
         }
-        
-        Long authId = getAuthenticatedAgentId();
-        if (authId != null && !authId.equals(agentId)) {
-            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            if (!isAdmin) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("You can only post properties for yourself"));
-            }
+
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+
+        if (!authId.equals(agentId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("You cannot post on behalf of another agent"));
+        }
+
+        // Enforcement: Check if agent is actually verified
+        if (!securityUtils.isVerifiedAgent(authId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("Agent verification required. You must be an approved member of a verified agency."));
         }
 
         AppUser agent = userRepository.findById(agentId).orElse(null);
@@ -309,12 +300,15 @@ public class PropertyController {
 
     /** PUT /api/properties/{id} — Update property */
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<PropertyDetailDTO>> updateProperty(@PathVariable Long id, @RequestBody Property up, @RequestParam Long agentId) {
+    public ResponseEntity<ApiResponse<PropertyDetailDTO>> updateProperty(@PathVariable Long id, @RequestBody Property up) {
         Property property = propertyRepository.findById(id).orElse(null);
         if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
 
-        if (!property.getAgentId().equals(agentId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+        
+        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("You are not the owner of this property"));
         }
 
         if (up.getTitle() != null) property.setTitle(up.getTitle());
@@ -348,12 +342,15 @@ public class PropertyController {
 
     /** DELETE /api/properties/{id} — Soft delete */
     @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<Map<String, String>>> deleteProperty(@PathVariable Long id, @RequestParam Long agentId) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> deleteProperty(@PathVariable Long id) {
         Property property = propertyRepository.findById(id).orElse(null);
         if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
 
-        if (!property.getAgentId().equals(agentId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+
+        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Unauthorized to delete this property"));
         }
 
         property.setActive(false);
@@ -365,12 +362,15 @@ public class PropertyController {
 
     /** PUT /api/properties/{id}/sold — Finalize sale */
     @PutMapping(value = "/{id}/sold", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<PropertyDetailDTO>> markPropertyAsSold(@PathVariable Long id, @RequestParam Long agentId, @RequestParam(required = false) Long buyerId) {
+    public ResponseEntity<ApiResponse<PropertyDetailDTO>> markPropertyAsSold(@PathVariable Long id, @RequestParam(required = false) Long buyerId) {
         Property property = propertyRepository.findById(id).orElse(null);
         if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
 
-        if (!property.getAgentId().equals(agentId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+
+        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 
         property.setSold(true);
@@ -420,11 +420,14 @@ public class PropertyController {
 
     /** PUT /api/properties/{id}/relist — Relist property */
     @PutMapping(value = "/{id}/relist", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<PropertyDetailDTO>> relistProperty(@PathVariable Long id, @RequestParam Long agentId) {
+    public ResponseEntity<ApiResponse<PropertyDetailDTO>> relistProperty(@PathVariable Long id) {
         Property property = propertyRepository.findById(id).orElse(null);
         if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Not found"));
 
-        if (!property.getAgentId().equals(agentId)) {
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+
+        if (!property.getAgentId().equals(authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 
@@ -472,11 +475,14 @@ public class PropertyController {
 
     /** PUT /api/properties/{id}/feature — Spotlight toggle */
     @PutMapping(value = "/{id}/feature", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<Map<String, Object>>> toggleFeaturedStatus(@PathVariable Long id, @RequestParam Long agentId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> toggleFeaturedStatus(@PathVariable Long id) {
         Property property = propertyRepository.findById(id).orElse(null);
         if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Not found"));
 
-        if (!property.getAgentId().equals(agentId)) {
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+
+        if (!property.getAgentId().equals(authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 

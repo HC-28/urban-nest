@@ -4,7 +4,7 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import toast from "react-hot-toast";
 import "./PostProperty.css";
-import { propertyApi } from "../../services/api";
+import { propertyApi, agencyApi } from "../../services/api";
 import { AMENITIES_LIST, PURPOSES, PROPERTY_TYPES } from "../../utils/constants";
 /* ─── SVG Icons ─── */
 const UploadIcon = ({ size = 40 }) => (
@@ -84,10 +84,12 @@ function PostProperty() {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const res = await propertyApi.get("/api/agencies/my-agency");
-        const joined = res.data.membershipStatus === "JOINED";
-        const approved = res.data.agency?.status === "APPROVED";
-        setAgentStatus({ joined, approved });
+        const res = await agencyApi.get(`/me?agentId=${user.id}`);
+        setAgentStatus({ 
+          joined: res.agencyStatus === "JOINED", 
+          approved: res.agency?.status === "APPROVED",
+          verified: res.verified 
+        });
       } catch (err) {
         console.error("Status check failed:", err);
       } finally {
@@ -308,9 +310,9 @@ function PostProperty() {
     return <div className="post-property-page"><Navbar /><div className="loader-container"><div className="loader"></div></div><Footer /></div>;
   }
 
-  const isVerified = agentStatus?.joined && agentStatus?.approved;
+  const isVerified = user?.role === "ADMIN" || agentStatus?.verified;
 
-  if (!user || user.role !== "AGENT" || !isVerified) {
+  if (!user || (user.role !== "AGENT" && user.role !== "ADMIN") || !isVerified) {
     return (
       <div className="post-property-page">
         <Navbar />

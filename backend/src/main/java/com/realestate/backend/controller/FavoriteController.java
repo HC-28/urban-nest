@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.realestate.backend.dto.ApiResponse;
 import com.realestate.backend.dto.PropertyListDTO;
+import com.realestate.backend.util.SecurityUtils;
 
 /**
  * Manage user favorites.
@@ -41,9 +42,19 @@ public class FavoriteController {
     @Autowired
     private PropertyRepository propertyRepository;
 
+    @Autowired
+    private SecurityUtils securityUtils;
+
+    private boolean isAdmin() {
+        return securityUtils.hasRole("ADMIN");
+    }
+
     /** GET /api/favorites/user/{userId} — Get user's favorite properties */
-    @GetMapping(value = "/user/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getUserFavorites(@PathVariable Long userId) {
+    @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<List<PropertyListDTO>>> getMyFavorites() {
+        Long userId = SecurityUtils.getAuthenticatedUserId();
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+        
         List<Favorite> favorites = favoriteRepository.findByUser_Id(userId);
         List<PropertyListDTO> dtos = favorites.stream()
                 .map(fav -> PropertyListDTO.from(fav.getProperty()))
@@ -53,7 +64,10 @@ public class FavoriteController {
 
     /** GET /api/favorites/status — Check if a property is favorited */
     @GetMapping(value = "/status", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkFavorite(@RequestParam Long propertyId) {
+        Long userId = SecurityUtils.getAuthenticatedUserId();
+        if (userId == null) return ResponseEntity.ok(ApiResponse.success(Map.of("isFavorite", false)));
+
         boolean exists = favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId);
         return ResponseEntity.ok(ApiResponse.success(Map.of("isFavorite", exists)));
     }
@@ -61,7 +75,10 @@ public class FavoriteController {
     /** POST /api/favorites — Add a favorite */
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public ResponseEntity<ApiResponse<Map<String, String>>> addFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> addFavorite(@RequestParam Long propertyId) {
+        Long userId = SecurityUtils.getAuthenticatedUserId();
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+
         long count = favoriteRepository.countByUser_Id(userId);
         if (count >= 10) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -78,7 +95,7 @@ public class FavoriteController {
 
         if (user == null || property == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("User or Property not found"));
+                    .body(ApiResponse.error("Property not found"));
         }
 
         Favorite favorite = new Favorite(user, property);
@@ -91,7 +108,10 @@ public class FavoriteController {
     /** DELETE /api/favorites — Remove a favorite */
     @DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public ResponseEntity<ApiResponse<Map<String, String>>> removeFavorite(@RequestParam Long userId, @RequestParam Long propertyId) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> removeFavorite(@RequestParam Long propertyId) {
+        Long userId = SecurityUtils.getAuthenticatedUserId();
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+
         if (!favoriteRepository.existsByUser_IdAndProperty_Id(userId, propertyId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Favorite not found"));

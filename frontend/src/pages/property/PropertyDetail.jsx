@@ -96,7 +96,7 @@ function PropertyDetail() {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const resp = await propertyApi.get(`/${id}?userId=${user?.id || ""}&role=${user?.role || ""}`);
+        const resp = await propertyApi.get(`/${id}`);
         const data = resp.data;
 
         const propertyData = {
@@ -144,9 +144,7 @@ function PropertyDetail() {
 
         if (user) {
           try {
-            const res = await favoritesApi.get("/status", {
-              params: { userId: user.id, propertyId: data.id }
-            });
+            const res = await favoritesApi.checkStatus(data.id);
             setIsSaved(res.data.isFavorite);
           } catch (e) {
             console.error(e);
@@ -182,7 +180,7 @@ function PropertyDetail() {
     const fetchChats = async () => {
       try {
         const res = await chatApi.get(`/messages`, {
-          params: { propertyId: property.id, buyerId: user.id, agentId: property.agentId }
+          params: { propertyId: property.id, agentId: property.agentId }
         });
 
         if (Array.isArray(res.data)) {
@@ -193,7 +191,6 @@ function PropertyDetail() {
 
         await chatApi.post(`/seen`, {
           propertyId: property.id,
-          buyerId: user.id,
           agentId: property.agentId,
           userRole: "BUYER"
         });
@@ -228,7 +225,6 @@ function PropertyDetail() {
     try {
       await reviewsApi.post("/", {
         agentId: property.agentId,
-        buyerId: user.id,
         propertyId: property.id,
         rating: reviewRating,
         reviewText: reviewText
@@ -285,7 +281,6 @@ function PropertyDetail() {
     try {
       await appointmentApi.post("", {
         slotId: slotId,
-        buyerId: user.id,
         propertyId: property.id
       });
 
@@ -324,12 +319,12 @@ function PropertyDetail() {
     try {
       if (isSaved) {
         await favoritesApi.delete("/", {
-          params: { userId: user.id, propertyId: property.id }
+          params: { propertyId: property.id }
         });
         setIsSaved(false);
       } else {
         await favoritesApi.post("/", null, {
-          params: { userId: user.id, propertyId: property.id }
+          params: { propertyId: property.id }
         });
         setIsSaved(true);
       }
@@ -384,7 +379,6 @@ function PropertyDetail() {
 
     const payload = {
       propertyId: property.id,
-      buyerId: user.id,
       agentId: property.agentId,
       sender: "BUYER",
       message: chatMessage

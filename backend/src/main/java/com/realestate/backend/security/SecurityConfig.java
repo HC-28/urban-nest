@@ -46,11 +46,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/agencies/public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                         .requestMatchers("/api/analytics/**").permitAll()
-                        // Favorites: read is public, write requires login
-                        .requestMatchers(HttpMethod.GET, "/api/favorites/status").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/favorites/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/favorites/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/favorites/**").authenticated()
+                        // Favorites: all require login
+                        .requestMatchers("/api/favorites/**").authenticated()
+                        
+                        // Reviews: read is public, write requires login
+                        .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
+                        .requestMatchers("/api/reviews/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()

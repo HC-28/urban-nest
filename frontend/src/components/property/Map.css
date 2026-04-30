@@ -57,41 +57,46 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
-    background: rgba(15, 23, 42, 0.7);
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.1),
-        0 20px 25px -5px rgba(0, 0, 0, 0.2),
+    padding: 6px 10px;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
     gap: 12px;
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .map-toolbar:hover {
-    background: rgba(15, 23, 42, 0.8);
-    border-color: rgba(59, 130, 246, 0.2);
-    box-shadow:
-        0 10px 15px -3px rgba(0, 0, 0, 0.1),
-        0 25px 50px -12px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: rgba(15, 23, 42, 0.95);
+    border-color: rgba(59, 130, 246, 0.4);
 }
 
-.toolbar-left,
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .toolbar-right {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex: 0 0 auto;
 }
 
 .toolbar-section {
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
+    gap: 10px;
+    flex-shrink: 1; /* Allow sections to shrink slightly */
+    min-width: 0;
 }
 
 /* City Selector */
@@ -104,20 +109,20 @@
 }
 
 .city-btn {
-    padding: 6px 14px;
+    padding: 6px 10px;
     border: none;
-    border-radius: 11px;
+    border-radius: 9px;
     background: transparent;
     color: #94a3b8;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .city-btn:hover {
@@ -138,9 +143,10 @@
 
 .toolbar-divider {
     width: 1px;
-    height: 24px;
-    background: rgba(255, 255, 255, 0.08);
-    margin: 0 4px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 2px;
+    flex-shrink: 0;
 }
 
 /* Toolbar Select Dropdowns */
@@ -176,19 +182,20 @@
 }
 
 .toolbar-select.area-select {
-    min-width: 160px;
+    min-width: 130px;
+    max-width: 180px;
 }
 
 .toolbar-select.mode-select {
-    min-width: 120px;
+    min-width: 110px;
 }
 
 .toolbar-select.type-select {
-    min-width: 100px;
+    min-width: 90px;
 }
 
 .toolbar-select.purpose-select {
-    min-width: 80px;
+    min-width: 70px;
 }
 
 .toolbar-select option {
@@ -239,8 +246,8 @@
 
 .toggle-label {
     font-size: 11px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.5);
+    font-weight: 700;
+    color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -256,15 +263,15 @@
 }
 
 .tile-pill {
-    padding: 6px 10px;
+    padding: 5px 8px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(255, 255, 255, 0.03);
     color: #94a3b8;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 32px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 28px;
     text-transform: uppercase;
 }
 
@@ -274,7 +281,10 @@
 }
 
 .tile-pill.active {
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+    background: #2563eb;
+    color: white;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
 /* Icon Buttons */
@@ -329,9 +339,49 @@
     border-color: rgba(59, 130, 246, 0.25);
 }
 
-.info-btn:hover {
-    background: rgba(59, 130, 246, 0.25);
-    color: #ffffff;
+.info-btn-pill {
+    padding: 0 16px;
+    height: 38px;
+    gap: 8px;
+    font-weight: 700;
+    background: rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+    border-radius: 12px;
+}
+
+.btn-icon {
+    font-size: 16px;
+}
+
+.btn-text {
+    font-size: 12px;
+}
+
+.map-absolute-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 1005;
+    width: 44px;
+    height: 44px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    transition: all 0.3s ease;
+    border: 2px solid white;
+}
+
+.map-absolute-close:hover {
+    background: #dc2626;
+    transform: scale(1.1) rotate(90deg);
 }
 
 /* ─── Leaflet Overrides ─── */
@@ -823,24 +873,30 @@
     }
 }
 
-@media (max-width: 992px) {
-    .toolbar-divider {
-        display: none;
-    }
-
+@media (max-width: 1420px) {
     .map-toolbar {
-        flex-wrap: wrap;
-        height: auto;
-        justify-content: center;
-        gap: 8px;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        padding: 6px 12px;
+        top: 20px;
+        width: calc(100% - 100px); /* Leave room for close btn */
+        margin-left: 20px;
+        transform: none;
+        left: 0;
     }
-
-    .toolbar-left,
     .toolbar-right {
-        width: 100%;
-        justify-content: center;
-        flex-wrap: wrap;
+        margin-left: auto;
     }
+}
+
+@media (max-width: 1200px) {
+    .btn-text { display: none; }
+    .info-btn-pill { padding: 0 10px; width: 38px; }
+}
+
+@media (max-width: 1024px) {
+    .toolbar-select.area-select { display: none; }
+    .purpose-pills { display: none; }
 }
 
 @media (max-width: 768px) {

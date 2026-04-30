@@ -80,14 +80,14 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
   useEffect(() => {
     if (isOpen && user) {
       setLoadingFavs(true);
-      favoritesApi.get(`/user/${user.id}`)
+      favoritesApi.getMyFavorites()
         .then(res => setFavorites(res.data))
         .catch(err => console.error("Error fetching favorites", err))
         .finally(() => setLoadingFavs(false));
 
       // Fetch properties count for agents
       if (user.role === "AGENT") {
-        propertyApi.get(`/agent/${user.id}`)
+        propertyApi.getMyProperties()
           .then(res => setPropertiesCount(res.data.length))
           .catch(err => console.error("Error fetching properties count", err));
       }
@@ -278,7 +278,7 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
                           onClick={(e) => {
                             e.stopPropagation();
                             handleUnfav(p.id);
-                            favoritesApi.delete(`?userId=${user.id}&propertyId=${p.id}`);
+                            favoritesApi.delete(`?propertyId=${p.id}`);
                           }}
                           style={{
                             position: 'absolute',

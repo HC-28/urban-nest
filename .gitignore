@@ -36,6 +36,12 @@ frontend/dist/
 *.ps1
 *.py
 *.pyc
+patch.js
+download_agents.js
+upload_agents_only.js
+fix_map.js
+upload_agents_only.js
+cloudinary_url_map.json
 *.json
 !package.json
 !package-lock.json

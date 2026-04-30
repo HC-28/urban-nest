@@ -27,7 +27,7 @@ public interface PropertyMapper {
     @Mapping(source = "agent.name", target = "agentName")
     @Mapping(source = "agent.email", target = "agentEmail")
     @Mapping(source = "agent.phone", target = "agentPhone")
-    @Mapping(source = "agent.profilePicture", target = "agentProfilePicture")
+    @Mapping(source = "agent.profilePictureUrl", target = "agentProfilePicture")
     @Mapping(source = "agent.city", target = "agentCity")
     @Mapping(source = "agent.verified", target = "isVerified")
     @Mapping(source = "listedDate", target = "listedDate")

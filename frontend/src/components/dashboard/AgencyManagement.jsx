@@ -45,7 +45,7 @@ function AgencyManagement({ user, onUpdateUser }) {
 
   const fetchMyAgency = async () => {
     try {
-      const { data } = await agencyApi.get(`/me?agentId=${user.id}`);
+      const { data } = await agencyApi.getMe();
       setAgency(data.agency);
       setAgentStatus(data.agencyStatus || "INDEPENDENT");
       
@@ -63,7 +63,7 @@ function AgencyManagement({ user, onUpdateUser }) {
 
   const fetchPendingAgents = async () => {
     try {
-      const { data } = await agencyApi.get(`/pending-agents?ownerId=${user.id}`);
+      const { data } = await agencyApi.getPendingAgents();
       setPendingAgents(data);
     } catch (err) {
       console.error("Failed to fetch pending agents", err);
@@ -76,8 +76,7 @@ function AgencyManagement({ user, onUpdateUser }) {
 
     try {
       const { data } = await agencyApi.post(`/join`, {
-        agencyCode: joinCode,
-        agentId: user.id
+        agencyCode: joinCode
       });
       toast.success(data.message);
       setJoinCode("");
@@ -92,7 +91,7 @@ function AgencyManagement({ user, onUpdateUser }) {
     if (!regForm.name) return toast.error("Agency name is required");
 
     try {
-      await agencyApi.post(`/register?adminId=${user.id}`, regForm);
+      await agencyApi.register(regForm);
       toast.success("Agency registered! Waiting for platform approval.");
       setShowRegisterForm(false);
       fetchMyAgency();
@@ -103,8 +102,11 @@ function AgencyManagement({ user, onUpdateUser }) {
 
   const handleAgentAction = async (profileId, action) => {
     try {
-      const endpoint = action === 'approve' ? 'approve-agent' : 'reject-agent';
-      await agencyApi.post(`/${endpoint}/${profileId}?ownerId=${user.id}`);
+      if (action === 'approve') {
+        await agencyApi.approveAgent(profileId);
+      } else {
+        await agencyApi.rejectAgent(profileId);
+      }
       toast.success(`Agent ${action}d successfully`);
       fetchPendingAgents();
     } catch (err) {

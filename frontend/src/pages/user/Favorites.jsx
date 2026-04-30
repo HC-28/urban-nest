@@ -21,7 +21,7 @@ function Favorites() {
 
         const fetchFavorites = async () => {
             try {
-                const response = await favoritesApi.get(`/user/${user.id}`);
+                const response = await favoritesApi.getMyFavorites();
                 console.log("Fetched favorites:", response.data);
                 setFavorites(response.data);
             } catch (error) {

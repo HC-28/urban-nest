@@ -65,7 +65,7 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
 
   useEffect(() => {
     if (user?.id) {
-      favoritesApi.get(`/status?userId=${user.id}&propertyId=${propertyId}`)
+      favoritesApi.checkStatus(propertyId)
         .then(res => setIsSaved(res.data.isFavorite))
         .catch(err => console.error("Error checking favorite", err));
     }
@@ -80,16 +80,17 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
     }
     try {
       if (isSaved) {
-        await favoritesApi.delete("", { params: { userId: user.id, propertyId } });
+        await favoritesApi.delete("", { params: { propertyId } });
         setIsSaved(false);
         if (onUnfav) onUnfav(propertyId);
       } else {
-        await favoritesApi.post("", null, { params: { userId: user.id, propertyId } });
+        await favoritesApi.post("", null, { params: { propertyId } });
         setIsSaved(true);
       }
     } catch (error) {
       if (error.response && error.response.status === 400) {
-        toast.error(error.response.data);
+        const errorData = error.response.data;
+        toast.error(typeof errorData === 'object' ? (errorData.message || "Bad Request") : errorData);
       } else {
         console.error("Error toggling favorite", error);
         toast.error("Error toggling favorite");
@@ -197,7 +198,7 @@ function PropertyCard({ property, viewMode, formatPrice = defaultFormatPrice, on
           <span className="dot-sep">·</span>
           <span>{property.bathrooms} Bath</span>
           <span className="dot-sep">·</span>
-          <span>{property.area} sq.ft</span>
+          <span>{Math.round(property.area)} sq.ft</span>
         </div>
 
         {/* Footer: agent + time */}

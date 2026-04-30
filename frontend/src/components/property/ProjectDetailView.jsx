@@ -147,24 +147,24 @@ const ProjectDetailView = ({
                 <tbody>
                   <tr>
                     <td>{property.bhk} BHK Premium</td>
-                    <td>{property.area}</td>
+                    <td>{Math.round(property.area)}</td>
                     <td className="price-cell">{formatPrice(property.priceRaw)}</td>
                     <td><span className="status-label available">Available</span></td>
-                    <td><button className="inquire-btn" onClick={() => setShowChat(true)}>Select</button></td>
+                    <td><button className="inquire-btn" onClick={() => { if(!user) { alert("Please login to Select"); return; } setShowChat(true); }}>Select</button></td>
                   </tr>
                   <tr>
                     <td>{property.bhk + 1} BHK Luxury</td>
                     <td>{Math.round(property.area * 1.3)}</td>
                     <td className="price-cell">{formatPrice(property.priceRaw * 1.45)}</td>
                     <td><span className="status-label limited">Limited</span></td>
-                    <td><button className="inquire-btn" onClick={() => setShowChat(true)}>View</button></td>
+                    <td><button className="inquire-btn" onClick={() => { if(!user) { alert("Please login to View"); return; } setShowChat(true); }}>View</button></td>
                   </tr>
                   <tr>
                     <td>{property.bhk + 2} BHK Elite</td>
                     <td>{Math.round(property.area * 1.6)}</td>
                     <td className="price-cell">{formatPrice(property.priceRaw * 1.8)}</td>
                     <td><span className="status-label standby">Waiting List</span></td>
-                    <td><button className="inquire-btn outline" onClick={() => setShowChat(true)}>Notify</button></td>
+                    <td><button className="inquire-btn outline" onClick={() => { if(!user) { alert("Please login to Notify"); return; } setShowChat(true); }}>Notify</button></td>
                   </tr>
                 </tbody>
               </table>

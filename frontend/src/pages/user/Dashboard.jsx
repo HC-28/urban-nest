@@ -159,7 +159,7 @@ function Dashboard() {
 
   const fetchAgentAppointments = async () => {
     try {
-      const { data } = await appointmentApi.get(`/agent/${user.id}`);
+      const { data } = await appointmentApi.getAgentAppointments();
       setAppointments(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching agent appointments:", err);
@@ -169,7 +169,7 @@ function Dashboard() {
 
   const fetchBuyerAppointments = async () => {
     try {
-      const { data } = await appointmentApi.get(`/buyer/${user.id}`);
+      const { data } = await appointmentApi.getBuyerAppointments();
       setAppointments(data);
       // Filter sold properties for bought properties tab
       setBoughtProperties(data.filter(a => a.status === "sold"));
@@ -180,7 +180,7 @@ function Dashboard() {
 
   const fetchAgentSlots = async () => {
     try {
-      const { data } = await slotsApi.get(`/agent/${user.id}`);
+      const { data } = await slotsApi.getMySlots();
       setSlots(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching slots:", err);
@@ -190,38 +190,52 @@ function Dashboard() {
 
   const fetchMyProperties = async () => {
     try {
-      const response = await propertyApi.get(`/agent/${user.id}`);
-      let properties = response.data;
+      const { data: properties } = await propertyApi.getMyProperties();
 
       // Fallback for missing reviews in cached properties
       try {
-        const chatsRes = await chatApi.get(`/agent/${user.id}`);
-        const chats = chatsRes.data || [];
-        properties = properties.map(p => {
+        const { data: chats } = await chatApi.getMyChatsAsAgent();
+        const chatList = chats || [];
+        const enriched = properties.map(p => {
           let computedReview = p.review;
           if (!computedReview && p.sold) {
-            const fbMsg = chats.find(c => String(c.propertyId) === String(p.id) && c.message?.startsWith('⭐ FEEDBACK:'));
+            const fbMsg = chatList.find(c => String(c.propertyId) === String(p.id) && c.message?.startsWith('⭐ FEEDBACK:'));
             if (fbMsg) computedReview = fbMsg.message.includes('Positive') ? 'Positive' : 'Negative';
           }
           return { ...p, review: computedReview };
         });
+        setMyProperties(enriched);
+        setSoldProperties(enriched.filter(p => p.sold));
+        setStats({
+          total: enriched.length,
+          active: enriched.filter(p => p.active && !p.sold).length,
+          inactive: enriched.filter(p => !p.active && !p.sold).length
+        });
       } catch (e) {
         console.error("Error fetching chats for reviews fallback:", e);
+        setMyProperties(properties);
+        setSoldProperties(properties.filter(p => p.sold));
+        setStats({
+          total: properties.length,
+          active: properties.filter(p => p.active && !p.sold).length,
+          inactive: properties.filter(p => !p.active && !p.sold).length
+        });
       }
-
-      setMyProperties(properties);
-      // Filter sold properties for the "Sold Properties" tab
-      setSoldProperties(properties.filter(p => p.sold));
-      setStats({
-        total: properties.length,
-        active: properties.filter(p => p.active && !p.sold).length,
-        inactive: properties.filter(p => !p.active && !p.sold).length
-      });
       setLoading(false);
     } catch (error) {
       console.error("Error fetching properties:", error);
       setMyProperties([]);
       setLoading(false);
+    }
+  };
+
+  const handleToggleFeatured = async (id) => {
+    try {
+      await propertyApi.toggleFeature(id);
+      toast.success("Spotlight status updated!");
+      fetchMyProperties();
+    } catch (err) {
+      toast.error("Failed to update spotlight status");
     }
   };
 
@@ -250,7 +264,7 @@ function Dashboard() {
     if (!window.confirm("Are you sure you want to delete this property?")) return;
 
     try {
-      await propertyApi.delete(`/${propertyId}?agentId=${user.id}`);
+      await propertyApi.delete(`/${propertyId}`);
       toast.success("Property deleted successfully!");
       fetchMyProperties();
     } catch (error) {
@@ -263,11 +277,11 @@ function Dashboard() {
     try {
       if (property.active) {
         // Unlist property (soft delete sets isActive to false without marking as sold)
-        await propertyApi.delete(`/${property.id}?agentId=${user.id}`);
+        await propertyApi.delete(`/${property.id}`);
         toast.success("Property unlisted successfully!");
       } else {
         // Re-list property
-        await propertyApi.put(`/${property.id}/relist?agentId=${user.id}`);
+        await propertyApi.relist(property.id);
         toast.success("Property listed successfully!");
       }
       fetchMyProperties();
@@ -292,7 +306,7 @@ function Dashboard() {
 
   const handleSaveEdit = async (propertyId) => {
     try {
-      await propertyApi.put(`/${propertyId}?agentId=${user.id}`, editForm);
+      await propertyApi.put(`/${propertyId}`, editForm);
       toast.success("Property updated successfully!");
       setEditingProperty(null);
       fetchMyProperties();
@@ -326,10 +340,7 @@ function Dashboard() {
 
   const handleConfirmMarkSold = async () => {
     try {
-      let endpoint = `/${propertyToMarkSold.id}/sold?agentId=${user.id}`;
-      if (selectedBuyerId) {
-        endpoint += `&buyerId=${selectedBuyerId}`;
-      }
+      const endpoint = `/${propertyToMarkSold.id}/sold${selectedBuyerId ? `?buyerId=${selectedBuyerId}` : ''}`;
       await propertyApi.put(endpoint);
       toast.success("Property marked as Sold! Interested parties notified.");
       setShowSoldModal(false);
@@ -354,7 +365,6 @@ function Dashboard() {
     }
     try {
       await slotsApi.post("", {
-        agentId: user.id,
         propertyId: newSlot.propertyId,
         slotDate: newSlot.date,
         slotTime: newSlot.time
