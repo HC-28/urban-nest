@@ -109,10 +109,12 @@ function Login() {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label>Email Address</label>
+            <label htmlFor="email">Email Address</label>
             <input
+              id="email"
               type="email"
               name="email"
+              autoComplete="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="name@example.com"
@@ -122,10 +124,12 @@ function Login() {
 
           {activeTab === 'password' ? (
             <div className="form-group">
-                <label>Password</label>
+                <label htmlFor="password">Password</label>
                 <input
+                id="password"
                 type="password"
                 name="password"
+                autoComplete="current-password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
@@ -139,11 +143,13 @@ function Login() {
             </div>
           ) : (
             <div className="form-group">
-                <label>Verification Code</label>
+                <label htmlFor="otp">Verification Code</label>
                 <div className="otp-input-wrapper">
                     <input
+                        id="otp"
                         type="text"
                         name="otp"
+                        autoComplete="one-time-code"
                         value={formData.otp}
                         onChange={handleChange}
                         placeholder="6-digit OTP"

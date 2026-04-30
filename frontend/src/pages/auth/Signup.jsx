@@ -117,7 +117,7 @@ function Signup() {
     setLoading(true);
     try {
       const res = await authApi.post("/register", { ...user, otp });
-      
+
       if (res.data.token) {
         // Auto-login for Buyers
         localStorage.setItem("token", res.data.token);
@@ -155,7 +155,7 @@ function Signup() {
 
     setLoading(true);
     try {
-      const res = await authApi.post("/google", { 
+      const res = await authApi.post("/google", {
         token: response.credential,
         role: user.role,
         city: user.city,
@@ -212,19 +212,22 @@ function Signup() {
           {!otpStep ? (
             <>
               <div className="form-group">
-                <input name="name" placeholder="Full Name" value={user.name} onChange={handleChange} required />
+                <label htmlFor="name">Full Name</label>
+                <input id="name" name="name" placeholder="Full Name" value={user.name} onChange={handleChange} required autoComplete="name" />
               </div>
 
               <div className="form-group">
-                <input name="email" type="email" placeholder="Email Address" value={user.email} onChange={handleChange} required />
+                <label htmlFor="email">Email Address</label>
+                <input id="email" name="email" type="email" placeholder="Email Address" value={user.email} onChange={handleChange} required autoComplete="email" />
               </div>
 
               <div className="form-group">
-                <input name="password" type="password" placeholder="Password (min 6 chars)" value={user.password} onChange={handleChange} required minLength={6} />
+                <label htmlFor="password">Password (min 6 chars)</label>
+                <input id="password" name="password" type="password" placeholder="Password (min 6 chars)" value={user.password} onChange={handleChange} required minLength={6} autoComplete="new-password" />
                 {user.password && (
                   <div style={{ marginTop: '6px' }}>
                     <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                      {[1,2,3,4,5].map(i => (
+                      {[1, 2, 3, 4, 5].map(i => (
                         <div key={i} style={{
                           flex: 1, height: '3px', borderRadius: '2px',
                           background: i <= pwdStrength.score ? pwdStrength.color : 'rgba(255,255,255,0.1)',
@@ -238,7 +241,8 @@ function Signup() {
               </div>
 
               <div className="form-group">
-                <select name="role" value={user.role} onChange={handleChange}>
+                <label htmlFor="role">Account Type</label>
+                <select id="role" name="role" value={user.role} onChange={handleChange}>
                   <option value="BUYER">I am a Buyer/Renter</option>
                   <option value="AGENT">I am an Agent/Seller</option>
                 </select>
@@ -246,41 +250,47 @@ function Signup() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div className="form-group">
-                  <input name="city" placeholder="City" value={user.city} onChange={handleChange} required />
+                  <label htmlFor="city">City</label>
+                  <input id="city" name="city" placeholder="City" value={user.city} onChange={handleChange} required autoComplete="address-level2" />
                 </div>
                 <div className="form-group">
-                  <input name="pincode" placeholder="Pincode" value={user.pincode} onChange={handleChange} maxLength="6" required />
+                  <label htmlFor="pincode">Pincode</label>
+                  <input id="pincode" name="pincode" placeholder="Pincode" value={user.pincode} onChange={handleChange} maxLength="6" required autoComplete="postal-code" />
                 </div>
               </div>
               <div className="form-group">
-                <input name="phone" placeholder="Phone Number" value={user.phone} onChange={handleChange} required pattern="[0-9]{10}" title="Enter a 10-digit phone number" />
+                <label htmlFor="phone">Phone Number</label>
+                <input id="phone" name="phone" placeholder="Phone Number" value={user.phone} onChange={handleChange} required pattern="[0-9]{10}" title="Enter a 10-digit phone number" autoComplete="tel" />
               </div>
 
               {user.role === "AGENT" && (
                 <div className="form-group">
-                  <input name="agencyName" placeholder="Agency Name (Optional)" value={user.agencyName || ""} onChange={handleChange} />
+                  <label htmlFor="agencyName">Agency Name (Optional)</label>
+                  <input id="agencyName" name="agencyName" placeholder="Agency Name (Optional)" value={user.agencyName || ""} onChange={handleChange} autoComplete="organization" />
                 </div>
               )}
 
               <div className="form-group">
-                <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <label htmlFor="profilePicture" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <span style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '0.6rem 1rem', borderRadius: '0.75rem', fontSize: '0.85rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
                     {previewImage ? "✨ Change Photo" : "📷 Upload Photo"}
                   </span>
-                  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                  <input id="profilePicture" type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
                   {previewImage && <img src={previewImage} alt="Preview" style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', objectFit: 'cover' }} />}
                 </label>
               </div>
             </>
           ) : (
             <div className="form-group">
-              <label>Verification Code</label>
+              <label htmlFor="signup-otp">Verification Code</label>
               <div className="otp-input-wrapper">
                 <input
+                  id="signup-otp"
                   type="text"
                   placeholder="Enter 6-digit OTP"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
+                  autoComplete="one-time-code"
                   required
                 />
                 <button type="button" onClick={requestOtp} disabled={loading} className="resend-otp-btn">
@@ -296,7 +306,7 @@ function Signup() {
           <button type="submit" className="auth-btn" disabled={loading}>
             {loading ? "Please wait..." : otpStep ? "Verify & Register" : "Sign Up"}
           </button>
-          
+
           {otpStep && (
             <button type="button" onClick={() => setOtpStep(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.9rem', marginTop: '0.75rem', cursor: 'pointer' }}>
               ← Edit Registration Details

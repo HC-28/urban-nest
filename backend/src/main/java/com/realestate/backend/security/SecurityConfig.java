@@ -38,39 +38,47 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints — no token required
-                        .requestMatchers("/", "/index.html").permitAll()
+                        // Public endpoints
+                        .requestMatchers("/", "/index.html", "/favicon.ico", "/*.png", "/*.jpg").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/agents/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/agencies/public").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/agencies/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                         .requestMatchers("/api/analytics/**").permitAll()
-                        // Favorites: all require login
-                        .requestMatchers("/api/favorites/**").authenticated()
-                        
-                        // Reviews: read is public, write requires login
-                        .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
-                        .requestMatchers("/api/reviews/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
 
-                        // Admin-only endpoints (debug requires admin login)
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/debug/**").hasRole("ADMIN")
+                        // Secure endpoints
+                        .requestMatchers("/api/favorites/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
+                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/debug/**").hasAuthority("ROLE_ADMIN")
 
-                        // Everything else requires authentication
+                        // Everything else
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // This stops the "Using generated security password" warning
+    @Bean
+    public org.springframework.security.core.userdetails.UserDetailsService userDetailsService() {
+        return username -> {
+            throw new org.springframework.security.core.userdetails.UsernameNotFoundException("User not found");
+        };
+    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(frontendUrl));
+        config.setAllowedOrigins(List.of(
+            frontendUrl, 
+            "https://urban-nest-nine-omega.vercel.app",
+            "http://localhost:5173"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));

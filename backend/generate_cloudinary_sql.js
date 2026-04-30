@@ -44,16 +44,16 @@ const logos = [1, 2, 3, 4].map(n => resolve(`agency_logo_${n}`, 'logo'));
 
 // ── Resolve agent portraits (Hardcoded realistic faces) ──────────────────────────
 const portraits = [
-  "https://randomuser.me/api/portraits/men/32.jpg",
-  "https://randomuser.me/api/portraits/women/44.jpg",
-  "https://randomuser.me/api/portraits/men/68.jpg",
-  "https://randomuser.me/api/portraits/women/79.jpg",
-  "https://randomuser.me/api/portraits/men/45.jpg",
-  "https://randomuser.me/api/portraits/women/33.jpg",
-  "https://randomuser.me/api/portraits/men/22.jpg",
-  "https://randomuser.me/api/portraits/women/11.jpg",
-  "https://randomuser.me/api/portraits/men/90.jpg",
-  "https://randomuser.me/api/portraits/men/55.jpg"
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_1.jpg",
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_2.jpg",
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_3.jpg",
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_4.jpg",
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_5.jpg",
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_6.jpg",
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_7.jpg",
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_8.jpg",
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_9.jpg",
+  "https://res.cloudinary.com/drxw32m8m/image/upload/urban-nest/agents/agent_10.jpg"
 ];
 
 // ── Resolve property images (only successful uploads included in array) ────────
@@ -124,7 +124,7 @@ const agentData = [
 ];
 
 const agentRows = agentData
-  .map(a => `('${a.name}', '${a.email}', '${PASS}', '${a.phone}', 'AGENT', '${a.city}', ${sqlStr(a.p)})`)
+  .map(a => `('${a.name}', '${a.email}', '${PASS}', '${a.phone}', 'AGENT', '${a.city}', ${sqlStr(a.p)}, true, true)`)
   .join(',\n');
 
 // ── Property image ARRAY literal ──────────────────────────────────────────────
@@ -157,7 +157,7 @@ INSERT INTO agencies (name, agency_code, license_number, bio, status, logo_url, 
 ('Urban Nexus Group',     'UBX-IND', 'L-NAT-7700', 'Modern urban apartments across India major hubs.',      'APPROVED', ${sqlStr(logos[3])}, NOW());
 
 -- 3. AGENTS (password: 'password123' — profile_picture_url = NULL if not uploaded)
-INSERT INTO users (name, email, password, phone, role, city, profile_picture_url) VALUES
+INSERT INTO users (name, email, password, phone, role, city, profile_picture_url, email_verified, verified) VALUES
 ${agentRows};
 
 -- 4. LINK AGENTS TO AGENCIES
