@@ -1,8 +1,8 @@
 import axios from "axios";
 
 // ---------------- Base URL from Environment Variable ----------------
-export const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8083/api";
-export const IMAGE_URL = import.meta.env.VITE_IMAGE_URL || "http://localhost:8083";
+export const BASE_URL = import.meta.env.VITE_API_URL;
+export const IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
 // ---------------- Helper: create Axios instance with JWT interceptor ----------------
 function createApi(path, options = {}) {
@@ -88,8 +88,8 @@ chatApi.getMyChatsAsAgent = () => chatApi.get("/agent/me");
 chatApi.getMyChatsAsBuyer = () => chatApi.get("/buyer/me");
 export const analyticsApi = createApi("/analytics", { timeout: 15000 });
 export const appointmentApi = createApi("/appointments");
-appointmentApi.getMyAgentAppointments = () => appointmentApi.get("/agent/me");
-appointmentApi.getMyBuyerAppointments = () => appointmentApi.get("/buyer/me");
+appointmentApi.getAgentAppointments = () => appointmentApi.get("/agent/me");
+appointmentApi.getBuyerAppointments = () => appointmentApi.get("/buyer/me");
 export const slotsApi = createApi("/slots");
 slotsApi.getMySlots = () => slotsApi.get("/agent/me");
 export const contactApi = createApi("/contact");
@@ -100,6 +100,13 @@ agencyApi.getPendingAgents = () => agencyApi.get("/pending-agents");
 agencyApi.register = (data) => agencyApi.post("/register", data);
 agencyApi.approveAgent = (id) => agencyApi.post(`/approve-agent/${id}`);
 agencyApi.rejectAgent = (id) => agencyApi.post(`/reject-agent/${id}`);
+
+// Dedicated upload API so URLs resolve to /api/upload (not /api/properties/api/upload)
+export const uploadApi = createApi("/upload");
+uploadApi.uploadFile = (formData, type = "misc") => {
+  formData.append("type", type);
+  return uploadApi.post("", formData, { headers: { "Content-Type": "multipart/form-data" } });
+};
 
 // ---------------- Default Export ----------------
 export default {

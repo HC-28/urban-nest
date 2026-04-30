@@ -499,17 +499,17 @@ public class AppointmentController {
         for (Appointment a : appts) {
             AppointmentDTO dto = AppointmentDTO.from(a);
 
-            // Fetch property title & agent name
+            // Fetch property title & agent name safely
             propertyRepository.findById(a.getPropertyId()).ifPresent(p -> {
                 dto.setPropertyTitle(p.getTitle());
-                dto.setAgentName(p.getAgentName());
+                dto.setAgentName(p.getAgent() != null ? p.getAgent().getName() : null);
             });
             result.add(dto);
         }
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
-    /** GET /api/appointments/agent/{agentId} — Agent's appointments */
+    /** GET /api/appointments/agent/me — Agent's appointments */
     @GetMapping("/agent/me")
     public ResponseEntity<ApiResponse<List<AppointmentDTO>>> getMyAgentAppointments() {
         Long agentId = SecurityUtils.getAuthenticatedUserId();
@@ -520,10 +520,10 @@ public class AppointmentController {
         for (Appointment a : appts) {
             AppointmentDTO dto = AppointmentDTO.from(a);
 
-            // Fetch property title & agent name
+            // Fetch property title & agent name safely
             propertyRepository.findById(a.getPropertyId()).ifPresent(p -> {
                 dto.setPropertyTitle(p.getTitle());
-                dto.setAgentName(p.getAgentName());
+                dto.setAgentName(p.getAgent() != null ? p.getAgent().getName() : null);
             });
             result.add(dto);
         }

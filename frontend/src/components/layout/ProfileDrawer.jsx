@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { userApi, favoritesApi, propertyApi } from "../../services/api";
+import { userApi, favoritesApi, propertyApi, uploadApi } from "../../services/api";
+
 import "./ProfileDrawer.css";
 import PropertyCard from "../property/PropertyCard";
 import { formatPrice } from "../../utils/priceUtils";
@@ -162,12 +163,10 @@ function ProfileDrawer({ isOpen, onClose, user, onUserUpdate }) {
       const uploadFormData = new FormData();
       uploadFormData.append("file", file);
       
-      // 1. Upload to Cloudinary via our backend
-      const uploadRes = await propertyApi.post("/api/upload", uploadFormData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+      // 1. Upload to Cloudinary via dedicated upload endpoint
+      const uploadRes = await uploadApi.uploadFile(uploadFormData, "agents");
       
-      const imageUrl = uploadRes.data.data.imageUrl;
+      const imageUrl = uploadRes.data.imageUrl;
       
       // 2. Update user profile with the new URL
       await userApi.patch("/me/avatar", {

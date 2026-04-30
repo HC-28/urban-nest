@@ -4,7 +4,8 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import toast from "react-hot-toast";
 import "./PostProperty.css";
-import { propertyApi, agencyApi } from "../../services/api";
+import { propertyApi, agencyApi, uploadApi } from "../../services/api";
+
 import { AMENITIES_LIST, PURPOSES, PROPERTY_TYPES } from "../../utils/constants";
 /* ─── SVG Icons ─── */
 const UploadIcon = ({ size = 40 }) => (
@@ -207,15 +208,11 @@ function PostProperty() {
         const uploadFormData = new FormData();
         uploadFormData.append("file", file);
         
-        // Upload to our backend's Cloudinary storage endpoint
-        const response = await propertyApi.post("/api/upload", uploadFormData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        });
+        // Upload to Cloudinary via dedicated upload endpoint
+        const response = await uploadApi.uploadFile(uploadFormData, "properties");
         
-        if (response.data && response.data.data.imageUrl) {
-          uploadedUrls.push(response.data.data.imageUrl);
+        if (response.data && response.data.imageUrl) {
+          uploadedUrls.push(response.data.imageUrl);
         }
       }
 

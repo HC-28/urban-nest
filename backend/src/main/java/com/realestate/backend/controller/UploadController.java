@@ -24,13 +24,18 @@ public class UploadController {
      * Returns the secure image URL.
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<Map<String, String>>> uploadImage(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> uploadImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "type", defaultValue = "misc") String type) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("File is empty"));
         }
 
         try {
-            String imageUrl = cloudinaryService.uploadFile(file);
+            // Determine subfolder based on type (e.g. properties, agents)
+            String subFolder = type.toLowerCase();
+            String imageUrl = cloudinaryService.uploadFile(file, subFolder);
+            
             Map<String, String> response = new HashMap<>();
             response.put("imageUrl", imageUrl);
             return ResponseEntity.ok(ApiResponse.success(response));

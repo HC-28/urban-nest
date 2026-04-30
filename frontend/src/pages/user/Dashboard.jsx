@@ -187,11 +187,13 @@ function Dashboard() {
   const fetchBuyerAppointments = async () => {
     try {
       const { data } = await appointmentApi.getBuyerAppointments();
-      setAppointments(data);
+      const safe = Array.isArray(data) ? data : [];
+      setAppointments(safe);
       // Filter sold properties for bought properties tab
-      setBoughtProperties(data.filter(a => a.status === "sold"));
+      setBoughtProperties(safe.filter(a => a.status === "sold"));
     } catch (err) {
       console.error("Error fetching buyer appointments:", err);
+      setAppointments([]);
     }
   };
 

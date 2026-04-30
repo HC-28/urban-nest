@@ -224,7 +224,7 @@ public class PropertyController {
         // Filter by purpose if specified
         if (purpose != null && !purpose.isBlank() && !purpose.equalsIgnoreCase("All")) {
             final String pu = purpose.toLowerCase();
-            properties = properties.stream().filter(p -> p.getPurpose().toLowerCase().contains(pu)).toList();
+            properties = properties.stream().filter(p -> p.getPurpose() != null && p.getPurpose().toLowerCase().contains(pu)).toList();
         }
 
         // Sort by views (simple "top" logic)

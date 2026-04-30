@@ -20,18 +20,24 @@ public class CloudinaryService {
     private String folderName;
 
     /**
-     * Uploads a file to Cloudinary.
+     * Uploads a file to a specific subfolder within the main project folder.
      * @param file The file to upload.
+     * @param subFolder The subfolder (e.g. "properties", "agents", "agencies").
      * @return The secure URL of the uploaded image.
      * @throws IOException If upload fails.
      */
-    public String uploadFile(MultipartFile file) throws IOException {
+    public String uploadFile(MultipartFile file, String subFolder) throws IOException {
+        String finalFolder = folderName + "/" + subFolder;
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
                 ObjectUtils.asMap(
-                        "folder", folderName,
+                        "folder", finalFolder,
                         "resource_type", "auto"
                 ));
         return (String) uploadResult.get("secure_url");
+    }
+
+    public String uploadFile(MultipartFile file) throws IOException {
+        return uploadFile(file, "misc");
     }
 
     /**
