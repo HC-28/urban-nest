@@ -29,6 +29,17 @@ function Navbar() {
     const navigate = useNavigate();
     const location = useLocation();
 
+    useEffect(() => {
+        const checkAuth = () => {
+            const storedUser = localStorage.getItem("user");
+            setUser(storedUser ? JSON.parse(storedUser) : null);
+        };
+        
+        checkAuth();
+        window.addEventListener("storage", checkAuth);
+        return () => window.removeEventListener("storage", checkAuth);
+    }, [location.pathname]);
+
     const handleUserUpdate = (updatedUser) => setUser(updatedUser);
     const isActive = (path, search) => {
         if (search) {
@@ -44,7 +55,7 @@ function Navbar() {
                     <div
                         className="brand"
                         role="button"
-                        onClick={() => (window.location.href = "/")}
+                        onClick={() => navigate("/")}
                         tabIndex={0}
                     >
                         <img src={logo} alt="logo" className="brand-logo" />

@@ -310,7 +310,7 @@ function PostProperty() {
     return <div className="post-property-page"><Navbar /><div className="loader-container"><div className="loader"></div></div><Footer /></div>;
   }
 
-  const isVerified = user?.role === "ADMIN" || agentStatus?.verified;
+  const isVerified = user?.role === "ADMIN" || user?.verified || agentStatus?.verified;
 
   if (!user || (user.role !== "AGENT" && user.role !== "ADMIN") || !isVerified) {
     return (
@@ -337,9 +337,11 @@ function PostProperty() {
             <p style={{ color: '#94a3b8', marginBottom: '32px', fontSize: '1.1rem', lineHeight: '1.6' }}>
               {user?.role !== "AGENT" 
                 ? "This feature is exclusively available for registered agents."
-                : !agentStatus?.joined 
-                  ? "You must be an approved member of an agency before you can list properties. Please join an agency or wait for your request to be approved."
-                  : "Your agency is currently awaiting platform verification. You'll be able to list properties once the Super Admin approves your agency."}
+                : !user?.verified && !agentStatus?.verified 
+                  ? "Your account is awaiting platform verification. Our team needs to verify your credentials before you can list properties. This usually takes 24-48 hours."
+                  : !agentStatus?.joined 
+                    ? "Independent agents are welcome! However, if you've applied to an agency, you must wait for their approval or cancel the request to list as an independent agent."
+                    : "Your agency is currently awaiting platform approval. You'll be able to list properties once the Super Admin approves the agency."}
             </p>
             <button
                onClick={() => navigate(user?.role === "AGENT" ? "/dashboard?tab=agency" : "/")}

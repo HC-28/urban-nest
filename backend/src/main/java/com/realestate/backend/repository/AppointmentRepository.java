@@ -69,4 +69,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
         // Get all appointments for a specific slot
         List<Appointment> findBySlotId(Long slotId);
+
+        @org.springframework.transaction.annotation.Transactional
+        void deleteByProperty_Id(Long propertyId);
+
+        default void deleteByPropertyId(Long propertyId) {
+                deleteByProperty_Id(propertyId);
+        }
 }

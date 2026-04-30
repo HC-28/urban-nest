@@ -54,8 +54,8 @@ const HomeIcon = ({ size = 24 }) => (
   </svg>
 );
 
-const StarIcon = ({ size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const StarIcon = ({ size = 18, fill = "none" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
   </svg>
 );
@@ -129,7 +129,24 @@ function Dashboard() {
   const [myProperties, setMyProperties] = useState([]);
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
   const [editingProperty, setEditingProperty] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    type: "",
+    purpose: "",
+    price: 0,
+    area: 0,
+    bhk: 0,
+    bathrooms: 0,
+    balconies: 0,
+    city: "",
+    location: "",
+    pinCode: "",
+    furnishing: "",
+    description: "",
+    amenities: "",
+    photos: ""
+  });
 
   // Pagination & Filtering
   const [searchTerm, setSearchTerm] = useState("");
@@ -155,7 +172,7 @@ function Dashboard() {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id, user?.role]);
 
   const fetchAgentAppointments = async () => {
     try {
@@ -231,11 +248,11 @@ function Dashboard() {
 
   const handleToggleFeatured = async (id) => {
     try {
-      await propertyApi.toggleFeature(id);
-      toast.success("Spotlight status updated!");
+      const { data } = await propertyApi.toggleFeature(id);
+      toast.success(data?.message || "Spotlight status updated!");
       fetchMyProperties();
     } catch (err) {
-      toast.error("Failed to update spotlight status");
+      toast.error(err.response?.data?.message || "Failed to update spotlight status");
     }
   };
 
@@ -261,15 +278,15 @@ function Dashboard() {
   };
 
   const handleDelete = async (propertyId) => {
-    if (!window.confirm("Are you sure you want to delete this property?")) return;
+    if (!window.confirm("PERMANENT DELETE: This will remove the property and all related data (chats, appointments). This action cannot be undone. Are you sure?")) return;
 
     try {
-      await propertyApi.delete(`/${propertyId}`);
-      toast.success("Property deleted successfully!");
+      await propertyApi.hardDelete(propertyId);
+      toast.success("Property permanently removed.");
       fetchMyProperties();
     } catch (error) {
       console.error("Error deleting property:", error);
-      toast.error("Failed to delete property. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to delete property.");
     }
   };
 
@@ -294,29 +311,40 @@ function Dashboard() {
   const handleEdit = (property) => {
     setEditingProperty(property.id);
     setEditForm({
-      title: property.title,
-      type: property.type,
-      purpose: property.purpose,
-      price: property.price,
-      area: property.area,
-      bhk: property.bhk,
-      photos: property.photos
+      title: property.title || "",
+      type: property.type || "",
+      purpose: property.purpose || "",
+      price: property.price || 0,
+      area: property.area || 0,
+      bhk: property.bhk || 0,
+      bathrooms: property.bathrooms || 0,
+      balconies: property.balconies || 0,
+      city: property.city || "",
+      location: property.location || "",
+      pinCode: property.pinCode || "",
+      furnishing: property.furnishing || "",
+      description: property.description || "",
+      amenities: property.amenities || "",
+      photos: property.photos || ""
     });
+    setShowEditModal(true);
   };
 
-  const handleSaveEdit = async (propertyId) => {
+  const handleSaveEdit = async () => {
     try {
-      await propertyApi.put(`/${propertyId}`, editForm);
+      await propertyApi.put(`/${editingProperty}`, editForm);
       toast.success("Property updated successfully!");
+      setShowEditModal(false);
       setEditingProperty(null);
       fetchMyProperties();
     } catch (error) {
       console.error("Error updating property:", error);
-      toast.error("Failed to update property. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to update property.");
     }
   };
 
   const handleCancelEdit = () => {
+    setShowEditModal(false);
     setEditingProperty(null);
     setEditForm({});
   };
@@ -622,29 +650,6 @@ function Dashboard() {
                           <tbody>
                             {currentProperties.map(property => (
                               <tr key={property.id} className={!property.active ? 'inactive-row' : ''}>
-                                {editingProperty === property.id ? (
-                                  <td colSpan="6">
-                                    <div className="inline-edit-form">
-                                      <input type="text" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} placeholder="Title" style={{ flex: 1 }} />
-                                      <select
-                                        value={editForm.purpose}
-                                        onChange={e => setEditForm({ ...editForm, purpose: e.target.value })}
-                                        style={{ width: '130px', background: '#060d18', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '8px' }}
-                                      >
-                                        <option value="For Sale">For Sale</option>
-                                        <option value="For Rent">For Rent</option>
-                                        <option value="Commercial">Commercial</option>
-                                        <option value="Project">Project</option>
-                                      </select>
-                                      <input type="number" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} placeholder="Price" style={{ width: '140px' }} />
-                                      <div className="edit-actions">
-                                        <button className="save-btn" onClick={() => handleSaveEdit(property.id)}>Save</button>
-                                        <button className="cancel-btn" onClick={handleCancelEdit}>Cancel</button>
-                                      </div>
-                                    </div>
-                                  </td>
-                                ) : (
-                                  <>
                                     <td>
                                       <div className="property-info">
                                         <img
@@ -682,21 +687,19 @@ function Dashboard() {
                                             onClick={() => handleToggleFeatured(property.id)}
                                             style={property.featured ? { color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.4)', background: 'rgba(245, 158, 11, 0.1)' } : {}}
                                           >
-                                            <StarIcon />
+                                            <StarIcon fill={property.featured ? "currentColor" : "none"} />
                                           </button>
                                           <button className="action-icon edit" onClick={() => handleEdit(property)}><EditIcon /></button>
                                           <button className="action-icon toggle" title={property.active ? "Unlist Property" : "Relist Property"} onClick={() => handleToggleActive(property)}>
                                             {property.active ? <EyeOffIcon /> : <EyeIcon />}
                                           </button>
                                           <button className="action-icon success" title="Mark as Sold" onClick={() => handleMarkSoldInit(property)} style={{ color: '#10b981' }}>
-                                            <CheckCircleIcon size={18} />
+                                            <CheckCircleIcon size={18} color="currentColor" />
                                           </button>
                                           <button className="action-icon delete" onClick={() => handleDelete(property.id)}><TrashIcon /></button>
                                         </>
                                       )}
                                     </td>
-                                  </>
-                                )}
                               </tr>
                             ))}
                           </tbody>
@@ -997,7 +1000,7 @@ function Dashboard() {
                             )}
                           </td>
                           <td>
-                            <button className="view-btn" onClick={() => navigate(`/property/${p.id}?userId=${user.id}&role=${user.role}`)}>
+                            <button className="view-btn" onClick={() => navigate(`/property/${p.id}?userId=${user?.id || ''}&role=${user?.role || ''}`)}>
                               View Details
                             </button>
                           </td>
@@ -1011,6 +1014,100 @@ function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Comprehensive Property Edit Modal */}
+      {showEditModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '850px' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0 }}><EditIcon /> Advanced Property Editor</h2>
+              <button className="close-x" onClick={handleCancelEdit} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '24px', cursor: 'pointer' }}>&times;</button>
+            </div>
+            
+            <div className="edit-modal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '10px' }}>
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label>Property Title</label>
+                <input type="text" value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Purpose</label>
+                <select value={editForm.purpose} onChange={e => setEditForm({...editForm, purpose: e.target.value})}>
+                  <option value="For Sale">For Sale</option>
+                  <option value="For Rent">For Rent</option>
+                  <option value="Commercial">Commercial</option>
+                  <option value="Project">Project</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Price (₹)</label>
+                <input type="number" value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Area (sq.ft)</label>
+                <input type="number" value={editForm.area} onChange={e => setEditForm({...editForm, area: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Furnishing</label>
+                <select value={editForm.furnishing} onChange={e => setEditForm({...editForm, furnishing: e.target.value})}>
+                  <option value="">Select...</option>
+                  <option value="Unfurnished">Unfurnished</option>
+                  <option value="Semi-Furnished">Semi-Furnished</option>
+                  <option value="Fully Furnished">Fully Furnished</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>BHK</label>
+                <input type="number" value={editForm.bhk} onChange={e => setEditForm({...editForm, bhk: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Bathrooms</label>
+                <input type="number" value={editForm.bathrooms} onChange={e => setEditForm({...editForm, bathrooms: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Balconies</label>
+                <input type="number" value={editForm.balconies} onChange={e => setEditForm({...editForm, balconies: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>City</label>
+                <input type="text" value={editForm.city} onChange={e => setEditForm({...editForm, city: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Pin Code</label>
+                <input type="text" value={editForm.pinCode} onChange={e => setEditForm({...editForm, pinCode: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Facing</label>
+                <input type="text" value={editForm.facing} onChange={e => setEditForm({...editForm, facing: e.target.value})} placeholder="e.g. East" />
+              </div>
+              <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                <label>Location / Landmark</label>
+                <input type="text" value={editForm.location} onChange={e => setEditForm({...editForm, location: e.target.value})} />
+              </div>
+              <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                <label>Description</label>
+                <textarea 
+                  value={editForm.description} 
+                  onChange={e => setEditForm({...editForm, description: e.target.value})}
+                  style={{ width: '100%', minHeight: '100px', background: '#060d18', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '12px', padding: '12px' }}
+                />
+              </div>
+              <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                <label>Amenities (Comma separated)</label>
+                <input type="text" value={editForm.amenities} onChange={e => setEditForm({...editForm, amenities: e.target.value})} placeholder="Pool, Gym, Parking..." />
+              </div>
+              <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                <label>Image URLs (Comma separated)</label>
+                <input type="text" value={editForm.photos} onChange={e => setEditForm({...editForm, photos: e.target.value})} />
+              </div>
+            </div>
+            
+            <div className="modal-actions" style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '20px' }}>
+              <button className="cancel-btn" onClick={handleCancelEdit} style={{ width: 'auto', padding: '12px 24px' }}>Discard</button>
+              <button className="save-btn" onClick={handleSaveEdit} style={{ width: 'auto', padding: '12px 32px', background: '#3b82f6' }}>Apply Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sold Confirmation Modal */}
       {showSoldModal && propertyToMarkSold && (

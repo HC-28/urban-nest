@@ -33,9 +33,20 @@ public class SecurityUtils {
                 .anyMatch(a -> a.getAuthority().equals(roleWithPrefix));
     }
 
+    @Autowired
+    private com.realestate.backend.repository.UserRepository userRepository;
+
     public boolean isVerifiedAgent(Long agentId) {
         if (hasRole("ADMIN")) return true;
         
+        // Check if the user itself is verified (Independent Agent support)
+        boolean userVerified = userRepository.findById(agentId)
+                .map(u -> Boolean.TRUE.equals(u.isVerified()))
+                .orElse(false);
+        
+        if (userVerified) return true;
+
+        // Otherwise, check if they belong to a verified agency
         return agentProfileRepository.findByUserId(agentId)
                 .map(p -> "JOINED".equals(p.getAgencyStatus()) && 
                           p.getAgency() != null && 

@@ -74,8 +74,8 @@ function App() {
         <SearchProvider>
             <CompareProvider>
                 <BackToTop />
-                <AnimatePresence mode="wait">
-                    <Suspense fallback={<GlobalLoader />}>
+                <Suspense fallback={<GlobalLoader />}>
+                    <AnimatePresence mode="wait">
                         <Routes location={location} key={location.pathname}>
                             <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
                             <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
@@ -105,8 +105,8 @@ function App() {
                             <Route path="/privacy" element={<PageWrapper><Privacy /></PageWrapper>} />
                             <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
                         </Routes>
-                    </Suspense>
-                </AnimatePresence>
+                    </AnimatePresence>
+                </Suspense>
                 <CompareActionBanner />
                 <CompareModal />
             </CompareProvider>

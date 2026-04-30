@@ -340,9 +340,30 @@ public class PropertyController {
         return ResponseEntity.ok(ApiResponse.success(PropertyDetailDTO.from(saved)));
     }
 
-    /** DELETE /api/properties/{id} — Soft delete */
+    /** DELETE /api/properties/{id} — Soft delete (Unlist) */
     @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Map<String, String>>> deleteProperty(@PathVariable Long id) {
+        Property property = propertyRepository.findById(id).orElse(null);
+        if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
+
+        Long authId = SecurityUtils.getAuthenticatedUserId();
+        if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
+
+        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Unauthorized to hide this property"));
+        }
+
+        property.setActive(false);
+        propertyRepository.save(property);
+
+        if (property.getCity() != null) analyticsService.computeScoresForCity(property.getCity());
+        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Property unlisted successfully")));
+    }
+
+    /** DELETE /api/properties/{id}/permanent — Hard delete */
+    @DeleteMapping(value = "/{id}/permanent", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Transactional
+    public ResponseEntity<ApiResponse<Map<String, String>>> hardDeleteProperty(@PathVariable Long id) {
         Property property = propertyRepository.findById(id).orElse(null);
         if (property == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Property not found"));
 
@@ -353,11 +374,16 @@ public class PropertyController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Unauthorized to delete this property"));
         }
 
-        property.setActive(false);
-        propertyRepository.save(property);
+        // Clean up related data to prevent foreign key errors
+        favoriteRepository.deleteByProperty(property);
+        appointmentRepository.deleteByPropertyId(id);
+        chatMessageRepository.deleteByPropertyId(id);
+        agentSlotRepository.deleteByPropertyId(id);
+        
+        propertyRepository.delete(property);
 
         if (property.getCity() != null) analyticsService.computeScoresForCity(property.getCity());
-        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Deleted successfully")));
+        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Property permanently deleted")));
     }
 
     /** PUT /api/properties/{id}/sold — Finalize sale */

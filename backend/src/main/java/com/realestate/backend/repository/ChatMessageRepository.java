@@ -67,4 +67,11 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             @Param("buyerId") Long buyerId,
             @Param("agentId") Long agentId,
             @Param("userRole") String userRole);
+
+    @Transactional
+    void deleteByProperty_Id(Long propertyId);
+
+    default void deleteByPropertyId(Long propertyId) {
+        deleteByProperty_Id(propertyId);
+    }
 }

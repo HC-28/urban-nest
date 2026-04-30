@@ -32,4 +32,11 @@ public interface AgentSlotRepository extends JpaRepository<AgentSlot, Long> {
 
     // All available slots for a property on a given date
     List<AgentSlot> findByProperty_IdAndSlotDateAndIsBookedFalse(Long propertyId, LocalDate date);
+
+    @org.springframework.transaction.annotation.Transactional
+    void deleteByProperty_Id(Long propertyId);
+
+    default void deleteByPropertyId(Long propertyId) {
+        deleteByProperty_Id(propertyId);
+    }
 }

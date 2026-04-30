@@ -78,6 +78,7 @@ propertyApi.toggleFeature = (id) => propertyApi.put(`/${id}/feature`);
 propertyApi.getMyProperties = () => propertyApi.get("/agent/me");
 propertyApi.relist = (id) => propertyApi.put(`/${id}/relist`);
 propertyApi.markSold = (id) => propertyApi.put(`/${id}/sold`);
+propertyApi.hardDelete = (id) => propertyApi.delete(`/${id}/permanent`);
 export const agentsApi = createApi("/agents");
 export const favoritesApi = createApi("/favorites");
 favoritesApi.getMyFavorites = () => favoritesApi.get("/me");

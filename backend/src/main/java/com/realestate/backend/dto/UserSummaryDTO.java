@@ -17,6 +17,7 @@ public class UserSummaryDTO {
     private String phone;
     private boolean verified;
     private boolean deletionRequested;
+    private String agencyName;
 
     public UserSummaryDTO() {}
 
@@ -32,6 +33,7 @@ public class UserSummaryDTO {
         dto.phone = user.getPhone();
         dto.verified = user.isVerified();
         dto.deletionRequested = user.isDeletionRequested();
+        dto.agencyName = user.getAgencyName();
         return dto;
     }
 
@@ -45,6 +47,7 @@ public class UserSummaryDTO {
     public String getPhone() { return phone; }
     public boolean isVerified() { return verified; }
     public boolean isDeletionRequested() { return deletionRequested; }
+    public String getAgencyName() { return agencyName; }
 
     // Setters
     public void setId(Long id) { this.id = id; }
@@ -56,4 +59,5 @@ public class UserSummaryDTO {
     public void setPhone(String phone) { this.phone = phone; }
     public void setVerified(boolean verified) { this.verified = verified; }
     public void setDeletionRequested(boolean deletionRequested) { this.deletionRequested = deletionRequested; }
+    public void setAgencyName(String agencyName) { this.agencyName = agencyName; }
 }
