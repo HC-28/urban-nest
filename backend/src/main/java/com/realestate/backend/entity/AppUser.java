@@ -183,7 +183,8 @@ public class AppUser {
     // ── Convenience methods for Agent functionality ──────────────────────────
 
     public int getReviews() {
-        return agentProfile != null ? agentProfile.getReviews() : 0;
+        if (agentProfile == null || agentProfile.getReviews() == null) return 0;
+        return agentProfile.getReviews();
     }
 
     public void setReviews(int reviews) {
@@ -192,7 +193,8 @@ public class AppUser {
     }
 
     public double getRating() {
-        return agentProfile != null ? agentProfile.getRating() : 0.0;
+        if (agentProfile == null || agentProfile.getRating() == null) return 0.0;
+        return agentProfile.getRating();
     }
 
     public void setRating(double rating) {
