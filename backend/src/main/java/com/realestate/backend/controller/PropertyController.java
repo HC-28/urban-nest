@@ -490,7 +490,7 @@ public class PropertyController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Cannot feature sold property"));
         }
 
-        List<Property> agentFeatured = propertyRepository.findByAgentId(agentId).stream()
+        List<Property> agentFeatured = propertyRepository.findByAgentId(property.getAgentId()).stream()
                 .filter(p -> Boolean.TRUE.equals(p.getFeatured()))
                 .toList();
 
