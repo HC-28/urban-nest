@@ -1085,6 +1085,12 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
+.send-btn svg {
+  stroke: white !important;
+  color: white !important;
+  fill: none !important;
+}
+
 .send-btn:hover:not(:disabled) {
   background: #2563eb;
   transform: scale(1.1) rotate(-10deg);
@@ -1302,6 +1308,31 @@
   color: #f1f5f9;
 }
 
+.slots-section {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.slots-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 15px;
+}
+
+.slots-header h3 {
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+  color: #f1f5f9;
+  margin: 0;
+}
+
 .slots-close {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1314,6 +1345,15 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.slots-close svg {
+  stroke: #94a3b8 !important;
+  color: #94a3b8 !important;
+  fill: none !important;
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .slots-close:hover {

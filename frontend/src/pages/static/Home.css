@@ -1,11 +1,11 @@
-/* ============ Home Page — Premium Design ============ */
+/* ============ Home Page â€” Premium Design ============ */
 .home-page {
   overflow-x: hidden;
   background: transparent;
   min-height: 100vh;
 }
 
-/* ═══════════════ HERO ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• HERO â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .hero {
   min-height: 100vh;
   position: relative;
@@ -107,7 +107,7 @@
   }
 }
 
-/* ─── Sotheby's Search Card ─── */
+/* â”€â”€â”€ Sotheby's Search Card â”€â”€â”€ */
 .hero-search {
   background: rgba(10, 20, 40, 0.75);
   backdrop-filter: blur(30px);
@@ -457,7 +457,7 @@
   font-size: 16px;
 }
 
-/* ═══════════════ FEATURES ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FEATURES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .features {
   padding: 100px 24px;
   background: #0a1020;
@@ -581,7 +581,7 @@
   color: #60a5fa;
 }
 
-/* ═══════════════ SECTION HEADERS ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION HEADERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -629,7 +629,7 @@
   color: #60a5fa;
 }
 
-/* ═══════════════ FEATURED PROPERTIES ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FEATURED PROPERTIES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .featured-section {
   padding: 80px 24px;
   background: linear-gradient(180deg, #0a1020 0%, #0d1526 100%);
@@ -650,7 +650,7 @@
   gap: 28px;
 }
 
-/* ═══════════════ CITIES ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CITIES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .cities {
   padding: 120px 24px;
   background: #0d1526;
@@ -746,7 +746,7 @@
   font-weight: 500;
 }
 
-/* ═══════════════ RESPONSIVE ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RESPONSIVE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media (max-width: 1024px) {
   .hero-title {
     font-size: 3rem;
@@ -1028,5 +1028,145 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+}
+
+/* ═══════════════ PREMIUM PROJECTS ═══════════════ */
+.projects-section {
+  padding: 80px 24px;
+  background: transparent;
+}
+
+.projects-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+.project-card {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+.project-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+}
+
+.project-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.project-card:hover .project-image {
+  transform: scale(1.08);
+}
+
+.project-status-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 2;
+}
+
+.project-builder-badge {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.project-info {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.project-info h3 {
+  font-size: 1.3rem;
+  color: #fff;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.project-location {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.project-config {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+.project-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.project-price-label {
+  color: #64748b;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.project-price {
+  color: #60a5fa;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+@media (max-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
   }
 }

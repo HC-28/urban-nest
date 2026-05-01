@@ -565,6 +565,30 @@
   cursor: pointer;
 }
 
+.close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  padding: 4px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 8px;
+}
+
+.close-btn svg {
+  stroke: currentColor !important;
+  fill: none !important;
+  color: currentColor !important;
+}
+
 .premium-chat-box .chat-messages {
   flex: 1;
   overflow-y: auto;

@@ -259,9 +259,7 @@ public class PropertyController {
 
         // Tracking (only for public viewing)
         if (!property.getAgentId().equals(authId) && !isAdmin()) {
-            property.setViews(property.getViews() + 1);
-            propertyRepository.save(property);
-            analyticsService.trackView(id);
+            analyticsService.trackView(id, authId);
         }
 
         return ResponseEntity.ok(ApiResponse.success(PropertyDetailDTO.from(property)));

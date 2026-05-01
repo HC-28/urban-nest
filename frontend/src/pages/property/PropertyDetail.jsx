@@ -16,7 +16,7 @@ import { Helmet } from "react-helmet-async";
 import { 
   FiEye, FiHeart, FiShare2, FiHome, FiMaximize, 
   FiCalendar, FiMapPin, FiUser, FiCheck, FiMail, 
-  FiPhone, FiX, FiChevronLeft, FiChevronRight 
+  FiPhone, FiX, FiChevronLeft, FiChevronRight, FiSend
 } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
 
@@ -79,6 +79,7 @@ function PropertyDetail() {
 
   const [showSlots, setShowSlots] = useState(false);
   const [availableSlots, setAvailableSlots] = useState([]);
+  const [refreshApptTrigger, setRefreshApptTrigger] = useState(0);
   const [showMap, setShowMap] = useState(false);
   const chatMessagesRef = useRef(null);
 
@@ -166,9 +167,11 @@ function PropertyDetail() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get("chat") === "true") {
-      setShowChat(true);
+      if (property?.id && property?.agentId) {
+        navigate(`/buyer/chat/${property.id}/${property.agentId}`);
+      }
     }
-  }, [location.search]);
+  }, [location.search, property, navigate]);
 
   /* ================= FETCH CHAT HISTORY ================= */
   useEffect(() => {
@@ -286,6 +289,7 @@ function PropertyDetail() {
 
       toast.success("Appointment request sent successfully!");
       setShowSlots(false);
+      setRefreshApptTrigger(prev => prev + 1);
     } catch (e) {
       toast.error(e.response?.data?.error || "Failed to book appointment");
     }
@@ -640,7 +644,7 @@ function PropertyDetail() {
                     return;
                   }
 
-                  setShowChat(true);
+                  navigate(`/buyer/chat/${property.id}/${property.agentId}`);
                 }}
               >
                 💬 Chat with Agent
@@ -800,7 +804,7 @@ function PropertyDetail() {
                       onKeyDown={e => e.key === "Enter" && sendMessage()}
                     />
                     <button className="send-btn" onClick={sendMessage} disabled={!chatMessage.trim()}>
-                      <ShareIcon style={{ transform: 'rotate(-45deg)', marginLeft: '4px' }} />
+                      <FiSend size={18} />
                     </button>
                   </div>
                 )}
@@ -883,6 +887,7 @@ function PropertyDetail() {
                   buyerId={user.id}
                   agentId={property.agentId}
                   userRole={user.role}
+                  refreshTrigger={refreshApptTrigger}
                 />
               </div>
             )}

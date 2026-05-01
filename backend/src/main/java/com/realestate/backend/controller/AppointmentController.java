@@ -184,7 +184,7 @@ public class AppointmentController {
                     slot.getSlotDate().toString(), slot.getSlotTime().toString());
         }
 
-        // 10. Automated Chat Message
+        // 10. Automated Chat Message (from buyer)
         ChatMessage autoMsg = new ChatMessage();
         autoMsg.setPropertyId(propertyId);
         autoMsg.setAgentId(agentId);
@@ -194,8 +194,20 @@ public class AppointmentController {
         autoMsg.setMessage(slotId != null
                 ? "🗓️ **Appointment Booked!** at " + (slot != null ? slot.getSlotTime() : "") + " on "
                         + (slot != null ? slot.getSlotDate() : "")
-                : "🗓️ **I want to book an appointment**. Please assign a time slot.");
+                : "🗓️ **Appointment Requested** — I'd like to schedule a site visit. Please assign me a time slot.");
         chatMessageRepository.save(autoMsg);
+
+        // 11. System auto-reply to buyer confirming receipt (pending only)
+        if (slotId == null) {
+            ChatMessage systemReply = new ChatMessage();
+            systemReply.setPropertyId(propertyId);
+            systemReply.setAgentId(agentId);
+            systemReply.setBuyerId(buyerId);
+            systemReply.setSender("SYSTEM");
+            systemReply.setSeen(false);
+            systemReply.setMessage("✅ **Request Received!** Your appointment request for **" + property.getTitle() + "** has been sent to the agent. You'll be notified here once a time slot is assigned.");
+            chatMessageRepository.save(systemReply);
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("message", slotId != null ? "Appointment booked successfully" : "Appointment request sent");

@@ -854,7 +854,63 @@ function Dashboard() {
 
           {activeTab === "appointments" && (
             <div className="appointments-section">
-              <h2>{user.role === "AGENT" ? "Sale Confirmations" : "My Appointments"}</h2>
+              <h2>{user.role === "AGENT" ? "Appointments & Requests" : "My Appointments"}</h2>
+
+              {/* Pending requests alert for agents */}
+              {user.role === "AGENT" && appointments.filter(a => a.status === "pending").length > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05))',
+                  border: '1px solid rgba(245,158,11,0.4)',
+                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  marginBottom: '20px'
+                }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px' }}>
+                    <span style={{ fontSize:'1.2rem' }}>🔔</span>
+                    <strong style={{ color:'#f59e0b', fontSize:'1rem' }}>
+                      {appointments.filter(a => a.status === "pending").length} New Appointment Request(s)
+                    </strong>
+                  </div>
+                  {appointments.filter(a => a.status === "pending").map(appt => (
+                    <div key={appt.id} style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      borderRadius: '8px',
+                      padding: '12px 14px',
+                      marginBottom: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '10px'
+                    }}>
+                      <div>
+                        <p style={{ margin:0, fontWeight:600, color:'var(--text-primary)' }}>
+                          {appt.buyerName} <span style={{ fontWeight:400, color:'var(--text-secondary)', fontSize:'0.85rem' }}>({appt.buyerEmail})</span>
+                        </p>
+                        <p style={{ margin:'2px 0 0', fontSize:'0.82rem', color:'var(--text-secondary)' }}>
+                          Property: {appt.propertyTitle || `#${appt.propertyId}`}
+                        </p>
+                      </div>
+                      <button
+                        style={{
+                          background:'#f59e0b', color:'#000', border:'none',
+                          borderRadius:'8px', padding:'7px 16px',
+                          fontWeight:600, cursor:'pointer', fontSize:'0.85rem'
+                        }}
+                        onClick={() => {
+                          setActiveTab('properties');
+                          setTimeout(() => {
+                            const el = document.querySelector(`[data-property-id="${appt.propertyId}"]`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }, 200);
+                        }}
+                      >
+                        Go to Property →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="appointments-list">
                 {appointments.length === 0 ? (
@@ -867,8 +923,8 @@ function Dashboard() {
                         <span className={`status-pill ${appt.status}`}>{appt.status.toUpperCase()}</span>
                       </div>
                       <div className="appt-details">
-                        <p><strong>Property ID:</strong> {appt.propertyId}</p>
-                        <p><strong>Date/Time:</strong> {appt.appointmentDate} at {appt.appointmentTime}</p>
+                        <p><strong>Property:</strong> {appt.propertyTitle || `#${appt.propertyId}`}</p>
+                        <p><strong>Date/Time:</strong> {appt.appointmentDate ? `${appt.appointmentDate} at ${appt.appointmentTime}` : 'Awaiting slot assignment'}</p>
                         {user.role === "AGENT" ? (
                           <p><strong>Buyer:</strong> {appt.buyerName} ({appt.buyerEmail})</p>
                         ) : (

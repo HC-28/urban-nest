@@ -8,7 +8,8 @@ export default function AppointmentActionPanel({
     buyerId,
     agentId,
     userRole,
-    isHeader = false
+    isHeader = false,
+    refreshTrigger = 0
 }) {
     const [appointment, setAppointment] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -17,15 +18,15 @@ export default function AppointmentActionPanel({
 
     useEffect(() => {
         fetchAppointmentStatus();
-    }, [propertyId, buyerId, agentId]);
+    }, [propertyId, buyerId, agentId, refreshTrigger]);
 
     const fetchAppointmentStatus = async () => {
         setLoading(true);
         try {
             // Fetch appointments using hardened session-based endpoint
             const res = userRole === "BUYER" 
-                ? await appointmentApi.getMyBuyerAppointments()
-                : await appointmentApi.getMyAgentAppointments();
+                ? await appointmentApi.getBuyerAppointments()
+                : await appointmentApi.getAgentAppointments();
 
             if (res.data && Array.isArray(res.data)) {
                 const activeAppt = res.data.find(a =>
@@ -38,8 +39,8 @@ export default function AppointmentActionPanel({
                 if (activeAppt) {
                     const sorted = res.data
                         .filter(a => String(a.propertyId) === String(propertyId) && String(a.agentId) === String(agentId) && a.status !== 'cancelled')
-                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    setAppointment(sorted[0]);
+                        .sort((a, b) => new Date(b.createdDate || b.createdAt) - new Date(a.createdDate || a.createdAt));
+                    setAppointment(sorted[0] || activeAppt);
                 } else {
                     setAppointment(null);
                 }

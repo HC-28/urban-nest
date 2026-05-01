@@ -414,6 +414,15 @@
     flex-shrink: 0;
 }
 
+.send-btn svg {
+    stroke: white !important;
+    color: white !important;
+    fill: none !important;
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
 .send-btn:hover {
     background: #06cf9c;
     transform: scale(1.05);

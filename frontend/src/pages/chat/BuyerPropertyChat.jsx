@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { chatApi, propertyApi, userApi } from "../../services/api";
 import { formatPrice } from "../../utils/priceUtils";
 import AppointmentActionPanel from "../../components/dashboard/AppointmentActionPanel";
+import { FiArrowUp } from "react-icons/fi";
 import "./PropertyChat.css";
 
 // Local fallback images
@@ -294,7 +295,6 @@ export default function BuyerPropertyChat() {
             ) : (
                 <div className="chat-input-wrapper">
                     <div className="chat-input-container">
-                        <button className="icon-btn" title="Attach file">📎</button>
                         <input
                             value={text}
                             onChange={e => setText(e.target.value)}
@@ -304,19 +304,12 @@ export default function BuyerPropertyChat() {
                         <div className="actions">
                             <button className="icon-btn" title="Emojis">😊</button>
                             <button className="send-btn" onClick={sendMessage} title="Send Message">
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                </svg>
+                                <FiArrowUp 
+                                    size={20} 
+                                    color="#ffffff" 
+                                    strokeWidth="3" 
+                                    style={{ display: 'block', flexShrink: 0, width: '20px', height: '20px' }} 
+                                />
                             </button>
                         </div>
                     </div>

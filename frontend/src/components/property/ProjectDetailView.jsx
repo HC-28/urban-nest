@@ -239,7 +239,7 @@ const ProjectDetailView = ({
             <div className="premium-actions">
               <button className="premium-btn primary" onClick={() => {
                 if (!user) return alert("Please login first to chat");
-                setShowChat(true);
+                navigate(`/buyer/chat/${property.id}/${property.agentId}`);
               }}>
                 <FiMessageSquare /> Chat with Builder
               </button>
