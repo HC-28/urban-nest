@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./Navbar.css";
 import ProfileDrawer from "./ProfileDrawer";
 import MapModal from "../property/MapModal";
+import ThemeToggle from "../ui/ThemeToggle";
 import logo from "../../assets/logo.png";
 import profile from "../../assets/profile.png";
 
@@ -121,6 +122,9 @@ function Navbar() {
                     </nav>
 
                     <div className="header-actions">
+                        {/* Theme Toggle */}
+                        <ThemeToggle />
+
                         {/* Search Button — redirects to search page */}
                         <button
                             className="search-toggle-btn"

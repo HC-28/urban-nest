@@ -1,0 +1,216 @@
+/* =============================================================================
+   URBAN NEST — DESIGN SYSTEM TOKENS
+   Central source of truth for all theme variables.
+   Imported by index.css.
+   
+   Architecture:
+     :root          → Dark theme values (original design preserved)
+     [data-theme="light"] → Light theme overrides
+   ============================================================================= */
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  DARK THEME (default :root — original Urban Nest dark design)               */
+/* ──────────────────────────────────────────────────────────────────────────── */
+:root {
+    /* Primary Brand — Blue */
+    --primary-color: #3B82F6;
+    --primary-dark: #2563EB;
+    --primary-light: #60A5FA;
+    --primary-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    --primary-glow: 0 0 30px rgba(59, 130, 246, 0.3);
+
+    /* Secondary */
+    --secondary-color: #3B82F6;
+    --secondary-dark: #2563EB;
+    --secondary-light: #60A5FA;
+    --secondary-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+
+    /* Accent */
+    --accent-color: #FFFFFF;
+    --accent-dark: #E2E8F0;
+    --accent-light: #F8FAFC;
+
+    /* Backgrounds */
+    --bg-primary: #060d18;
+    --bg-secondary: #0d1526;
+    --bg-card: rgba(15, 23, 42, 0.7);
+    --bg-tertiary: #1a2438;
+    --bg-dark: #030810;
+    --bg-glass: rgba(6, 13, 24, 0.65);
+    --bg-glass-strong: rgba(6, 13, 24, 0.85);
+    --bg-overlay: rgba(0, 0, 0, 0.7);
+
+    /* Text */
+    --text-primary: #FFFFFF;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --text-dark: #0F172A;
+    --text-on-primary: #0A192F;
+    --text-inverse: #0F172A;
+
+    /* Utility / Semantic */
+    --success-color: #059669;
+    --success-bg: rgba(5, 150, 105, 0.12);
+    --warning-color: #D97706;
+    --warning-bg: rgba(217, 119, 6, 0.12);
+    --error-color: #DC2626;
+    --error-bg: rgba(220, 38, 38, 0.12);
+    --info-color: #38BDF8;
+    --info-bg: rgba(56, 189, 248, 0.12);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 30px rgba(255, 255, 255, 0.15);
+    --shadow-blue-glow: 0 0 30px rgba(148, 163, 184, 0.15);
+
+    /* Borders */
+    --border-light: rgba(255, 255, 255, 0.08);
+    --border-medium: rgba(255, 255, 255, 0.12);
+    --border-dark: rgba(255, 255, 255, 0.04);
+    --border-strong: rgba(255, 255, 255, 0.2);
+
+    /* Navbar specific */
+    --navbar-bg: rgba(6, 13, 24, 0.88);
+    --navbar-border: rgba(255, 255, 255, 0.05);
+    --navbar-link-color: #CBD5E1;
+    --navbar-link-hover-bg: rgba(255, 255, 255, 0.1);
+    --navbar-active-bg: #FFFFFF;
+    --navbar-active-color: #0A192F;
+    --navbar-icon-color: #FFFFFF;
+    --navbar-pill-bg: rgba(255, 255, 255, 0.04);
+    --navbar-pill-border: rgba(255, 255, 255, 0.08);
+    --navbar-mobile-bg: rgba(10, 25, 47, 0.97);
+    --navbar-mobile-active-bg: rgba(255, 255, 255, 0.12);
+
+    /* Footer specific */
+    --footer-bg: #060d18;
+    --footer-border: rgba(255, 255, 255, 0.05);
+    --footer-text: #94A3B8;
+    --footer-heading: #FFFFFF;
+    --footer-link: #94A3B8;
+    --footer-link-hover: #60a5fa;
+    --footer-social-bg: rgba(255, 255, 255, 0.05);
+    --footer-social-border: rgba(255, 255, 255, 0.05);
+    --footer-bottom-bg: rgba(0, 0, 0, 0.2);
+    --footer-bottom-border: rgba(255, 255, 255, 0.08);
+
+    /* Card / Form elements */
+    --input-bg: #0d1526;
+    --input-bg-focus: #0d1526;
+    --input-border: rgba(255, 255, 255, 0.08);
+    --input-placeholder: #94A3B8;
+    --input-autofill-bg: #112240;
+    --input-autofill-color: #FFFFFF;
+
+    /* Skeleton shimmer */
+    --skeleton-base: rgba(30, 41, 59, 0.5);
+    --skeleton-shine: rgba(51, 65, 85, 0.5);
+
+    /* Scrollbar */
+    --scrollbar-track: #0d1526;
+
+    /* Body background */
+    --body-bg-overlay: linear-gradient(135deg, rgba(10, 25, 47, 0.92) 0%, rgba(17, 34, 64, 0.88) 100%);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  LIGHT THEME                                                                  */
+/*  Applied when <html data-theme="light">                                       */
+/*  Default for new users (set in ThemeContext.jsx)                             */
+/* ──────────────────────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+    /* Primary Brand — unchanged */
+    --primary-color: #3B82F6;
+    --primary-dark: #2563EB;
+    --primary-light: #60A5FA;
+    --primary-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    --primary-glow: 0 0 30px rgba(59, 130, 246, 0.2);
+
+    /* Backgrounds — clean white/slate */
+    --bg-primary: #F8FAFC;
+    --bg-secondary: #F1F5F9;
+    --bg-card: rgba(255, 255, 255, 0.95);
+    --bg-tertiary: #E2E8F0;
+    --bg-dark: #E2E8F0;
+    --bg-glass: rgba(248, 250, 252, 0.75);
+    --bg-glass-strong: rgba(248, 250, 252, 0.92);
+    --bg-overlay: rgba(15, 23, 42, 0.5);
+
+    /* Text — dark on light */
+    --text-primary: #0F172A;
+    --text-secondary: #334155;
+    --text-muted: #64748B;
+    --text-dark: #0F172A;
+    --text-on-primary: #FFFFFF;
+    --text-inverse: #FFFFFF;
+
+    /* Utility / Semantic — slightly adjusted for light bg */
+    --success-color: #059669;
+    --success-bg: rgba(5, 150, 105, 0.08);
+    --warning-color: #D97706;
+    --warning-bg: rgba(217, 119, 6, 0.08);
+    --error-color: #DC2626;
+    --error-bg: rgba(220, 38, 38, 0.08);
+    --info-color: #0284C7;
+    --info-bg: rgba(2, 132, 199, 0.08);
+
+    /* Shadows — softer for light mode */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.16);
+    --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.15);
+    --shadow-blue-glow: 0 0 30px rgba(59, 130, 246, 0.15);
+
+    /* Borders */
+    --border-light: rgba(0, 0, 0, 0.07);
+    --border-medium: rgba(0, 0, 0, 0.1);
+    --border-dark: rgba(0, 0, 0, 0.04);
+    --border-strong: rgba(0, 0, 0, 0.18);
+
+    /* Navbar */
+    --navbar-bg: rgba(248, 250, 252, 0.92);
+    --navbar-border: rgba(0, 0, 0, 0.07);
+    --navbar-link-color: #334155;
+    --navbar-link-hover-bg: rgba(59, 130, 246, 0.08);
+    --navbar-active-bg: #1E40AF;
+    --navbar-active-color: #FFFFFF;
+    --navbar-icon-color: #334155;
+    --navbar-pill-bg: rgba(0, 0, 0, 0.03);
+    --navbar-pill-border: rgba(0, 0, 0, 0.08);
+    --navbar-mobile-bg: rgba(248, 250, 252, 0.98);
+    --navbar-mobile-active-bg: rgba(59, 130, 246, 0.1);
+
+    /* Footer */
+    --footer-bg: #1E293B;
+    --footer-border: rgba(0, 0, 0, 0.1);
+    --footer-text: #94A3B8;
+    --footer-heading: #FFFFFF;
+    --footer-link: #94A3B8;
+    --footer-link-hover: #60a5fa;
+    --footer-social-bg: rgba(255, 255, 255, 0.08);
+    --footer-social-border: rgba(255, 255, 255, 0.08);
+    --footer-bottom-bg: rgba(0, 0, 0, 0.15);
+    --footer-bottom-border: rgba(255, 255, 255, 0.1);
+
+    /* Card / Form elements */
+    --input-bg: #FFFFFF;
+    --input-bg-focus: #FFFFFF;
+    --input-border: rgba(0, 0, 0, 0.12);
+    --input-placeholder: #94A3B8;
+    --input-autofill-bg: #EFF6FF;
+    --input-autofill-color: #0F172A;
+
+    /* Skeleton shimmer */
+    --skeleton-base: rgba(203, 213, 225, 0.5);
+    --skeleton-shine: rgba(226, 232, 240, 0.7);
+
+    /* Scrollbar */
+    --scrollbar-track: #E2E8F0;
+
+    /* Body background */
+    --body-bg-overlay: linear-gradient(135deg, rgba(248, 250, 252, 0.96) 0%, rgba(241, 245, 249, 0.92) 100%);
+}

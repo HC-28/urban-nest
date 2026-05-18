@@ -4,7 +4,7 @@ export const StatusBadge = ({ status, type = "property", style = {} }) => {
     let finalClass = "inactive";
     let displayText = status || "Unknown";
 
-    const s = (status || "").toLowerCase();
+    const s = String(status != null ? status : "").toLowerCase();
 
     if (type === "property") {
         if (s === "sold") {
