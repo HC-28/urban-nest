@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,7 +20,7 @@ import java.util.Optional;
 import com.realestate.backend.dto.ApiResponse;
 
 /**
- * Handles authentication: signup and login.
+ * Handles authentication: signup, login, OTP verification, and password resets.
  * Separated from UserController to follow single-responsibility principle.
  */
 @RestController
@@ -42,10 +42,11 @@ public class AuthController {
     @Autowired
     private OtpService otpService;
 
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private boolean isValidEmail(String email) {
-        // RFC-5322 compatible: accepts any valid email format (not just Gmail/urbannest)
+        // RFC-5322 compatible: accepts any valid email format
         return email != null && email.matches("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$");
     }
 
@@ -53,7 +54,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Map<String, String>>> checkUser(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
         if (email != null) {
-            email = email.toLowerCase();
+            email = email.toLowerCase().trim();
         }
         if (userRepository.findByEmail(email).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error("Email already exists"));
@@ -71,7 +72,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Invalid Google Token"));
         }
 
-        String email = googleUser.getEmail().toLowerCase();
+        String email = googleUser.getEmail().toLowerCase().trim();
         String name = (String) googleUser.get("name");
 
         AppUser user = userRepository.findByEmail(email).orElseGet(() -> {
@@ -85,7 +86,7 @@ public class AuthController {
             } else {
                 newUser.setVerified(true);
             }
-            newUser.setPassword(encoder.encode(UUID.randomUUID().toString()));
+            newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
             return userRepository.save(newUser);
         });
 
@@ -95,9 +96,9 @@ public class AuthController {
 
     @PostMapping("/request-otp")
     public ResponseEntity<ApiResponse<Map<String, String>>> requestOtp(@RequestParam String email) {
-        if (email != null) email = email.toLowerCase();
+        if (email != null) email = email.toLowerCase().trim();
         if (!isValidEmail(email)) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Invalid email domain"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("Please provide a valid email address"));
         }
         String otp = otpService.generateOtp(email);
         emailService.sendHtmlEmail(email, "Your Login OTP",
@@ -108,8 +109,12 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<ApiResponse<Map<String, Object>>> verifyOtp(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
-        if (email != null) email = email.toLowerCase();
+        if (email != null) email = email.toLowerCase().trim();
         String code = payload.get("otp");
+
+        if (email == null || code == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Email and OTP are required"));
+        }
 
         if (otpService.validateOtp(email, code)) {
             AppUser user = userRepository.findByEmail(email).orElse(null);
@@ -124,9 +129,9 @@ public class AuthController {
 
     @PostMapping("/register-otp")
     public ResponseEntity<ApiResponse<Map<String, String>>> requestRegisterOtp(@RequestParam String email) {
-        if (email != null) email = email.toLowerCase();
+        if (email != null) email = email.toLowerCase().trim();
         if (!isValidEmail(email)) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Invalid email domain"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("Please provide a valid email address"));
         }
         if (userRepository.findByEmail(email).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error("Email already exists"));
@@ -139,9 +144,9 @@ public class AuthController {
 
     @PostMapping("/reset-password-otp")
     public ResponseEntity<ApiResponse<Map<String, String>>> requestResetPasswordOtp(@RequestParam String email) {
-        if (email != null) email = email.toLowerCase();
+        if (email != null) email = email.toLowerCase().trim();
         if (!isValidEmail(email)) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Invalid email domain"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("Please provide a valid email address"));
         }
         if (userRepository.findByEmail(email).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("User with this email not found"));
@@ -158,11 +163,17 @@ public class AuthController {
         String code = payload.get("otp");
         String newPassword = payload.get("newPassword");
 
+        if (email == null || code == null || newPassword == null || newPassword.isBlank() || newPassword.length() < 6) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Valid email, OTP, and a new password with at least 6 characters are required"));
+        }
+
+        email = email.toLowerCase().trim();
+
         if (otpService.validateOtp(email, code)) {
             Optional<AppUser> userOpt = userRepository.findByEmail(email);
             if (userOpt.isPresent()) {
                 AppUser user = userOpt.get();
-                user.setPassword(encoder.encode(newPassword));
+                user.setPassword(passwordEncoder.encode(newPassword));
                 userRepository.save(user);
                 return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Password reset successfully! You can now log in.")));
             }
@@ -198,30 +209,30 @@ public class AuthController {
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Map<String, Object>>> signup(@RequestBody Map<String, Object> payload) {
         String email = (String) payload.get("email");
-        if (email != null) email = email.toLowerCase();
         String otp = (String) payload.get("otp");
         String name = (String) payload.get("name");
         String password = (String) payload.get("password");
         String role = (String) payload.get("role");
 
         // Input validation
+        if (email == null || email.isBlank() || !isValidEmail(email)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("A valid email address is required"));
+        }
+        email = email.toLowerCase().trim();
+
         if (name == null || name.isBlank()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Name is required"));
         }
-        if (password == null || password.isBlank()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Password is required"));
+        if (password == null || password.isBlank() || password.length() < 6) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Password must be at least 6 characters"));
         }
         if (role == null || role.isBlank()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Role is required"));
         }
 
-        if (!otpService.validateOtp(email, otp)) {
+        if (otp == null || otp.isBlank() || !otpService.validateOtp(email, otp)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Invalid or expired OTP"));
-        }
-
-        if (!isValidEmail(email)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Only valid Gmail or UrbanNest addresses are allowed"));
         }
 
         if (userRepository.findByEmail(email).isPresent()) {
@@ -231,7 +242,7 @@ public class AuthController {
         AppUser user = new AppUser();
         user.setEmail(email);
         user.setName(name);
-        user.setPassword(encoder.encode(password));
+        user.setPassword(passwordEncoder.encode(password));
         user.setRole(role);
         user.setCity((String) payload.get("city"));
         user.setPhone((String) payload.get("phone"));
@@ -294,11 +305,11 @@ public class AuthController {
         }
 
         String email = user.getEmail();
-        if (email != null) email = email.toLowerCase();
+        if (email != null) email = email.toLowerCase().trim();
 
         if (!isValidEmail(email)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Only Gmail or UrbanNest login allowed"));
+                    .body(ApiResponse.error("Please provide a valid email address"));
         }
 
         AppUser dbUser = userRepository.findByEmail(email).orElse(null);
@@ -308,8 +319,8 @@ public class AuthController {
                     .body(ApiResponse.error("Invalid credentials"));
         }
 
-        // Check if password matches hash (secure comparison only)
-        if (!encoder.matches(user.getPassword(), dbUser.getPassword())) {
+        // Check if password matches hash using injected bean
+        if (!passwordEncoder.matches(user.getPassword(), dbUser.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("Invalid credentials"));
         }

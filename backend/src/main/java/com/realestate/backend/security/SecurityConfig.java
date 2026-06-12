@@ -28,7 +28,7 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @org.springframework.beans.factory.annotation.Value("${app.frontend-url}")
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
     @Bean
@@ -38,32 +38,37 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/", "/index.html", "/favicon.ico", "/*.png", "/*.jpg").permitAll()
+                        // Public system and static endpoints
+                        .requestMatchers("/", "/index.html", "/favicon.ico", "/*.png", "/*.jpg", "/error").permitAll()
+                        .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+
+                        // Public API endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/map/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/slots/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/agents/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/agencies/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                         .requestMatchers("/api/analytics/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
 
-                        // Secure endpoints
+                        // Protected feature endpoints
                         .requestMatchers("/api/favorites/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/debug/**").hasAuthority("ROLE_ADMIN")
 
-                        // Everything else
+                        // Everything else requires authentication
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // This stops the "Using generated security password" warning
+    // Suppresses generated default password log on startup
     @Bean
     public org.springframework.security.core.userdetails.UserDetailsService userDetailsService() {
         return username -> {
@@ -74,10 +79,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-            frontendUrl, 
-            "https://urban-nest-nine-omega.vercel.app",
-            "http://localhost:5173"
+        // Allow configured frontend URL, local development ports, and Vercel deployments
+        config.setAllowedOriginPatterns(List.of(
+            frontendUrl,
+            "http://localhost:[*]",
+            "http://127.0.0.1:[*]",
+            "https://urban-nest-*.vercel.app",
+            "https://urban-nest-nine-omega.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
@@ -89,6 +97,7 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);

@@ -1,26 +1,41 @@
 package com.realestate.backend.controller;
 
+import com.realestate.backend.dto.ApiResponse;
 import com.realestate.backend.service.EmailService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/contact")
 public class ContactController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ContactController.class);
+
     @Autowired
     private EmailService emailService;
 
     @PostMapping
-    public ResponseEntity<?> submitContactQuery(@RequestBody ContactRequest request) {
-        System.out.println("Processing contact query from: " + request.getEmail());
+    public ResponseEntity<ApiResponse<Map<String, String>>> submitContactQuery(@RequestBody ContactRequest request) {
+        if (request == null || request.getEmail() == null || request.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Email is required for contact query"));
+        }
+        if (request.getMessage() == null || request.getMessage().isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Message content is required"));
+        }
+
+        logger.info("[Contact] Received contact query from: {} with subject: {}", request.getEmail(), request.getSubject());
         emailService.sendContactQueryEmail(
-                request.getName(),
+                request.getName() != null ? request.getName() : "Anonymous",
                 request.getEmail(),
-                request.getSubject(),
+                request.getSubject() != null ? request.getSubject() : "Website Inquiry",
                 request.getMessage());
-        return ResponseEntity.ok(java.util.Map.of("message", "Contact query sent successfully"));
+
+        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Contact query sent successfully")));
     }
 
     public static class ContactRequest {

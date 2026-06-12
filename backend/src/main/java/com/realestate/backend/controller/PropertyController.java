@@ -249,8 +249,8 @@ public class PropertyController {
         Long authId = SecurityUtils.getAuthenticatedUserId();
 
         // Sold visibility check
-        if (property.getSold()) {
-            boolean isAllowed = isAdmin() || (authId != null && (property.getAgentId().equals(authId) || authId.equals(property.getSoldToUserId())));
+        if (Boolean.TRUE.equals(property.getSold())) {
+            boolean isAllowed = isAdmin() || (authId != null && (Objects.equals(property.getAgentId(), authId) || Objects.equals(authId, property.getSoldToUserId())));
 
             if (!isAllowed) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("This property is sold and no longer public."));
@@ -258,7 +258,7 @@ public class PropertyController {
         }
 
         // Tracking (only for public viewing)
-        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(property.getAgentId(), authId) && !isAdmin()) {
             analyticsService.trackView(id, authId);
         }
 
@@ -305,7 +305,7 @@ public class PropertyController {
         Long authId = SecurityUtils.getAuthenticatedUserId();
         if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
         
-        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(property.getAgentId(), authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("You are not the owner of this property"));
         }
 
@@ -347,7 +347,7 @@ public class PropertyController {
         Long authId = SecurityUtils.getAuthenticatedUserId();
         if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
 
-        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(property.getAgentId(), authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Unauthorized to hide this property"));
         }
 
@@ -368,7 +368,7 @@ public class PropertyController {
         Long authId = SecurityUtils.getAuthenticatedUserId();
         if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
 
-        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(property.getAgentId(), authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Unauthorized to delete this property"));
         }
 
@@ -393,7 +393,7 @@ public class PropertyController {
         Long authId = SecurityUtils.getAuthenticatedUserId();
         if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
 
-        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(property.getAgentId(), authId) && !isAdmin()) {
              return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 
@@ -451,7 +451,7 @@ public class PropertyController {
         Long authId = SecurityUtils.getAuthenticatedUserId();
         if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
 
-        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(property.getAgentId(), authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 
@@ -506,7 +506,7 @@ public class PropertyController {
         Long authId = SecurityUtils.getAuthenticatedUserId();
         if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
 
-        if (!property.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(property.getAgentId(), authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 

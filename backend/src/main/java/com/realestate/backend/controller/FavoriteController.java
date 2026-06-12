@@ -57,6 +57,7 @@ public class FavoriteController {
         
         List<Favorite> favorites = favoriteRepository.findByUser_Id(userId);
         List<PropertyListDTO> dtos = favorites.stream()
+                .filter(fav -> fav != null && fav.getProperty() != null)
                 .map(fav -> PropertyListDTO.from(fav.getProperty()))
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(dtos));

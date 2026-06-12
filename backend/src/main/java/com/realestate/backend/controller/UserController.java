@@ -37,7 +37,8 @@ public class UserController {
     @Autowired
     private com.realestate.backend.service.OtpService otpService;
 
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     /**
      * Helper to get authenticated user email
@@ -174,14 +175,14 @@ public class UserController {
         }
 
         // Verify current password (BCrypt only — no plaintext fallback)
-        boolean isMatch = encoder.matches(currentPassword, dbUser.getPassword());
+        boolean isMatch = passwordEncoder.matches(currentPassword, dbUser.getPassword());
 
         if (!isMatch) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("Current password is incorrect"));
         }
 
-        dbUser.setPassword(encoder.encode(newPassword));
+        dbUser.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(dbUser);
 
         return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Password changed successfully")));

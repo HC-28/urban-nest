@@ -1,5 +1,7 @@
 package com.realestate.backend.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,8 +23,13 @@ import java.util.Map;
 @Service
 public class EmailService {
 
-    @Value("${BREVO_API_KEY:dummy}")
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+
+    @Value("${BREVO_API_KEY:dummy_key}")
     private String apiKey;
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -31,8 +38,8 @@ public class EmailService {
     private static final String BREVO_URL = "https://api.brevo.com/v3/smtp/email";
 
     private void sendBrevoEmail(List<String> toEmails, String subject, String htmlContent) {
-        if (apiKey == null || apiKey.equals("dummy")) {
-            System.err.println("⚠️ [EmailService] BREVO_API_KEY is not set. Email won't send.");
+        if (apiKey == null || apiKey.equals("dummy") || apiKey.equals("dummy_key")) {
+            logger.warn("[EmailService] BREVO_API_KEY is not set or using dummy key. Email '{}' will not be dispatched.", subject);
             return;
         }
 
@@ -65,10 +72,12 @@ public class EmailService {
             ResponseEntity<String> response = restTemplate.exchange(BREVO_URL, HttpMethod.POST, request, String.class);
             
             if (!response.getStatusCode().is2xxSuccessful()) {
-                System.err.println("⚠️ [EmailService] Brevo API returned error: " + response.getBody());
+                logger.error("[EmailService] Brevo API returned error status {}: {}", response.getStatusCode(), response.getBody());
+            } else {
+                logger.info("[EmailService] Email successfully sent to {} recipients. Subject: {}", toEmails.size(), subject);
             }
         } catch (Exception e) {
-            System.err.println("⚠️ [EmailService] Failed to send email via Brevo: " + e.getMessage());
+            logger.error("[EmailService] Failed to send email via Brevo: {}", e.getMessage(), e);
         }
     }
 
@@ -102,12 +111,13 @@ public class EmailService {
     public void sendSaleConfirmationRequestToAgent(String agentEmail, String agentName,
             String buyerName, String buyerEmail,
             String propertyTitle, Long appointmentId,
-            String frontendUrl) {
+            String clientBaseUrl) {
+        String targetUrl = (clientBaseUrl != null && !clientBaseUrl.isBlank()) ? clientBaseUrl : frontendUrl;
         String text = "Hi " + agentName + ",\n\n" +
                 "The buyer " + buyerName + " (" + buyerEmail + ") has indicated they wish to purchase:\n" +
                 "🏠 Property: " + propertyTitle + "\n\n" +
                 "Please log in to your dashboard to CONFIRM or DENY this sale:\n" +
-                frontendUrl + "/dashboard\n\n" +
+                targetUrl + "/dashboard\n\n" +
                 "(Appointment ID: " + appointmentId + ")\n\n" +
                 "Best regards,\n" + APP_NAME + " Team";
         sendBrevoEmail(agentEmail, "[" + APP_NAME + "] Sale Confirmation Required — " + propertyTitle, textToHtml(text));
@@ -148,17 +158,17 @@ public class EmailService {
         String text = "Hi " + name + ",\n\n" +
                 "Great news! Your agent account on " + APP_NAME + " has been approved by our administrators.\n\n" +
                 "You can now log in to your dashboard to start listing properties and managing your appointments.\n\n" +
-                "Login here: " + APP_NAME + " Portal\n\n" +
+                "Login here: " + frontendUrl + "/login\n\n" +
                 "Best regards,\n" + APP_NAME + " Team";
         sendBrevoEmail(toEmail, "[" + APP_NAME + "] Account Approved — Welcome onboard!", textToHtml(text));
     }
 
     /**
      * Sent to a buyer when they register on the platform.
-     * Includes a verification link.
+     * Includes a verification link with dynamic frontendUrl.
      */
     public void sendVerificationEmail(String toEmail, String name, String token) {
-        String verificationUrl = "http://localhost:5173/verify-email?token=" + token;
+        String verificationUrl = frontendUrl + "/verify-email?token=" + token;
         String text = "Hi " + name + ",\n\n" +
                 "Welcome to " + APP_NAME + "! We are thrilled to have you here.\n\n" +
                 "To complete your registration, please click the link below to verify your email address:\n\n" +
@@ -184,7 +194,7 @@ public class EmailService {
                 "  <li><b>Connect:</b> Chat directly with professional agents in real-time.</li>" +
                 "</ul>" +
                 "<div style='text-align: center; margin: 30px 0;'>" +
-                "  <a href='http://localhost:5173' style='background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;'>Start Exploring Now</a>" +
+                "  <a href='" + frontendUrl + "' style='background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;'>Start Exploring Now</a>" +
                 "</div>" +
                 "<p>Happy hunting!</p>" +
                 "<hr style='border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;'>" +
@@ -236,7 +246,6 @@ public class EmailService {
                 "Message:\n" + message + "\n\n" +
                 "---\n" +
                 "To reply to the user, simply click 'Reply' in your email client.";
-        // Sending to admin
         sendBrevoEmail(FROM_EMAIL, "[" + APP_NAME + " Contact Form] " + subject, textToHtml(text));
     }
 

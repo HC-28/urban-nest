@@ -162,14 +162,34 @@ public class ChatController {
     /** POST /api/chat/seen — Mark messages as seen (hardened) */
     @PostMapping("/seen")
     public ResponseEntity<ApiResponse<Void>> markAsSeen(@RequestBody Map<String, Object> payload) {
-        Long propertyId = Long.valueOf(payload.get("propertyId").toString());
-        String userRole = payload.get("userRole").toString();
+        if (payload == null || payload.get("propertyId") == null || payload.get("userRole") == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("propertyId and userRole are required"));
+        }
+
+        Long propertyId;
+        try {
+            propertyId = Long.valueOf(payload.get("propertyId").toString());
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("propertyId must be a valid number"));
+        }
+
+        String userRole = payload.get("userRole").toString().trim().toUpperCase();
         
         Long authId = SecurityUtils.getAuthenticatedUserId();
         if (authId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Login required"));
 
-        Long buyerIdParam = payload.get("buyerId") != null ? Long.valueOf(payload.get("buyerId").toString()) : null;
-        Long agentIdParam = payload.get("agentId") != null ? Long.valueOf(payload.get("agentId").toString()) : null;
+        Long buyerIdParam = null;
+        Long agentIdParam = null;
+        try {
+            if (payload.get("buyerId") != null && !payload.get("buyerId").toString().isBlank()) {
+                buyerIdParam = Long.valueOf(payload.get("buyerId").toString());
+            }
+            if (payload.get("agentId") != null && !payload.get("agentId").toString().isBlank()) {
+                agentIdParam = Long.valueOf(payload.get("agentId").toString());
+            }
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("buyerId/agentId must be a valid number"));
+        }
 
         Long effectiveBuyerId = buyerIdParam;
         Long effectiveAgentId = agentIdParam;
@@ -183,7 +203,7 @@ public class ChatController {
         }
 
         // Security check
-        if (!isAdmin() && !authId.equals(effectiveBuyerId) && !authId.equals(effectiveAgentId)) {
+        if (!isAdmin() && !java.util.Objects.equals(authId, effectiveBuyerId) && !java.util.Objects.equals(authId, effectiveAgentId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 

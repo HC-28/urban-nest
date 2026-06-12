@@ -233,7 +233,7 @@ public class AppointmentController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Appt not found"));
 
         Long authId = SecurityUtils.getAuthenticatedUserId();
-        if (!appt.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(appt.getAgentId(), authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("You are not the agent for this appointment"));
         }
 
@@ -289,7 +289,7 @@ public class AppointmentController {
                     .body(ApiResponse.error("Appointment not found"));
 
         Long authId = SecurityUtils.getAuthenticatedUserId();
-        if (!appt.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(appt.getAgentId(), authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 
@@ -323,7 +323,7 @@ public class AppointmentController {
                     .body(ApiResponse.error("Appointment not found"));
 
         Long authId = SecurityUtils.getAuthenticatedUserId();
-        if (!appt.getBuyerId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(appt.getBuyerId(), authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 
@@ -378,7 +378,7 @@ public class AppointmentController {
                     .body(ApiResponse.error("Appointment not found"));
 
         Long authId = SecurityUtils.getAuthenticatedUserId();
-        if (!appt.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(appt.getAgentId(), authId) && !isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
 
@@ -462,14 +462,14 @@ public class AppointmentController {
 
             List<ChatMessage> chats = chatMessageRepository.findByPropertyId(property.getId());
             for (ChatMessage chat : chats) {
-                if (!chat.getBuyerId().equals(winnerId)) {
+                if (!Objects.equals(chat.getBuyerId(), winnerId)) {
                     notifiedBuyerIds.add(chat.getBuyerId());
                 }
             }
 
             List<Appointment> appts = appointmentRepository.findByPropertyId(property.getId());
             for (Appointment a : appts) {
-                if (!a.getBuyerId().equals(winnerId)) {
+                if (!Objects.equals(a.getBuyerId(), winnerId)) {
                     notifiedBuyerIds.add(a.getBuyerId());
                 }
             }
@@ -551,7 +551,7 @@ public class AppointmentController {
                     .body(ApiResponse.error("Appointment not found"));
 
         Long authId = SecurityUtils.getAuthenticatedUserId();
-        if (!appt.getBuyerId().equals(authId) && !appt.getAgentId().equals(authId) && !isAdmin()) {
+        if (!Objects.equals(appt.getBuyerId(), authId) && !Objects.equals(appt.getAgentId(), authId) && !isAdmin()) {
              return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
         }
         
