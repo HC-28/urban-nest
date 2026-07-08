@@ -111,11 +111,8 @@ public class AnalyticsService {
             String pincode = entry.getKey();
             List<Property> pincodeProperties = entry.getValue();
 
-            // Reuse existing score or create new one
-            PincodeScore score = existingScoresMap.getOrDefault(pincode, new PincodeScore(city, pincode));
-
-            // Re-compute metrics (this will overwrite the reset values)
-            score = computePincodeScore(city, pincode, pincodeProperties, properties);
+            // Re-compute metrics (avoids N+1 DB query — uses in-memory map instead)
+            PincodeScore score = computePincodeScore(city, pincode, pincodeProperties, properties);
             scoresToSave.add(score);
         }
 
@@ -145,9 +142,8 @@ public class AnalyticsService {
     private PincodeScore computePincodeScore(String city, String pincode,
             List<Property> pincodeProperties,
             List<Property> allCityProperties) {
-        PincodeScore score = pincodeScoreRepository
-                .findByCityAndPincode(city, pincode)
-                .orElse(new PincodeScore(city, pincode));
+        // Use in-memory lookup to avoid N+1 DB query
+        PincodeScore score = new PincodeScore(city, pincode);
 
         // === RAW METRICS ===
         int activeListings = pincodeProperties.size();
