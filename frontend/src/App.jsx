@@ -52,10 +52,10 @@ const PageWrapper = ({ children }) => (
     </motion.div>
 );
 
-// Fallback loader for Suspense
+// Fallback loader for Suspense — theme-aware (uses CSS variables)
 const GlobalLoader = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a' }}>
-        <div className="loader" style={{ width: '50px', height: '50px', border: '3px solid rgba(59, 130, 246, 0.2)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-primary)', transition: 'background 0.3s ease' }}>
+        <div className="loader" style={{ width: '50px', height: '50px', border: '3px solid var(--border-light)', borderTopColor: 'var(--primary-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
     </div>
 );
