@@ -53,6 +53,11 @@ cloudinary_url_map.json
 *.md
 !README.md
 !**/README.md
+!docs/**
+
+# Database migrations and scripts
+!database/**
+database/seeds/final_industrial_seed.sql
 
 # Sensitive backend config — all credential/secret files ignored
 backend/src/main/resources/application.properties

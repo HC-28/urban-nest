@@ -1,0 +1,15 @@
+Urban Nest — Missing Cloudinary Images Report
+Generated: 2026-04-24T11:56:21.162Z
+
+Total missing: 10  |  Total resolved: 454
+
+[AGENT] agent_portrait_1 — not uploaded
+[AGENT] agent_portrait_2 — not uploaded
+[AGENT] agent_portrait_3 — not uploaded
+[AGENT] agent_portrait_4 — not uploaded
+[AGENT] agent_portrait_5 — not uploaded
+[AGENT] agent_portrait_6 — not uploaded
+[AGENT] agent_portrait_7 — not uploaded
+[AGENT] agent_portrait_8 — not uploaded
+[AGENT] agent_portrait_9 — not uploaded
+[AGENT] agent_portrait_10 — not uploaded
