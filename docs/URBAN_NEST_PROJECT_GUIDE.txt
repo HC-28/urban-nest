@@ -1,0 +1,80 @@
+URBAN NEST - 25 PROJECT-SPECIFIC VIVA QUESTIONS
+===============================================
+
+1. Why did you choose the name "Urban Nest" for this project?
+Ans: "Urban" represents the modern city environment our platform targets, and "Nest" symbolizes the comfort and security of a home. The project focuses on providing high-end urban living solutions.
+
+2. How many user roles does Urban Nest support, and what is the difference between them?
+Ans: Three roles: ADMIN (manages users/agents and site state), AGENT (lists properties and manages leads), and BUYER (searches properties and contacts agents).
+
+3. Explain the Agent Approval process in your system.
+Ans: When an agent signs up, their status is 'PENDING'. They cannot list properties or show up in the public directory until the ADMIN reviews their profile and clicks "Approve" in the Admin Dashboard.
+
+4. How does the "Search & Filter" logic work on the Properties page?
+Ans: The frontend sends a dynamic query to the backend (e.g., ?city=Mumbai&bhk=3&type=Villa). The backend uses a "Specification" or "Query Method" in Spring Data JPA to filter the results based on these optional parameters.
+
+5. What is the difference between "Projects" and "Apartments" in your platform?
+Ans: "Projects" are large-scale developments (like a whole complex), while "Apartments" are individual units. Our system categorizes them using the 'type' column in the property table.
+
+6. How is a "Featured Property" different from a regular listing?
+Ans: Featured properties have a boolean flag 'featured = true'. They are displayed in a special high-visibility slider on the Homepage Hero section to give them more exposure.
+
+7. How does the "Map Modal" know where to place the pins?
+Ans: Every property record in our database contains 'latitude' and 'longitude' coordinates. The Leaflet.js library on the frontend reads these values and renders a marker on the exact spot.
+
+8. Explain the "Heatmap" feature in Urban Nest.
+Ans: The heatmap visualizes property density. We provide a set of coordinates to the Map component, and it uses a gradient (blue to red) to show which areas of the city have the most listings.
+
+9. How are multiple images for a single property stored in the database?
+Ans: We use a JSON array (or JSONB in PostgreSQL) to store an array of Cloudinary URLs. This allows us to store 1, 3, or even 10 images in a single database column.
+
+10. Why did you integrate Cloudinary instead of storing images on your own server?
+Ans: Storing 150 properties with 3 images each (450+ images) would slow down our server. Cloudinary provides a Global CDN, which optimizes and delivers images instantly to the user.
+
+11. What details are stored in an "Agent Profile"?
+Ans: Beyond basic user info, it stores the agent's Agency Name, License Number, Years of Experience, and their current Verification Status.
+
+12. How does the system link an Agent to an Agency?
+Ans: We have an 'agencies' table. The 'agent_profiles' table has a foreign key 'agency_id'. If it's NULL, the agent is considered "Independent."
+
+13. What happens if an agent is deleted?
+Ans: We use 'CascadeType.SET_NULL' or 'REMOVE'. Usually, we remove the agent's profile but keep the properties as "Inactive" or re-assign them, depending on the business logic.
+
+14. Explain the OTP (One-Time Password) flow during Signup.
+Ans: To prevent fake accounts, the system sends a 6-digit code to the user's email. The user must enter this code to "Verify" their account before they can log in.
+
+15. How does "Google One-Tap Login" work in your project?
+Ans: We use the Google Identity Services API. Google provides a "Credential" (ID Token), which our backend validates using a Google Library to ensure the user is authentic.
+
+16. What property analytics do you track?
+Ans: We track 'Views' (how many times a property was opened), 'Favorites' (how many users saved it), and 'Inquiries' (how many messages were sent).
+
+17. How does the "Real-time Chat" work between a Buyer and an Agent?
+Ans: It’s a dedicated module where messages are stored with a timestamp and sender/receiver IDs. The UI updates frequently to show new messages, simulating a live conversation.
+
+18. What is the "Appointment" feature?
+Ans: A Buyer can request a "Site Visit." The Agent receives this request in their dashboard and can "Accept" or "Reschedule" the visit based on their availability.
+
+19. How do you handle property pricing for different cities?
+Ans: Our seeding script uses "Multipliers." Mumbai properties are priced higher per square foot than Ahmedabad, ensuring the data looks realistic for the examiner.
+
+20. Explain the "Sold/Active" status.
+Ans: When a property is sold, the agent marks it as 'sold = true'. It remains on the site but shows a "SOLD" badge and prevents further inquiries.
+
+21. What is "Furnishing Status" in your listings?
+Ans: It's a field where agents specify if a property is 'Unfurnished', 'Semi-furnished', or 'Fully-furnished', which is a key decision factor for buyers.
+
+22. How do you handle "Facing" directions (e.g., East-Facing)?
+Ans: This is a specific metadata field in the 'property' table. Many Indian buyers prioritize "Vastu," so the "East-Facing" filter is a project-specific requirement.
+
+23. How are "Amenities" (Gym, Pool, etc.) stored and filtered?
+Ans: They are stored as a comma-separated string or a JSON array. The frontend "Filter" checks if a property's amenity list contains the user's selected values.
+
+24. What is the "Agency Dashboard"?
+Ans: It's a view where an Agency Head can see all the agents working under them and the total number of properties listed by their entire team.
+
+25. How do you handle "Pincode" logic?
+Ans: Each pincode is mapped to a specific "Area Name" and "City" in a JSON map. This ensures that when a user enters 400001, the system automatically knows it is "Mumbai GPO".
+
+---
+(End of Guide)

@@ -43,7 +43,11 @@ The frontend utilizes a component-driven architecture with a focus on performant
   - `property/`: Specialized cards, grids, and filters for real estate listings.
   - `ui/`: Design-system elements like *StatusBadges*, *Skeletons*, and *Modals*.
 - **`services/`**: The communication layer interfacing with the Spring Boot API.
-- **`context/`**: Global state management (Auth and User state) using React Context API.
+- **`context/`**: Global state management using React Context API:
+  - `ThemeContext` — light/dark theme with localStorage persistence (light default)
+  - `CompareContext` — property comparison state
+  - `SearchContext` — search state
+- **`styles/`**: Design token system (`themes.css`) — all CSS variables for both light and dark themes.
 - **`utils/`**: Shared logic for currency formatting, date parsing, and visual image processing.
 
 ---
@@ -92,16 +96,26 @@ graph TD
    - Gather your connection string, username, and password.
    - Configure these in your `backend/src/main/resources/application.properties` or as environment variables in Render.
 
-3. **Backend Launch**
+3. **Docker One-Command Launch (Recommended — MNC Standard)**
    ```bash
-   cd backend
-   mvn clean install
-   ./mvnw spring-boot:run
-   ```
+   # Copy sample environment config
+   cp .env.docker.example .env
 
-4. **Frontend Launch**
+   # Spin up Database, Backend, and Frontend containers
+   docker compose up --build -d
+   ```
+   - **Frontend:** http://localhost:80
+   - **Backend API:** http://localhost:8083/api
+   - **PostgreSQL:** localhost:5432
+
+4. **Manual Local Launch (Alternative)**
    ```bash
-   cd frontend
+   # Backend Launch
+   cd backend
+   ./mvnw spring-boot:run
+
+   # Frontend Launch
+   cd ../frontend
    npm install
    npm run dev
    ```
@@ -109,8 +123,36 @@ graph TD
 ---
 
 ## 📜 Documentation Reference
-- [🗺️ Full Heatmap Methodology](./HEATMAP.md) - Deep dive into spatial scoring and market analytics.
-- [🔌 API Specification](./backend/src/main/resources/api-docs.md) - endpoint signatures and DTO schemas.
+All project documentation is organized under the [`docs/`](./docs) directory:
+- [🗺️ Full Heatmap Methodology](./docs/HEATMAP.md) — Deep dive into spatial scoring and market analytics.
+- [🗄️ Enterprise Database Design](./docs/DATABASE_DESIGN.md) — Production PostgreSQL schema, indexes, and views.
+- [🏗️ Frontend Architecture](./docs/FRONTEND_STRUCTURE.md) — Feature-based vertical slice design guide.
+- [🧱 Backend Architecture](./docs/BACKEND_STRUCTURE.md) — Domain-Driven Design (DDD) guide.
+- [🚀 Migration Guide](./docs/MIGRATION_GUIDE.md) — Production rollout roadmap and checklist.
+- [📊 Scoring Formulas](./docs/SCORING_FORMULAS.md) — Real estate mathematical algorithms.
+- [🤝 Contributing Guide](./CONTRIBUTING.md) — Branch naming, commits, PR process, code style.
+- [📋 Changelog](./CHANGELOG.md) — Release history and migration notes.
+
+---
+
+## 🎨 Theme System
+
+Urban Nest ships with a **light/dark theme toggle** in the Navbar.
+
+| Detail | Value |
+|--------|-------|
+| **Default** | ☀️ Light |
+| **Persistence** | `localStorage` → key `urban-nest-theme` |
+| **Architecture** | `data-theme` attr on `<html>` drives all CSS vars |
+| **Token file** | `frontend/src/styles/themes.css` |
+| **Context** | `frontend/src/context/ThemeContext.jsx` |
+| **Toggle** | `frontend/src/components/ui/ThemeToggle.jsx` |
+
+### Extending themes
+
+1. Open `frontend/src/styles/themes.css`
+2. Add your token in both `:root` (dark) and `[data-theme="light"]`
+3. Use `var(--your-token)` in component CSS — never raw hex
 
 ---
 
