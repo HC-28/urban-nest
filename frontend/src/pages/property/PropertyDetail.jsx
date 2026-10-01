@@ -143,12 +143,13 @@ function PropertyDetail() {
         setProperty(propertyData);
         addToRecentlyViewed(data);
 
-        if (user) {
+        if (user?.id) {
           try {
             const res = await favoritesApi.checkStatus(data.id);
-            setIsSaved(res.data.isFavorite);
+            const isFav = res.data?.isFavorite ?? res.data?.data?.isFavorite ?? false;
+            setIsSaved(Boolean(isFav));
           } catch (e) {
-            console.error(e);
+            console.error("Error checking favorite status:", e);
           }
         }
 
@@ -318,27 +319,36 @@ function PropertyDetail() {
 
   const toggleSave = async (e) => {
     e?.stopPropagation();
-    if (!user) return toast.error("Please login to save property");
+    if (!user) {
+      toast.error("Please login to save property");
+      navigate("/login");
+      return;
+    }
 
     try {
       if (isSaved) {
-        await favoritesApi.delete("/", {
+        await favoritesApi.delete("", {
           params: { propertyId: property.id }
         });
         setIsSaved(false);
+        toast.success("Removed from favorites");
       } else {
-        await favoritesApi.post("/", null, {
+        await favoritesApi.post("", null, {
           params: { propertyId: property.id }
         });
         setIsSaved(true);
+        toast.success("Saved to favorites!");
       }
     } catch (err) {
       console.error("Save error:", err);
-      if (err.response?.data) {
-        toast.error(err.response.data);
-      } else {
-        toast.error("Failed to update favorites");
+      const errorData = err.response?.data;
+      let errMsg = "Failed to update favorites";
+      if (typeof errorData === "string") {
+        errMsg = errorData;
+      } else if (errorData && typeof errorData === "object") {
+        errMsg = errorData.message || errorData.error || "Failed to update favorites";
       }
+      toast.error(errMsg);
     }
   };
 
