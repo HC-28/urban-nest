@@ -803,3 +803,28 @@
   .proj-filter-group { flex-wrap: wrap; }
   .proj-filters-bar { padding: 12px 4%; }
 }
+
+/* LIGHT THEME OVERRIDES */
+[data-theme="light"] .projects-page { background: #f8fafc; color: #334155; }
+[data-theme="light"] .proj-filters-bar { background: rgba(255, 255, 255, 0.95); border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .proj-search-wrap { background: #ffffff; border: 1px solid #cbd5e1; }
+[data-theme="light"] .proj-search-input { color: #0f172a; }
+[data-theme="light"] .proj-filter-pill { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; }
+[data-theme="light"] .proj-sort-wrap { background: #f1f5f9; border: 1px solid #cbd5e1; }
+[data-theme="light"] .proj-sort-select { color: #334155; }
+[data-theme="light"] .proj-sort-select option { background: #ffffff; color: #0f172a; }
+[data-theme="light"] .proj-section-title { color: #0f172a; }
+[data-theme="light"] .proj-card { background: #ffffff; border: 1px solid #e2e8f0; }
+[data-theme="light"] .proj-card-title { color: #0f172a; }
+[data-theme="light"] .proj-card-stats { color: #64748b; }
+[data-theme="light"] .proj-card-footer { border-top: 1px solid #e2e8f0; }
+[data-theme="light"] .proj-skeleton { background: #ffffff; border: 1px solid #e2e8f0; }
+[data-theme="light"] .proj-skeleton-img, [data-theme="light"] .proj-skeleton-line { background: #e2e8f0; }
+[data-theme="light"] .proj-empty h3 { color: #0f172a; }
+[data-theme="light"] .proj-cta-banner { background: #ffffff; border: 1px solid #e2e8f0; }
+[data-theme="light"] .proj-cta-content h2 { color: #0f172a; }
+
+/* MOBILE RESPONSIVENESS */
+@media (max-width: 768px) {
+  .proj-grid { grid-template-columns: 1fr; }
+}

@@ -665,3 +665,15 @@
     width: auto;
   }
 }
+/* LIGHT THEME OVERRIDES */
+[data-theme="light"] .properties-page { background: #f8fafc; }
+[data-theme="light"] .prop-search-wrap { background: #ffffff; border: 1px solid #cbd5e1; }
+[data-theme="light"] .prop-search-input { color: #0f172a; }
+[data-theme="light"] .filter-bar { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+[data-theme="light"] .filter-group select, [data-theme="light"] .sort-select { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; }
+[data-theme="light"] .filter-group select option, [data-theme="light"] .sort-select option { background: #ffffff; color: #0f172a; }
+[data-theme="light"] .price-input { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; }
+[data-theme="light"] .filter-tag { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; }
+[data-theme="light"] .recently-viewed-section h3 { color: #0f172a; }
+[data-theme="light"] .recently-viewed-card { background: #ffffff; border: 1px solid #e2e8f0; }
+[data-theme="light"] .rv-title { color: #0f172a; }

@@ -117,100 +117,100 @@
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  LIGHT THEME                                                                  */
+/*  LIGHT THEME  — Warm Professional Palette                                    */
 /*  Applied when <html data-theme="light">                                       */
-/*  Default for new users (set in ThemeContext.jsx)                             */
+/*  Follows WCAG AA contrast ratios                                              */
 /* ──────────────────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
-    /* Primary Brand — unchanged */
-    --primary-color: #3B82F6;
-    --primary-dark: #2563EB;
-    --primary-light: #60A5FA;
-    --primary-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-    --primary-glow: 0 0 30px rgba(59, 130, 246, 0.2);
+    /* Primary Brand */
+    --primary-color: #2563EB;
+    --primary-dark: #1D4ED8;
+    --primary-light: #3B82F6;
+    --primary-gradient: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    --primary-glow: 0 0 24px rgba(37, 99, 235, 0.18);
 
-    /* Backgrounds — clean white/slate */
+    /* Backgrounds — warm layered hierarchy */
     --bg-primary: #F8FAFC;
     --bg-secondary: #F1F5F9;
-    --bg-card: rgba(255, 255, 255, 0.95);
-    --bg-tertiary: #E2E8F0;
-    --bg-dark: #E2E8F0;
-    --bg-glass: rgba(248, 250, 252, 0.75);
-    --bg-glass-strong: rgba(248, 250, 252, 0.92);
-    --bg-overlay: rgba(15, 23, 42, 0.5);
+    --bg-card: #FFFFFF;
+    --bg-tertiary: #E8EDF5;
+    --bg-dark: #CBD5E1;
+    --bg-glass: rgba(255, 255, 255, 0.80);
+    --bg-glass-strong: rgba(255, 255, 255, 0.96);
+    --bg-overlay: rgba(15, 23, 42, 0.45);
 
-    /* Text — dark on light */
+    /* Text — high-contrast */
     --text-primary: #0F172A;
-    --text-secondary: #334155;
+    --text-secondary: #1E293B;
     --text-muted: #64748B;
     --text-dark: #0F172A;
     --text-on-primary: #FFFFFF;
     --text-inverse: #FFFFFF;
 
-    /* Utility / Semantic — slightly adjusted for light bg */
+    /* Semantic */
     --success-color: #059669;
-    --success-bg: rgba(5, 150, 105, 0.08);
-    --warning-color: #D97706;
-    --warning-bg: rgba(217, 119, 6, 0.08);
+    --success-bg: rgba(5, 150, 105, 0.10);
+    --warning-color: #B45309;
+    --warning-bg: rgba(180, 83, 9, 0.10);
     --error-color: #DC2626;
-    --error-bg: rgba(220, 38, 38, 0.08);
+    --error-bg: rgba(220, 38, 38, 0.10);
     --info-color: #0284C7;
-    --info-bg: rgba(2, 132, 199, 0.08);
+    --info-bg: rgba(2, 132, 199, 0.10);
 
-    /* Shadows — softer for light mode */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
-    --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.16);
-    --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.15);
-    --shadow-blue-glow: 0 0 30px rgba(59, 130, 246, 0.15);
+    /* Shadows — elevated but soft */
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.10), 0 4px 8px rgba(15, 23, 42, 0.04);
+    --shadow-xl: 0 24px 56px rgba(15, 23, 42, 0.14), 0 8px 16px rgba(15, 23, 42, 0.06);
+    --shadow-glow: 0 0 24px rgba(37, 99, 235, 0.18);
+    --shadow-blue-glow: 0 0 24px rgba(37, 99, 235, 0.18);
 
     /* Borders */
-    --border-light: rgba(0, 0, 0, 0.07);
-    --border-medium: rgba(0, 0, 0, 0.1);
-    --border-dark: rgba(0, 0, 0, 0.04);
-    --border-strong: rgba(0, 0, 0, 0.18);
+    --border-light: #E2E8F0;
+    --border-medium: #CBD5E1;
+    --border-dark: #F1F5F9;
+    --border-strong: #94A3B8;
 
     /* Navbar */
-    --navbar-bg: rgba(248, 250, 252, 0.92);
-    --navbar-border: rgba(0, 0, 0, 0.07);
-    --navbar-link-color: #334155;
-    --navbar-link-hover-bg: rgba(59, 130, 246, 0.08);
-    --navbar-active-bg: #1E40AF;
+    --navbar-bg: rgba(255, 255, 255, 0.94);
+    --navbar-border: #E2E8F0;
+    --navbar-link-color: #475569;
+    --navbar-link-hover-bg: rgba(37, 99, 235, 0.07);
+    --navbar-active-bg: #2563EB;
     --navbar-active-color: #FFFFFF;
-    --navbar-icon-color: #334155;
-    --navbar-pill-bg: rgba(0, 0, 0, 0.03);
-    --navbar-pill-border: rgba(0, 0, 0, 0.08);
-    --navbar-mobile-bg: rgba(248, 250, 252, 0.98);
-    --navbar-mobile-active-bg: rgba(59, 130, 246, 0.1);
+    --navbar-icon-color: #475569;
+    --navbar-pill-bg: #F1F5F9;
+    --navbar-pill-border: #E2E8F0;
+    --navbar-mobile-bg: rgba(255, 255, 255, 0.98);
+    --navbar-mobile-active-bg: rgba(37, 99, 235, 0.08);
 
-    /* Footer */
-    --footer-bg: #1E293B;
-    --footer-border: rgba(0, 0, 0, 0.1);
+    /* Footer — intentionally dark for contrast anchor */
+    --footer-bg: #0F172A;
+    --footer-border: rgba(255, 255, 255, 0.06);
     --footer-text: #94A3B8;
     --footer-heading: #FFFFFF;
     --footer-link: #94A3B8;
-    --footer-link-hover: #60a5fa;
-    --footer-social-bg: rgba(255, 255, 255, 0.08);
+    --footer-link-hover: #3B82F6;
+    --footer-social-bg: rgba(255, 255, 255, 0.06);
     --footer-social-border: rgba(255, 255, 255, 0.08);
-    --footer-bottom-bg: rgba(0, 0, 0, 0.15);
-    --footer-bottom-border: rgba(255, 255, 255, 0.1);
+    --footer-bottom-bg: rgba(0, 0, 0, 0.2);
+    --footer-bottom-border: rgba(255, 255, 255, 0.08);
 
     /* Card / Form elements */
     --input-bg: #FFFFFF;
-    --input-bg-focus: #FFFFFF;
-    --input-border: rgba(0, 0, 0, 0.12);
+    --input-bg-focus: #FAFBFF;
+    --input-border: #CBD5E1;
     --input-placeholder: #94A3B8;
     --input-autofill-bg: #EFF6FF;
     --input-autofill-color: #0F172A;
 
-    /* Skeleton shimmer */
-    --skeleton-base: rgba(203, 213, 225, 0.5);
-    --skeleton-shine: rgba(226, 232, 240, 0.7);
+    /* Skeleton shimmer — visible on white bg */
+    --skeleton-base: #E2E8F0;
+    --skeleton-shine: #F1F5F9;
 
     /* Scrollbar */
-    --scrollbar-track: #E2E8F0;
+    --scrollbar-track: #E8EDF5;
 
-    /* Body background */
-    --body-bg-overlay: linear-gradient(135deg, rgba(248, 250, 252, 0.96) 0%, rgba(241, 245, 249, 0.92) 100%);
+    /* Body background — light airy overlay */
+    --body-bg-overlay: linear-gradient(135deg, rgba(248, 250, 252, 0.97) 0%, rgba(241, 245, 249, 0.95) 100%);
 }

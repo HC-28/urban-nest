@@ -330,3 +330,20 @@
         height: 48px;
     }
 }
+
+/* --- Light Mode Overrides --- */
+[data-theme="light"] .agent-chats-page { background: #f8fafc; color: #0f172a; }
+[data-theme="light"] .chats-header h2 { color: #0f172a; }
+[data-theme="light"] .chats-header p { color: #64748b; }
+[data-theme="light"] .chat-card { border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .chat-card:hover { background: rgba(0,0,0,0.02); }
+[data-theme="light"] .chat-card.is-unread { background: #f1f5f9; }
+[data-theme="light"] .chat-info-header h4 { color: #0f172a; }
+[data-theme="light"] .last-msg, [data-theme="light"] .meta, [data-theme="light"] .chat-date { color: #64748b; }
+[data-theme="light"] .chat-card.is-unread .last-msg { color: #334155; }
+[data-theme="light"] .empty-state, [data-theme="light"] .no-chats { background: #ffffff; border: 1px dashed #e2e8f0; }
+[data-theme="light"] .no-chats h3, [data-theme="light"] .empty-state h3 { color: #0f172a; }
+
+@media (max-width: 768px) {
+  .chats-container { width: 100%; padding: 10px 0; }
+}

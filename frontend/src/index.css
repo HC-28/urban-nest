@@ -392,9 +392,71 @@ a:focus:not(:focus-visible) {
 .glow-on-hover:hover::after { opacity: 1; }
 
 /* ===== RESPONSIVE UTILITIES ===== */
+@media (max-width: 1200px) {
+    h1 { font-size: clamp(1.75rem, 4vw, 3rem); }
+    h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); }
+}
+
 @media (max-width: 768px) {
-    h1 { font-size: 2rem; }
-    h2 { font-size: 1.75rem; }
-    h3 { font-size: 1.5rem; }
-    h4 { font-size: 1.25rem; }
+    h1 { font-size: clamp(1.5rem, 5vw, 2rem); }
+    h2 { font-size: clamp(1.25rem, 4vw, 1.75rem); }
+    h3 { font-size: clamp(1.1rem, 3.5vw, 1.5rem); }
+    h4 { font-size: 1.15rem; }
+
+    /* Ensure buttons are always touch-friendly */
+    button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Inputs full width on mobile */
+    input, select, textarea {
+        width: 100%;
+        font-size: 16px; /* prevent iOS zoom */
+    }
+}
+
+@media (max-width: 480px) {
+    h1 { font-size: clamp(1.3rem, 6vw, 1.75rem); }
+    h2 { font-size: clamp(1.1rem, 5vw, 1.5rem); }
+    h3 { font-size: 1.1rem; }
+}
+
+/* ===== LIGHT MODE GLOBAL OVERRIDES ===== */
+/* Fix breadcrumb text that's hardcoded white */
+[data-theme="light"] .breadcrumb .current {
+    color: #0F172A;
+}
+
+/* Fix select option backgrounds globally */
+[data-theme="light"] select option {
+    background: #ffffff;
+    color: #0F172A;
+}
+
+/* Ensure sections using var(--bg-secondary) look clean */
+[data-theme="light"] .glass {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #E2E8F0;
+}
+
+[data-theme="light"] .glass-strong {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #CBD5E1;
+}
+
+/* Fix gradient border on light */
+[data-theme="light"] .gradient-border {
+    background: #ffffff;
+}
+
+/* Skeleton in light mode */
+[data-theme="light"] .skeleton {
+    background: linear-gradient(
+        90deg,
+        #E2E8F0 25%,
+        #F1F5F9 50%,
+        #E2E8F0 75%
+    );
+    background-size: 200% 100%;
 }

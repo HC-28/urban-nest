@@ -176,3 +176,21 @@
         text-align: center;
     }
 }
+
+
+/* MOBILE FIXES */
+@media (max-width: 600px) {
+  .footer-inner { grid-template-columns: 1fr; gap: 30px; width: 100%; }
+}
+
+/* LIGHT MODE OVERRIDES */
+[data-theme="light"] .site-footer { background: #1e293b; color: #f8fafc; border-top: 1px solid #0f172a; }
+[data-theme="light"] .footer-brand h3 { background: none; -webkit-text-fill-color: initial; color: #ffffff; }
+[data-theme="light"] .footer-description { color: #cbd5e1; }
+[data-theme="light"] .social-link { background: #0f172a; color: #ffffff; border: 1px solid rgba(255,255,255,0.1); }
+[data-theme="light"] .footer-col h4 { color: #ffffff; }
+[data-theme="light"] .footer-links-list a { color: #94a3b8; }
+[data-theme="light"] .contact-item { color: #cbd5e1; }
+[data-theme="light"] .footer-bottom { background: #0f172a; border-top: 1px solid rgba(255,255,255,0.1); }
+[data-theme="light"] .footer-bottom p, [data-theme="light"] .footer-bottom-links a { color: #94a3b8; }
+

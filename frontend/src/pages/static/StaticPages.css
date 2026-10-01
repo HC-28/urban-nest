@@ -340,3 +340,90 @@
         padding: 32px 16px 60px;
     }
 }
+
+/* ═══════════════════════════════════════════════════════
+   LIGHT THEME OVERRIDES
+   ═══════════════════════════════════════════════════════ */
+[data-theme="light"] .static-hero {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.5), rgba(30, 58, 138, 0.4)),
+    url('../assets/hero-bg.png');
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .static-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .static-card h2 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .static-card p,
+[data-theme="light"] .static-card li {
+  color: #475569;
+}
+
+[data-theme="light"] .value-item {
+  background: rgba(59, 130, 246, 0.03);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="light"] .value-item h3 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .value-item p {
+  color: #64748b;
+}
+
+[data-theme="light"] .contact-form input,
+[data-theme="light"] .contact-form textarea {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+
+[data-theme="light"] .contact-form input::placeholder,
+[data-theme="light"] .contact-form textarea::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .contact-form input:focus,
+[data-theme="light"] .contact-form textarea:focus {
+  background: #ffffff;
+  border-color: #3b82f6;
+}
+
+[data-theme="light"] .contact-info-item {
+  background: rgba(59, 130, 246, 0.03);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="light"] .contact-info-item h4 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .contact-info-item p {
+  color: #64748b;
+}
+
+[data-theme="light"] .stat-box .stat-label {
+  color: #64748b;
+}
+
+[data-theme="light"] .legal-section h3 {
+  color: #0f172a;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .legal-section p {
+  color: #475569;
+}
+
+[data-theme="light"] .last-updated {
+  color: #94a3b8;
+}

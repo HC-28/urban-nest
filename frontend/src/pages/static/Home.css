@@ -1170,3 +1170,300 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   LIGHT THEME OVERRIDES
+   Override all hardcoded dark colors for light mode
+   ═══════════════════════════════════════════════════════ */
+[data-theme="light"] .hero-subtitle {
+  color: #475569;
+}
+
+[data-theme="light"] .hero-overlay {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.45) 0%, rgba(241, 245, 249, 0.35) 100%);
+}
+
+/* Hero Search Card */
+[data-theme="light"] .hero-search {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] .purpose-link {
+  color: rgba(51, 65, 85, 0.6);
+}
+
+[data-theme="light"] .purpose-link:hover {
+  color: #334155;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .purpose-link.active {
+  color: #1e40af;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+[data-theme="light"] .search-row {
+  background: rgba(241, 245, 249, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .field-label {
+  color: #64748b;
+}
+
+[data-theme="light"] .field-icon-right {
+  color: rgba(51, 65, 85, 0.4);
+}
+
+[data-theme="light"] .field-input {
+  color: #0f172a;
+}
+
+[data-theme="light"] .field-input::placeholder {
+  color: rgba(51, 65, 85, 0.45);
+}
+
+[data-theme="light"] .field-select {
+  color: #0f172a;
+}
+
+[data-theme="light"] .field-select option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+[data-theme="light"] .search-divider {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .field-text {
+  color: #0f172a;
+}
+
+[data-theme="light"] .advanced-search-row {
+  background: rgba(241, 245, 249, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .preset-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #64748b;
+}
+
+[data-theme="light"] .preset-btn:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: #2563eb;
+}
+
+[data-theme="light"] .preset-btn.active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+/* Autocomplete dropdown */
+[data-theme="light"] .suggestions-dropdown {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .suggestion-item {
+  color: #334155;
+}
+
+[data-theme="light"] .suggestion-item:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+[data-theme="light"] .suggestion-item.disabled {
+  color: #94a3b8;
+}
+
+/* Section headers */
+[data-theme="light"] .section-header h2 {
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .section-header p {
+  color: #64748b;
+}
+
+[data-theme="light"] .view-all-link {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #64748b;
+}
+
+[data-theme="light"] .view-all-link:hover {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: #2563eb;
+}
+
+/* Features section */
+[data-theme="light"] .features {
+  background: #f1f5f9;
+}
+
+[data-theme="light"] .feature-box {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .feature-box:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.08);
+}
+
+[data-theme="light"] .feature-box h4 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .feature-box p {
+  color: #64748b;
+}
+
+[data-theme="light"] .explore-btn {
+  background: rgba(0, 0, 0, 0.04);
+  color: #334155;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .feature-box:hover .explore-btn {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #2563eb;
+}
+
+/* Featured properties section */
+[data-theme="light"] .featured-section {
+  background: linear-gradient(180deg, #f1f5f9 0%, #f8fafc 100%);
+}
+
+/* Cities section */
+[data-theme="light"] .cities {
+  background: #f8fafc;
+}
+
+[data-theme="light"] .cities h3 {
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .cities .section-subtitle {
+  color: #64748b;
+}
+
+[data-theme="light"] .city-pic {
+  border: 3px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .city-name {
+  color: #0f172a;
+}
+
+[data-theme="light"] .city-count {
+  color: #64748b;
+}
+
+/* How It Works section */
+[data-theme="light"] .how-it-works-section {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .step-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .step-num {
+  color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .step-card h4 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .step-card p {
+  color: #64748b;
+}
+
+/* Testimonials */
+[data-theme="light"] .testimonial-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .testimonial-card:hover {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .testimonial-text {
+  color: #334155;
+}
+
+[data-theme="light"] .testimonial-author {
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .testimonial-author h4 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .testimonial-author span {
+  color: #64748b;
+}
+
+/* Projects section */
+[data-theme="light"] .project-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .project-card:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .project-status-badge {
+  background: rgba(255, 255, 255, 0.9);
+  color: #334155;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .project-info h3 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .project-location {
+  color: #64748b;
+}
+
+[data-theme="light"] .project-config {
+  color: #475569;
+}
+
+[data-theme="light"] .project-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .project-price-label {
+  color: #64748b;
+}
+

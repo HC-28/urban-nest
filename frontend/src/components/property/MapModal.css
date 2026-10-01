@@ -94,3 +94,25 @@
 .leaflet-container {
     background: #0F172A !important;
 }
+
+/* ── Mobile Responsive ── */
+@media (max-width: 768px) {
+    .map-container {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        max-width: 100%;
+    }
+}
+
+/* ── Light theme ── */
+[data-theme="light"] .map-modal {
+    background: rgba(15, 23, 42, 0.60);
+}
+
+[data-theme="light"] .map-container {
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.20);
+}
+
+/* Leaflet container bg stays dark regardless — maps look bad on white */

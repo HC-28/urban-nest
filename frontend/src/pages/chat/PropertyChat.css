@@ -926,3 +926,34 @@
         padding: 0 16px 20px;
     }
 }
+
+/* --- Light Mode Overrides --- */
+[data-theme="light"] .chat-container { background: #f8fafc; }
+[data-theme="light"] .chat-container::before { opacity: 0.1; filter: invert(1); }
+[data-theme="light"] .chat-header { background: #ffffff; border-bottom: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+[data-theme="light"] .property-info h4 { color: #0f172a; }
+[data-theme="light"] .property-info p, [data-theme="light"] .back-btn, [data-theme="light"] .toggle-sidebar-btn { color: #334155; }
+[data-theme="light"] .toggle-sidebar-btn { background: #f1f5f9; border: 1px solid #e2e8f0; }
+[data-theme="light"] .buyer-bar { background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .buyer-info span { color: #0f172a; }
+[data-theme="light"] .chat-body { background: #f8fafc; }
+[data-theme="light"] .chat-bubble.received, [data-theme="light"] .chat-bubble.agent { background: #ffffff; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+[data-theme="light"] .chat-bubble.sent, [data-theme="light"] .chat-bubble.buyer { background: #e2e8f0; color: #0f172a; }
+[data-theme="light"] .msg-meta .time, [data-theme="light"] .chat-bubble .time { color: #64748b; }
+[data-theme="light"] .chat-input-wrapper { background: #ffffff; border-top: 1px solid #e2e8f0; }
+[data-theme="light"] .chat-input-container, [data-theme="light"] .chat-input input { background: #f1f5f9; color: #0f172a; }
+[data-theme="light"] .chat-input-container input { color: #0f172a; }
+[data-theme="light"] .chat-input-container input::placeholder, [data-theme="light"] .chat-input input::placeholder { color: #64748b; }
+[data-theme="light"] .property-sidebar-context { background: #ffffff; border-left: 1px solid #e2e8f0; }
+[data-theme="light"] .sidebar-prop-info h3 { color: #0f172a; }
+[data-theme="light"] .agent-small-card { background: #f8fafc; border: 1px solid #e2e8f0; }
+[data-theme="light"] .agent-small-card h5 { color: #0f172a; }
+[data-theme="light"] .agent-small-card p, [data-theme="light"] .sidebar-specs, [data-theme="light"] .sidebar-loc { color: #334155; }
+[data-theme="light"] .chat-sold-banner { background: #ffffff; border-bottom: 1px solid #e2e8f0; }
+
+@media (max-width: 768px) {
+  .chat-main-wrapper { flex-direction: column; width: 100%; }
+  .chat-body { padding: 10px; width: 100%; }
+  .chat-input-wrapper { padding: 10px; width: 100%; }
+  .property-sidebar-context.mobile-show { display: block; position: absolute; right: 0; top: 70px; bottom: 0; z-index: 100; box-shadow: -4px 0 15px rgba(0,0,0,0.1); width: 100%; max-width: 320px; }
+}

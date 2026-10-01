@@ -271,3 +271,11 @@
     left: 0;
     width: 100%;
 }
+/* LIGHT THEME & MOBILE RESPONSIVE OVERRIDES */
+[data-theme=""light""] .slots-dropdown { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+[data-theme=""light""] .slot-option { background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; }
+[data-theme=""light""] .slot-option:hover { background: #f1f5f9; }
+[data-theme=""light""] .slot-option span { color: #0f172a; }
+[data-theme=""light""] .close-slots { color: #64748b; }
+[data-theme=""light""] .verify-btn { background: #ffffff; border: 1px solid #cbd5e1; color: #334155; }
+[data-theme=""light""] .verify-btn:hover { background: #f1f5f9; }

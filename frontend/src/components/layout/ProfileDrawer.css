@@ -307,6 +307,24 @@
 
 @media (max-width: 768px) {
   .drawer {
-    width: 85%;
+    width: 100%;
   }
 }
+
+/* --- Light Mode Overrides --- */
+[data-theme="light"] .drawer { background: #ffffff; color: #0f172a; border-left: 1px solid #e2e8f0; }
+[data-theme="light"] .drawer-header { border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .drawer-header h3, [data-theme="light"] .display-name-container h3 { color: #0f172a; }
+[data-theme="light"] .user-email { color: #64748b; }
+[data-theme="light"] .drawer-stats { border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .stat-value { color: #0f172a; }
+[data-theme="light"] .stat-label { color: #64748b; }
+[data-theme="light"] .drawer-menu button { background: #f8fafc; border: 1px solid #e2e8f0; color: #0f172a; }
+[data-theme="light"] .drawer-menu button:hover { background: #f1f5f9; color: #2563eb; }
+[data-theme="light"] .drawer-content h4 { color: #0f172a; }
+[data-theme="light"] .drawer-fav-item { background: #f8fafc; border: 1px solid #e2e8f0; }
+[data-theme="light"] .fav-title { color: #0f172a; }
+[data-theme="light"] .fav-price { color: #3b82f6; }
+[data-theme="light"] .drawer-footer { background: #f1f5f9; border-top: 1px solid #e2e8f0; }
+[data-theme="light"] .edit-name-btn { background: #f1f5f9; color: #0f172a; }
+[data-theme="light"] .edit-name-input { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; }

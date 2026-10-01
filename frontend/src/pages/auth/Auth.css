@@ -343,3 +343,21 @@
 .google-auth-container iframe {
     margin: 0 auto !important;
 }
+
+/* --- Light Mode Overrides --- */
+[data-theme="light"] .auth-overlay { background: rgba(255, 255, 255, 0.9); }
+[data-theme="light"] .auth-card { background: rgba(255, 255, 255, 0.95); border: 1px solid #e2e8f0; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08); }
+[data-theme="light"] .auth-header h2 { color: #0f172a; }
+[data-theme="light"] .auth-header p { color: #64748b; }
+[data-theme="light"] .form-group label { color: #334155; }
+[data-theme="light"] .form-group input, [data-theme="light"] .form-group select { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; }
+[data-theme="light"] .auth-tabs { background: #f8fafc; border: 1px solid #e2e8f0; }
+[data-theme="light"] .auth-tabs button { color: #64748b; }
+[data-theme="light"] .auth-tabs button.active { background: #ffffff; color: #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+[data-theme="light"] .auth-divider { color: #64748b; }
+[data-theme="light"] .auth-divider::before, [data-theme="light"] .auth-divider::after { border-bottom: 1px solid #e2e8f0; }
+
+@media (max-width: 480px) {
+  .auth-card { width: 100%; max-width: 100%; padding: 24px 16px; margin: 0; }
+  .auth-form { gap: 1rem; }
+}

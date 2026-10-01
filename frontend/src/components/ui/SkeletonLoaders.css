@@ -150,3 +150,17 @@
     width: 100%;
     border-radius: 8px;
 }
+
+
+/* LIGHT MODE OVERRIDES */
+[data-theme="light"] .skeleton-card,
+[data-theme="light"] .skeleton-agent-card { background: var(--bg-card, #ffffff); border: 1px solid var(--border-light, #e2e8f0); }
+
+[data-theme="light"] .skeleton-img,
+[data-theme="light"] .skeleton-line,
+[data-theme="light"] .skeleton-box,
+[data-theme="light"] .skeleton-avatar,
+[data-theme="light"] .skeleton-btn { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 800px 100%; }
+
+[data-theme="light"] .skeleton-features { border-top: 1px solid var(--border-light, #e2e8f0); border-bottom: 1px solid var(--border-light, #e2e8f0); }
+

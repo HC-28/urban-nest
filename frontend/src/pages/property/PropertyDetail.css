@@ -1503,3 +1503,36 @@
   word-break: break-word;
 }
 
+
+/* LIGHT THEME OVERRIDES */
+[data-theme="light"] .property-detail-page { background: var(--bg-primary, #F8FAFC); }
+[data-theme="light"] .main-content { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+[data-theme="light"] .property-header h1 { color: #0f172a; }
+[data-theme="light"] .quick-info { background: #f1f5f9; border: 1px solid #e2e8f0; }
+[data-theme="light"] .quick-info .info-item { color: #0f172a; }
+[data-theme="light"] .property-stats-bar { background: #f8fafc; border: 1px solid #e2e8f0; }
+[data-theme="light"] .property-stats-bar .stat-value { color: #0f172a; }
+[data-theme="light"] .action-btn { background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; }
+[data-theme="light"] .section h3 { color: #0f172a; border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .detail-item { background: #f8fafc; border: 1px solid #e2e8f0; }
+[data-theme="light"] .detail-item:hover { background: #f1f5f9; }
+[data-theme="light"] .detail-item .value { color: #0f172a; }
+[data-theme="light"] .amenity-item { background: #f8fafc; border: 1px solid #e2e8f0; color: #0f172a; }
+[data-theme="light"] .agent-card { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+[data-theme="light"] .agent-header h4 { color: #0f172a; }
+[data-theme="light"] .agent-stats { border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .embedded-chat-container { background: #ffffff; border: 1px solid #e2e8f0; }
+[data-theme="light"] .chat-area-header { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .chat-area-header h4 { color: #0f172a; }
+[data-theme="light"] .chat-area-input { background: #f8fafc; border-top: 1px solid #e2e8f0; }
+[data-theme="light"] .chat-area-input input { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; }
+
+/* MOBILE RESPONSIVENESS */
+@media (max-width: 768px) {
+  .property-content { grid-template-columns: 1fr; }
+  .main-carousel { height: 300px; }
+  .details-grid { grid-template-columns: 1fr; }
+  .amenities-grid { grid-template-columns: repeat(2, 1fr); }
+  .agent-actions { flex-direction: column; }
+  .contact-btn { width: 100%; }
+}

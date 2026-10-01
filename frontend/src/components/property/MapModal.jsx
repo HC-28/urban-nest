@@ -394,7 +394,7 @@ export default function MapModal({ isOpen, onClose, initialProperty }) {
                 >
                     <TileLayer
                         url={TILE_LAYERS[tileLayer].url}
-                        attribution="&copy; OpenStreetMap &copy; CARTO"
+                        attribution={TILE_LAYERS[tileLayer].attribution}
                     />
 
                     <RecenterMap

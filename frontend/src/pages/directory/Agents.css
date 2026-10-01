@@ -501,3 +501,38 @@
     padding: 24px 16px 60px;
   }
 }
+
+
+/* MOBILE FIXES */
+@media (max-width: 768px) {
+  .agents-grid {
+    grid-template-columns: 100%;
+    width: 100%;
+  }
+  .agent-card {
+    width: 100%;
+  }
+}
+
+/* LIGHT MODE OVERRIDES */
+[data-theme="light"] .agents-page { background: var(--bg-primary, #F8FAFC); }
+[data-theme="light"] .agents-hero { background: linear-gradient(135deg, rgba(248, 250, 252, 0.9), rgba(241, 245, 249, 0.8)), url('../assets/hero-bg.png'); color: var(--text-primary, #0F172A); border-bottom: 1px solid var(--border-light, rgba(0, 0, 0, 0.07)); }
+[data-theme="light"] .agents-hero h1 { color: var(--text-primary, #0F172A); }
+[data-theme="light"] .agents-hero p { color: var(--text-secondary, #334155); }
+[data-theme="light"] .agent-search-box { background: var(--bg-card, #ffffff); border: 1px solid var(--border-medium, #cbd5e1); }
+[data-theme="light"] .agent-search-box input { color: var(--text-primary, #0F172A); }
+[data-theme="light"] .agent-search-box input::placeholder { color: var(--text-muted, #64748B); }
+[data-theme="light"] .agent-card { background: var(--bg-card, #ffffff); border: 1px solid var(--border-light, #e2e8f0); }
+[data-theme="light"] .agent-card:hover { box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.08)); }
+[data-theme="light"] .agent-image { background: var(--bg-secondary, #F1F5F9); }
+[data-theme="light"] .agent-info h3 { color: var(--text-primary, #0F172A); }
+[data-theme="light"] .agent-info .company, [data-theme="light"] .agent-info .location { color: var(--text-muted, #64748B); }
+[data-theme="light"] .agent-rating .rating { color: var(--text-primary, #0F172A); }
+[data-theme="light"] .agent-info .agent-stats { border-color: var(--border-light, #e2e8f0); }
+[data-theme="light"] .action-btn { background: var(--bg-secondary, #F1F5F9); border: 1px solid var(--border-light, #e2e8f0); color: var(--text-secondary, #334155); }
+[data-theme="light"] .agents-filters .search-box { background: var(--bg-card, #ffffff); border: 1px solid var(--border-medium, #cbd5e1); }
+[data-theme="light"] .agents-filters .search-box input { color: var(--text-primary, #0F172A); }
+[data-theme="light"] .city-btn { background: var(--bg-card, #ffffff); border: 1px solid var(--border-medium, #cbd5e1); color: var(--text-secondary, #334155); }
+[data-theme="light"] .city-btn:hover { background: var(--bg-secondary, #F1F5F9); }
+[data-theme="light"] .no-results { color: var(--text-secondary, #334155); }
+
