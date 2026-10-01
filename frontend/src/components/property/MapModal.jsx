@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./Map.css";
+import "./MapModal.css";
 
 import { analyticsApi, propertyApi } from "../../services/api";
 import { PURPOSES } from "../../utils/constants";

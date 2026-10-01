@@ -91,28 +91,67 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
+.map-absolute-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1005;
+    width: 44px;
+    height: 44px;
+    background: #ef4444;
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    transition: all 0.25s ease;
+}
+
+.map-absolute-close:hover {
+    background: #dc2626;
+    transform: scale(1.08) rotate(90deg);
+}
+
 .leaflet-container {
     background: #0F172A !important;
 }
 
-/* ── Mobile Responsive ── */
+/* ── Mobile Responsive (% and relative units) ── */
 @media (max-width: 768px) {
+    .map-modal {
+        padding: 0;
+    }
+
     .map-container {
         width: 100%;
         height: 100%;
         border-radius: 0;
         max-width: 100%;
+        border: none;
+    }
+
+    .map-absolute-close {
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
     }
 }
 
 /* ── Light theme ── */
 [data-theme="light"] .map-modal {
-    background: rgba(15, 23, 42, 0.60);
+    background: rgba(15, 23, 42, 0.50);
 }
 
 [data-theme="light"] .map-container {
+    background: #f8fafc;
     border: 1px solid #E2E8F0;
-    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.20);
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16);
 }
-
-/* Leaflet container bg stays dark regardless — maps look bad on white */
+
