@@ -7,6 +7,7 @@ import { CompareProvider } from "./context/CompareContext";
 import CompareActionBanner from "./components/ui/CompareActionBanner";
 import CompareModal from "./components/ui/CompareModal";
 import { SearchProvider } from "./context/SearchContext";
+import { useKeepAlive } from "./hooks/useKeepAlive";
 
 // Leaflet CSS for maps
 import "leaflet/dist/leaflet.css";
@@ -69,6 +70,7 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
     const location = useLocation();
+    useKeepAlive(); // Keeps the Render backend instance alive by pinging /api/health every 5 mins
 
     return (
         <SearchProvider>
