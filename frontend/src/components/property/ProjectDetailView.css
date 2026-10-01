@@ -768,3 +768,31 @@
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* LIGHT THEME OVERRIDES */
+[data-theme="light"] .project-premium-page { background: #f8fafc; color: #334155; }
+[data-theme="light"] .project-quick-stats { background: #ffffff; border: 1px solid #e2e8f0; }
+[data-theme="light"] .p-stat { border-right: 1px solid #e2e8f0; }
+[data-theme="light"] .p-stat-value { color: #0f172a; }
+[data-theme="light"] .section-title { color: #0f172a; border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .project-inventory-card { background: #ffffff; border: 1px solid #e2e8f0; }
+[data-theme="light"] .inventory-table th, [data-theme="light"] .inventory-table td { border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .inventory-table th { background: #f1f5f9; color: #334155; }
+[data-theme="light"] .premium-amenity-item { background: #ffffff; border: 1px solid #e2e8f0; color: #334155; }
+[data-theme="light"] .premium-contact-card { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+[data-theme="light"] .card-header { border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .card-header h3, [data-theme="light"] .builder-info h4 { color: #0f172a; }
+[data-theme="light"] .icon-btn { background: #f1f5f9; border: 1px solid #e2e8f0; color: #334155; }
+[data-theme="light"] .premium-chat-box { background: #ffffff; border: 1px solid #e2e8f0; }
+[data-theme="light"] .premium-chat-box .chat-header { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
+[data-theme="light"] .premium-chat-box .chat-header h4 { color: #0f172a; }
+[data-theme="light"] .premium-chat-box .chat-messages { background: #ffffff; }
+[data-theme="light"] .premium-chat-box .chat-input-area { background: #f1f5f9; border-top: 1px solid #e2e8f0; }
+[data-theme="light"] .premium-chat-box input { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; }
+
+/* MOBILE RESPONSIVENESS */
+@media (max-width: 768px) {
+  .project-quick-stats { grid-template-columns: 1fr; }
+  .p-stat { border-right: none; border-bottom: 1px solid #e2e8f0; }
+  [data-theme="light"] .p-stat { border-bottom: 1px solid #e2e8f0; }
+}
